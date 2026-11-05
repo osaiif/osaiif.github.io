@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>...</title>
+  <link rel="stylesheet" href="/css/styles.css?v=8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
+  <style>
+    [hidden] { display: none !important; }
+    .show-poster img { background-color: #191f29; }
+    .page-meta { flex-wrap: wrap; gap: 4px 14px; }
+    .page-meta .show-meta-dot { display: none; }
+    .page-empty { color: #8490a4; font-size: 13px; margin: 0 0 16px; }
+    @media (min-width: 641px) {
+      .show-hero { align-items: center; }
+      .page-meta { gap: 10px; }
+      .page-meta > span:not(.show-meta-dot) {
+        padding: 6px 14px;
+        background-color: rgba(0, 0, 0, 0.28);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
+        color: #eaeef5;
+        font-weight: 600;
+      }
+    }
+
+    .person-bio.-clamp {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 6;
+      overflow: hidden;
+    }
+    .bio-toggle {
+      margin: 0 0 16px;
+      padding: 0;
+      background: none;
+      border: 0;
+      color: #8490a4;
+      font-family: var(--font-text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .bio-toggle:hover { color: #ffffff; }
+    }
+    .work-section { margin-bottom: 32px; }
+    .work-section .section-heading { padding-bottom: 6px; margin-bottom: 12px; }
+    .work-list { display: flex; flex-direction: column; gap: 10px; }
+    .work-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid #1e2a3e;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .work-row:hover { border-color: #30405a; background-color: rgba(255, 255, 255, 0.03); }
+    }
+    .work-poster {
+      position: relative;
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 84px;
+      border-radius: 6px;
+      overflow: hidden;
+      background-color: #191f29;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+    .work-poster img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .work-initial { font-size: 1.3rem; color: #505a6b; }
+    .work-poster.-has-img .work-initial { visibility: hidden; }
+    .work-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .work-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+    }
+    .work-role {
+      font-size: 13px;
+      line-height: 1.4;
+      color: #a2acbe;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    .work-sub { font-size: 12px; color: #8490a4; }
+    .work-more {
+      display: block;
+      margin: 14px auto 0;
+      padding: 9px 20px;
+      background: transparent;
+      border: 1px solid #1e2a3e;
+      border-radius: 10px;
+      color: #b3c2db;
+      font-family: var(--font-text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .work-more:hover { color: #ffffff; border-color: #30405a; }
+    }
+    @media (max-width: 420px) {
+      .work-row { gap: 12px; padding: 8px; }
+      .work-poster { width: 48px; height: 72px; }
+      .work-initial { font-size: 1.1rem; }
+      .work-title { font-size: 14px; }
+    }
+    @media (min-width: 1024px) {
+      .work-row { gap: 18px; padding: 12px; }
+      .work-poster { width: 64px; height: 96px; }
+      .work-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-backing" aria-hidden="true"></div>
+  <div class="backdrop-container show-banner-container">
+    <div id="show-backdrop" class="backdrop-wrapper">
+      <div class="backdropimage js-show-backdrop-image"></div>
+      <div class="backdropmask"></div>
+    </div>
+    <a href="/about/" class="floating-tvbox" aria-label="TV Box">
+      <svg class="tvbox-icon" aria-hidden="true" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0;">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+      </svg>
+    </a>
+    <a href="/home/" class="floating-home -beside-tvbox" aria-label="Home">
+      <svg class="home-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.1l8.5 7.6c.32.29.5.7.5 1.13V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8.17c0-.43.18-.84.5-1.13L12 3.1z"></path>
+      </svg>
+    </a>
+    <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+  </div>
+  <div class="page-content">
+    <div id="page-status" class="search-status"></div>
+    <section id="person-hero" class="show-hero" hidden>
+      <div class="show-poster">
+        <img id="person-photo" alt="" fetchpriority="high" decoding="async">
+      </div>
+      <div class="show-hero-info">
+        <h1 id="person-name" class="show-title"></h1>
+        <div id="person-meta" class="show-meta page-meta"></div>
+        <p id="person-bio" class="show-overview person-bio" hidden></p>
+        <button type="button" id="bio-toggle" class="bio-toggle" hidden>More</button>
+      </div>
+    </section>
+    <div id="works"></div>
+  </div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© <a href="/about/"><strong>tvbox</strong></a> 2023 | Data from <a href="https://www.themoviedb.org/">TMDB</a>
+</p>
+</div>
+</footer>
+  <div id="page-loading-overlay" class="page-loading-overlay">
+    <div class="spinner">
+      <div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+  <script>
+
+(function () {
+      var TMDB_API_KEYS = [
+        '6cb6e1dc603bc65ffb6198489d5bc5b7',
+        '2e7b2fe7002c21f45f08c0a03aa9df52',
+        '51952b66efcd80289c3ba5f8f8044e6a'
+      ];
+      var TMDB_BASE = 'https://api.themoviedb.org/3';
+      function tmdbGet(path, query) {
+        return new Promise(function (resolve, reject) {
+          var controllers = [];
+          var failures = 0;
+          var settled = false;
+          var bestError = null;
+          function isAuthError(err) {
+            return !!err && (err.status === 401 || err.status === 403);
+          }
+          function onFail(err) {
+            if (settled) return;
+            failures++;
+            if (!bestError || (isAuthError(bestError) && !isAuthError(err))) bestError = err;
+            if (failures === TMDB_API_KEYS.length) {
+              settled = true;
+              reject(bestError);
+            }
+          }
+          TMDB_API_KEYS.forEach(function (key, index) {
+            var controller = typeof AbortController === 'function' ? new AbortController() : null;
+            controllers.push(controller);
+            fetch(
+              TMDB_BASE + path + '?api_key=' + key + (query ? '&' + query : ''),
+              controller ? { signal: controller.signal } : undefined
+            )
+              .then(function (res) {
+                if (!res.ok) {
+                  var err = new Error('TMDB request failed (' + res.status + ')');
+                  err.status = res.status;
+                  throw err;
+                }
+                return res.json();
+              })
+              .then(function (data) {
+                if (settled) return;
+                settled = true;
+                controllers.forEach(function (c, i) {
+                  if (c && i !== index) c.abort();
+                });
+                resolve(data);
+              })
+              .catch(onFail);
+          });
+        });
+      }
+      var PROFILE_BASE = 'https://image.tmdb.org/t/p/w342';
+      var POSTER_BASE = 'https://image.tmdb.org/t/p/w154';
+      var WORK_LIMIT = 12;
+      var ROLE_LABELS = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Editing: 'Editor' };
+      var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      var BACKDROP_BASE = 'https://image.tmdb.org/t/p/original';
+      var SPINNER_HTML =
+        '<div class="spinner -inline"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+      var statusEl = document.getElementById('page-status');
+      var backdropImage = document.querySelector('.js-show-backdrop-image');
+      function setStatus(html, isError) {
+        if (!html) {
+          statusEl.hidden = true;
+          statusEl.innerHTML = '';
+          statusEl.classList.remove('-error');
+          return;
+        }
+        statusEl.hidden = false;
+        statusEl.innerHTML = html;
+        statusEl.classList.toggle('-error', !!isError);
+      }
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : String(str);
+        return div.innerHTML;
+      }
+      function showUrl(id) {
+        var path = '/show/';
+        try { path = sessionStorage.getItem('tvbox-show-path') || path; } catch (e) {}
+        return path + '?id=' + encodeURIComponent(id);
+      }
+      function setBackdrop(url) {
+        var preload = new Image();
+        preload.onload = function () {
+          backdropImage.style.backgroundImage = 'url("' + url + '")';
+          backdropImage.classList.add('is-loaded');
+        };
+        preload.src = url;
+      }
+      function setImage(img, url, alt) {
+        img.onerror = function () {
+          img.onerror = null;
+          img.alt = '';
+          img.src = BLANK_IMG;
+        };
+        img.alt = url ? (alt || '') : '';
+        img.src = url || BLANK_IMG;
+      }
+      function metaHtml(parts) {
+        return parts.join('<span class="show-meta-dot">\u00b7</span>');
+      }
+      function firstLetter(name) {
+        var chars = Array.from(String(name || '').trim());
+        return chars.length ? chars[0].toUpperCase() : '';
+      }
+      function onPhotoError(e) {
+        var img = e.target;
+        if (!img || img.tagName !== 'IMG') return;
+        var box = img.parentNode;
+        if (box && box.classList) box.classList.remove('-has-img');
+        img.removeAttribute('src');
+        img.hidden = true;
+      }
+      var hero = document.getElementById('person-hero');
+      var worksEl = document.getElementById('works');
+      var bioEl = document.getElementById('person-bio');
+      var bioBtn = document.getElementById('bio-toggle');
+      var works = {};
+      function roleLabel(dept) {
+        return ROLE_LABELS[dept] || dept;
+      }
+      function isTv(c) {
+        return c && c.media_type === 'tv';
+      }
+      function yearOf(str) {
+        return /^\d{4}/.test(str || '') ? String(str).slice(0, 4) : '';
+      }
+      function collectWorks(list, roleKey) {
+        var map = {};
+        var out = [];
+        list.forEach(function (c) {
+          if (c.id == null) return;
+          var w = map[c.id];
+          if (!w) {
+            w = map[c.id] = {
+              id: c.id,
+              name: c.name || c.original_name || 'Untitled',
+              poster: c.poster_path || null,
+              date: c.first_air_date || '',
+              roles: [],
+              episodes: 0
+            };
+            out.push(w);
+          }
+          var role = String(c[roleKey] || '').trim();
+          if (role && w.roles.indexOf(role) === -1) w.roles.push(role);
+          if (c.episode_count && c.episode_count > w.episodes) w.episodes = c.episode_count;
+        });
+        out.sort(function (a, b) {
+          if (a.date === b.date) return 0;
+          if (!a.date) return 1;
+          if (!b.date) return -1;
+          return a.date < b.date ? 1 : -1;
+        });
+        return out;
+      }
+      function workRowHtml(w) {
+        var posterUrl = w.poster ? POSTER_BASE + w.poster : '';
+        var bits = [];
+        var year = yearOf(w.date);
+        if (year) bits.push('<span class="numbers">' + year + '</span>');
+        if (w.episodes > 0) {
+          bits.push('<span class="numbers">' + w.episodes + '</span> episode' + (w.episodes === 1 ? '' : 's'));
+        }
+        return '<a class="work-row" href="' + escapeHtml(showUrl(w.id)) + '">' +
+          '<span class="work-poster' + (posterUrl ? ' -has-img' : '') + '">' +
+          '<span class="work-initial">' + escapeHtml(firstLetter(w.name)) + '</span>' +
+          (posterUrl ? '<img src="' + escapeHtml(posterUrl) + '" alt="" loading="lazy" decoding="async">' : '') +
+          '</span><span class="work-info"><span class="work-title">' + escapeHtml(w.name) + '</span>' +
+          (w.roles.length ? '<span class="work-role">' + escapeHtml(w.roles.join(', ')) + '</span>' : '') +
+          (bits.length ? '<span class="work-sub">' + bits.join(' \u00b7 ') + '</span>' : '') +
+          '</span></a>';
+      }
+      function fillSection(key, all) {
+        var section = document.getElementById('work-' + key);
+        var list = works[key];
+        var shown = all ? list : list.slice(0, WORK_LIMIT);
+        section.querySelector('.work-list').innerHTML = shown.map(workRowHtml).join('');
+        var more = section.querySelector('.work-more');
+        more.hidden = all || list.length <= WORK_LIMIT;
+        more.textContent = 'Show all ' + list.length;
+      }
+      function renderWorks(person, tvCast, tvCrew) {
+        works = { acting: collectWorks(tvCast, 'character'), crew: collectWorks(tvCrew, 'job') };
+        var html = '';
+        [['acting', 'Acting'], ['crew', 'Crew']].forEach(function (s) {
+          if (!works[s[0]].length) return;
+          html += '<section class="work-section" id="work-' + s[0] + '">' +
+            '<h2 class="section-heading">' + s[1] + '</h2>' +
+            '<div class="work-list"></div>' +
+            '<button type="button" class="work-more" data-more="' + s[0] + '" hidden></button></section>';
+        });
+        if (!html) {
+          worksEl.innerHTML = '<p class="page-empty">No TV credits listed for ' + escapeHtml(person.name || 'this person') + ' yet.</p>';
+          return;
+        }
+        worksEl.innerHTML = html;
+        Object.keys(works).forEach(function (key) {
+          if (works[key].length) fillSection(key, false);
+        });
+      }
+      function updateBioToggle() {
+        if (bioEl.hidden) return;
+        if (bioEl.classList.contains('-clamp')) {
+          bioBtn.hidden = !(bioEl.scrollHeight > bioEl.clientHeight + 1);
+        }
+      }
+      function render(person) {
+        setStatus('');
+        var name = person.name || 'Unknown';
+        var cc = person.combined_credits || {};
+        var castAll = cc.cast || [];
+        var crewAll = cc.crew || [];
+        var tvCast = castAll.filter(isTv);
+        var tvCrew = crewAll.filter(isTv);
+        var withBackdrop = tvCast.concat(tvCrew).filter(function (c) { return c.backdrop_path; })
+          .sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
+        if (withBackdrop.length) setBackdrop(BACKDROP_BASE + withBackdrop[0].backdrop_path);
+        setImage(document.getElementById('person-photo'),
+          person.profile_path ? PROFILE_BASE + person.profile_path : '', name);
+        document.getElementById('person-name').textContent = name;
+        document.title = name + ' \u01c0 tvbox';
+        var counts = {};
+        crewAll.forEach(function (c) {
+          if (c.department) counts[c.department] = (counts[c.department] || 0) + 1;
+        });
+        if (castAll.length) counts.Acting = (counts.Acting || 0) + castAll.length;
+        var known = person.known_for_department;
+        var depts = Object.keys(counts).filter(function (d) { return d !== known && counts[d] >= 2; })
+          .sort(function (a, b) { return counts[b] - counts[a]; });
+        if (known) depts.unshift(known);
+        var parts = [];
+        if (depts.length) parts.push('<span>' + escapeHtml(depts.slice(0, 3).map(roleLabel).join(', ')) + '</span>');
+        var born = yearOf(person.birthday);
+        var died = yearOf(person.deathday);
+        if (born) parts.push('<span class="numbers">Born ' + born + '</span>');
+        if (died) parts.push('<span class="numbers">Died ' + died + '</span>');
+        if (person.place_of_birth) parts.push('<span>' + escapeHtml(person.place_of_birth) + '</span>');
+        document.getElementById('person-meta').innerHTML = metaHtml(parts);
+        var bio = (person.biography || '').trim();
+        bioEl.textContent = bio;
+        bioEl.hidden = !bio;
+        bioEl.classList.add('-clamp');
+        bioBtn.hidden = true;
+        bioBtn.textContent = 'More';
+        hero.hidden = false;
+        updateBioToggle();
+        renderWorks(person, tvCast, tvCrew);
+      }
+      bioBtn.addEventListener('click', function () {
+        var open = bioEl.classList.toggle('-clamp') === false;
+        bioBtn.textContent = open ? 'Less' : 'More';
+      });
+      window.addEventListener('resize', updateBioToggle);
+      worksEl.addEventListener('error', onPhotoError, true);
+      worksEl.addEventListener('click', function (e) {
+        var more = e.target.closest('.work-more');
+        if (more) fillSection(more.getAttribute('data-more'), true);
+      });
+      function slugify(name) {
+        var s = String(name || '');
+        if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      }
+      function personPath(name, id) {
+        var base = slugify(name);
+        return '/p/' + (base ? base + '-' + id : String(id));
+      }
+      function load(personId) {
+        setStatus(SPINNER_HTML);
+        tmdbGet('/person/' + encodeURIComponent(personId), 'append_to_response=combined_credits')
+          .then(function (person) {
+            render(person);
+            try {
+              history.replaceState(null, '', personPath(person.name, person.id) + window.location.hash);
+            } catch (e) {}
+          })
+          .catch(function (err) {
+            setStatus('Something went wrong: ' + err.message, true);
+          });
+      }
+      var params = new URLSearchParams(window.location.search);
+      var rawSlug = (params.get('s') || '').trim().toLowerCase();
+      var personId = (params.get('id') || '').replace(/\D/g, '');
+      var nameQuery = '';
+      if (!personId && rawSlug) {
+        if (rawSlug === 'saif') {
+          window.location.replace('/u/saif/');
+          return;
+        }
+        var idMatch = rawSlug.match(/(?:^|-)(\d+)$/);
+        if (idMatch) personId = idMatch[1];
+        else nameQuery = rawSlug.replace(/-/g, ' ');
+      }
+      if (personId) {
+        load(personId);
+      } else if (nameQuery) {
+        setStatus(SPINNER_HTML);
+        tmdbGet('/search/person', 'query=' + encodeURIComponent(nameQuery) + '&include_adult=false&page=1')
+          .then(function (data) {
+            var list = data.results || [];
+            var pick = null;
+            list.forEach(function (r) {
+              if (!pick && slugify(r.name) === rawSlug) pick = r;
+            });
+            if (!pick) pick = list[0];
+            if (!pick) {
+              setStatus('Nobody found. Head back to <a href="/search/">search</a> and try again.', true);
+              return;
+            }
+            load(pick.id);
+          })
+          .catch(function (err) {
+            setStatus('Something went wrong: ' + err.message, true);
+          });
+      } else {
+        setStatus('No person selected. Head back to <a href="/search/">search</a> and pick someone.', true);
+      }
+})();
+
+  </script>
+  <script>
+    (function () {
+      var form = document.getElementById('home-search-form');
+      var input = document.getElementById('home-search-input');
+      var overlay = document.getElementById('page-loading-overlay');
+      function goToResults() {
+        var value = input.value.trim();
+        if (!value) return;
+        overlay.classList.add('-visible');
+        window.location.href = '/search/?q=' + encodeURIComponent(value);
+      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        goToResults();
+      });
+      input.addEventListener('search', function () {
+        goToResults();
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          goToResults();
+        }
+      });
+      window.addEventListener('pageshow', function () {
+        overlay.classList.remove('-visible');
+      });
+    })();
+  </script>
+  <script>
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted && document.activeElement) {
+        document.activeElement.blur();
+      }
+    });
+  </script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>

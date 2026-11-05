@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>tvbox - home</title>
+  <link rel="stylesheet" href="/css/styles.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org">
+  <link rel="preconnect" href="https://api.themoviedb.org">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
+  <style>
+    .hero-cta,
+    .hero-cta:hover {
+      background: #ffffff;
+      color: #000000;
+    }
+  </style>
+</head>
+<body>
+  <div id="hero-carousel" class="hero-carousel">
+    <div class="hero-skeleton js-hero-skeleton"></div>
+    <div class="hero-mask"></div>
+    <form class="group floating-search -centered" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+        <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <a href="/about/" class="floating-tvbox" aria-label="TV Box">
+      <svg class="tvbox-icon" aria-hidden="true" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0;">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+      </svg>
+    </a>
+    <div id="hero-content" class="hero-content">
+      <div class="hero-eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z"/></svg>
+        <span>Trending this week</span>
+      </div>
+      <h1 id="hero-title" class="hero-title numbers" style="font-family: var(--font-text);"></h1>
+      <div id="hero-meta" class="hero-meta"></div>
+      <p id="hero-overview" class="hero-overview"></p>
+      <div class="hero-actions">
+        <a id="hero-cta" href="#" class="hero-cta">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <span>View show</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div id="rows-mount"></div>
+  </div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© <a href="/about/"><strong>tvbox</strong></a> 2023 | Data from <a href="https://www.themoviedb.org/">TMDB</a>
+</p>
+</div>
+</footer>
+<script>
+(function () {
+var btn = document.querySelector('.footer-email-btn');
+if (!btn) return;
+function fallbackCopy(text) {
+var ta = document.createElement('textarea');
+ta.value = text;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+try { document.execCommand('copy'); } catch (e) {}
+document.body.removeChild(ta);
+}
+function showCopied() {
+btn.classList.remove('-copied');
+void btn.offsetWidth;
+btn.classList.add('-copied');
+clearTimeout(btn._copiedTimeout);
+btn._copiedTimeout = setTimeout(function () {
+btn.classList.remove('-copied');
+}, 1400);
+}
+btn.addEventListener('click', function () {
+var email = btn.getAttribute('data-email');
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(email).then(showCopied).catch(function () {
+fallbackCopy(email);
+showCopied();
+});
+} else {
+fallbackCopy(email);
+showCopied();
+}
+});
+})();
+</script>
+  <script>
+    (function () {
+      var TMDB_BASE = 'https://api.themoviedb.org/3';
+      var TMDB_API_KEYS = [
+        '6cb6e1dc603bc65ffb6198489d5bc5b7',
+        '2e7b2fe7002c21f45f08c0a03aa9df52',
+        '51952b66efcd80289c3ba5f8f8044e6a'
+      ];
+      function tmdbFetch(path, params, signal) {
+        return new Promise(function (resolve, reject) {
+          var controllers = [];
+          var failures = 0;
+          var settled = false;
+          var bestError = null;
+          var sep = path.indexOf('?') > -1 ? '&' : '?';
+          var extra = params ? '&' + params : '';
+          function isAuthError(err) {
+            return !!err && (err.status === 401 || err.status === 403);
+          }
+          function abortAll(exceptIndex) {
+            controllers.forEach(function (c, i) {
+              if (c && i !== exceptIndex) c.abort();
+            });
+          }
+          if (signal) {
+            if (signal.aborted) {
+              var abortErr = new Error('Aborted');
+              abortErr.name = 'AbortError';
+              reject(abortErr);
+              return;
+            }
+            signal.addEventListener('abort', function () {
+              if (settled) return;
+              settled = true;
+              abortAll(-1);
+              var e = new Error('Aborted');
+              e.name = 'AbortError';
+              reject(e);
+            });
+          }
+          function onFail(err) {
+            if (settled) return;
+            failures++;
+            if (!bestError || (isAuthError(bestError) && !isAuthError(err))) bestError = err;
+            if (failures === TMDB_API_KEYS.length) {
+              settled = true;
+              reject(bestError);
+            }
+          }
+          TMDB_API_KEYS.forEach(function (key, index) {
+            var controller = typeof AbortController === 'function' ? new AbortController() : null;
+            controllers.push(controller);
+            fetch(
+              TMDB_BASE + path + sep + 'api_key=' + key + extra,
+              controller ? { signal: controller.signal } : undefined
+            )
+              .then(function (res) {
+                if (!res.ok) {
+                  var err = new Error('TMDB request failed (' + res.status + ')');
+                  err.status = res.status;
+                  throw err;
+                }
+                return res.json();
+              })
+              .then(function (data) {
+                if (settled) return;
+                settled = true;
+                abortAll(index);
+                resolve(data);
+              })
+              .catch(onFail);
+          });
+        });
+      }
+      var POSTER_BASE = 'https://image.tmdb.org/t/p/w342';
+      var BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280';
+      var STAR_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+      }
+      function yearFromDate(dateStr) {
+        return dateStr ? dateStr.slice(0, 4) : null;
+      }
+      function fetchTmdb(path) {
+        return tmdbFetch(path).then(function (data) { return data.results || []; });
+      }
+      var heroEl = document.getElementById('hero-carousel');
+      var heroSkeleton = heroEl.querySelector('.js-hero-skeleton');
+      var heroContent = document.getElementById('hero-content');
+      var heroTitle = document.getElementById('hero-title');
+      var heroMeta = document.getElementById('hero-meta');
+      var heroOverview = document.getElementById('hero-overview');
+      var heroCta = document.getElementById('hero-cta');
+      var heroSlides = [];
+      var heroShows = [];
+      var heroDots = [];
+      var heroIndex = 0;
+      var heroTimer = null;
+      var HERO_INTERVAL = 6500;
+      function buildHero(shows) {
+        heroShows = shows.filter(function (s) { return s.backdrop_path; }).slice(0, 5);
+        if (!heroShows.length) return;
+        heroShows.forEach(function (show, i) {
+          var slide = document.createElement('div');
+          slide.className = 'hero-slide';
+          slide.style.backgroundImage = 'url("' + BACKDROP_BASE + show.backdrop_path + '")';
+          heroEl.insertBefore(slide, heroEl.querySelector('.hero-mask'));
+          heroSlides.push(slide);
+        });
+        if (heroShows.length > 1) {
+          var dotsWrap = document.createElement('div');
+          dotsWrap.className = 'hero-dots';
+          heroShows.forEach(function (show, i) {
+            var dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'hero-dot';
+            dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+            dot.addEventListener('click', function () {
+              goToHero(i, true);
+            });
+            dotsWrap.appendChild(dot);
+            heroDots.push(dot);
+          });
+          heroEl.appendChild(dotsWrap);
+        }
+        heroSkeleton.style.display = 'none';
+        goToHero(0);
+        startHeroTimer();
+        heroEl.addEventListener('mouseenter', stopHeroTimer);
+        heroEl.addEventListener('mouseleave', startHeroTimer);
+      }
+      function goToHero(i, userTriggered) {
+        heroIndex = i;
+        heroSlides.forEach(function (s, idx) { s.classList.toggle('-active', idx === i); });
+        heroDots.forEach(function (d, idx) { d.classList.toggle('-active', idx === i); });
+        heroContent.classList.remove('-visible');
+        var show = heroShows[i];
+        window.setTimeout(function () {
+          heroTitle.textContent = show.name || 'Untitled';
+          var metaParts = [];
+          var year = yearFromDate(show.first_air_date);
+          if (year) metaParts.push('<span class="numbers">' + year + '</span>');
+          if (show.vote_average) {
+            metaParts.push('<span class="hero-rating">' + STAR_SVG + show.vote_average.toFixed(1) + '</span>');
+          }
+          heroMeta.innerHTML = metaParts.join('<span class="hero-meta-dot">·</span>');
+          heroOverview.textContent = show.overview || '';
+          heroCta.href = '/show/?id=' + show.id;
+          heroContent.classList.add('-visible');
+        }, 300);
+        if (userTriggered) {
+          stopHeroTimer();
+          startHeroTimer();
+        }
+      }
+      function startHeroTimer() {
+        stopHeroTimer();
+        if (heroShows.length < 2) return;
+        heroTimer = window.setInterval(function () {
+          goToHero((heroIndex + 1) % heroShows.length);
+        }, HERO_INTERVAL);
+      }
+      function stopHeroTimer() {
+        if (heroTimer) window.clearInterval(heroTimer);
+        heroTimer = null;
+      }
+      var rowsMount = document.getElementById('rows-mount');
+      var HIDDEN_GENRES = [10763, 10764, 10766, 10767];
+      function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+      function isoDate(offsetDays) {
+        var d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      var UPCOMING_PATH =
+        '/discover/tv?include_adult=false&sort_by=popularity.desc' +
+        '&first_air_date.gte=' + isoDate(-14) +
+        '&first_air_date.lte=' + isoDate(120) +
+        '&without_genres=' + HIDDEN_GENRES.join('%2C');
+      var ROWS = [
+        { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
+        { title: 'Airing Today', path: '/tv/airing_today', posterOnly: true, hideGenres: true },
+        { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
+        { title: 'Popular Shows', path: '/tv/popular' },
+        { title: 'Top Rated', path: '/tv/top_rated' },
+        { title: 'On The Air', path: '/tv/on_the_air' }
+      ];
+      function filterRow(rowDef, shows) {
+        return shows.filter(function (show) {
+          if (!show || !show.name) return false;
+          if (rowDef.posterOnly && !show.poster_path) return false;
+          if (rowDef.hideGenres && show.genre_ids) {
+            for (var i = 0; i < show.genre_ids.length; i++) {
+              if (HIDDEN_GENRES.indexOf(show.genre_ids[i]) !== -1) return false;
+            }
+          }
+          return true;
+        });
+      }
+      function buildSkeletonRow(title) {
+        var section = document.createElement('section');
+        section.className = 'discover-row';
+        var heading = document.createElement('h2');
+        heading.className = 'section-heading';
+        heading.textContent = title;
+        section.appendChild(heading);
+        var wrap = document.createElement('div');
+        wrap.className = 'carousel-wrap';
+        var track = document.createElement('div');
+        track.className = 'carousel-track';
+        for (var i = 0; i < 6; i++) {
+          var card = document.createElement('div');
+          card.className = 'carousel-card -skeleton';
+          card.innerHTML = '<div class="carousel-poster"><img width="132" height="198"></div>';
+          track.appendChild(card);
+        }
+        wrap.appendChild(track);
+        section.appendChild(wrap);
+        rowsMount.appendChild(section);
+        observeReveal(section);
+        return { section: section, wrap: wrap, track: track };
+      }
+      function renderRow(rowDef, shows, refs) {
+        refs.track.innerHTML = '';
+        shows.slice(0, 18).forEach(function (show, i) {
+          var card = document.createElement('a');
+          card.className = 'carousel-card';
+          card.href = '/show/?id=' + show.id;
+          var rankHtml = rowDef.ranked ? '<span class="carousel-rank numbers">' + (i + 1) + '</span>' : '';
+          var metaParts = [];
+          var year = yearFromDate(show.first_air_date);
+          if (year) metaParts.push(year);
+          var posterHtml = show.poster_path
+            ? '<img src="' + POSTER_BASE + show.poster_path + '" alt="' + escapeHtml(show.name) + '" width="132" height="198" loading="lazy" decoding="async">'
+            : '<div class="carousel-poster-fallback"><span>' + escapeHtml(show.name) + '</span></div>';
+          card.innerHTML =
+            '<div class="carousel-poster">' +
+              rankHtml +
+              posterHtml +
+            '</div>' +
+            '<div class="carousel-card-body">' +
+              '<p class="carousel-card-title">' + escapeHtml(show.name) + '</p>' +
+              '<div class="carousel-card-meta">' +
+                (show.vote_average ? STAR_SVG + '<span>' + show.vote_average.toFixed(1) + '</span>' : '') +
+                (year ? '<span>' + (show.vote_average ? '· ' : '') + year + '</span>' : '') +
+              '</div>' +
+            '</div>';
+          refs.track.appendChild(card);
+        });
+        var prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'carousel-nav -prev';
+        prevBtn.setAttribute('aria-label', 'Scroll left');
+        prevBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+        prevBtn.addEventListener('click', function () {
+          refs.track.scrollBy({ left: -refs.track.clientWidth * 0.8, behavior: 'smooth' });
+        });
+        var nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'carousel-nav -next';
+        nextBtn.setAttribute('aria-label', 'Scroll right');
+        nextBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>';
+        nextBtn.addEventListener('click', function () {
+          refs.track.scrollBy({ left: refs.track.clientWidth * 0.8, behavior: 'smooth' });
+        });
+        refs.wrap.appendChild(prevBtn);
+        refs.wrap.appendChild(nextBtn);
+        function updateNav() {
+          var max = refs.track.scrollWidth - refs.track.clientWidth;
+          var left = refs.track.scrollLeft;
+          prevBtn.classList.toggle('-hidden', left <= 4);
+          nextBtn.classList.toggle('-hidden', left >= max - 4);
+        }
+        refs.track.addEventListener('scroll', updateNav, { passive: true });
+        window.addEventListener('resize', updateNav);
+        updateNav();
+      }
+      var revealObserver = ('IntersectionObserver' in window)
+        ? new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('-visible');
+                revealObserver.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.1 })
+        : null;
+      function observeReveal(section) {
+        if (revealObserver) {
+          revealObserver.observe(section);
+        } else {
+          section.classList.add('-visible');
+        }
+      }
+      var trendingRequest = fetchTmdb('/trending/tv/week');
+      trendingRequest.then(buildHero).catch(function (err) {
+        console.error('Hero load failed:', err);
+        heroSkeleton.style.display = 'none';
+      });
+      ROWS.forEach(function (rowDef) {
+        var refs = buildSkeletonRow(rowDef.title);
+        var request = rowDef.path === '/trending/tv/week' ? trendingRequest : fetchTmdb(rowDef.path);
+        request.then(function (shows) {
+          shows = filterRow(rowDef, shows);
+          if (!shows.length) {
+            refs.section.remove();
+            return;
+          }
+          renderRow(rowDef, shows, refs);
+        }).catch(function (err) {
+          console.error(rowDef.title + ' failed to load:', err);
+          refs.section.remove();
+        });
+      });
+    })();
+  </script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>

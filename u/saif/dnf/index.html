@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Saif's dnf</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.themoviedb.org">
+  <link rel="preload" as="script" href="/js/shows.js?v=1">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+  <style>
+    #dnf-grid { grid-template-columns: repeat(4, 1fr); }
+    .dnf-empty {
+      color: rgba(247, 236, 230, 0.5);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+    .site-header {
+      position: relative;
+      height: 52px;
+      background-color: #0b121e;
+    }
+    @media (min-width: 1024px) {
+      .site-header { height: 76px; }
+    }
+    .page-content {
+      padding-top: 0px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-container">
+    <a href="/about/" class="floating-tvbox" aria-label="TV Box">
+      <svg class="tvbox-icon" aria-hidden="true" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0;">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+      </svg>
+    </a>
+    <a href="/home/" class="floating-home -beside-tvbox" aria-label="Home">
+      <svg class="home-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.1l8.5 7.6c.32.29.5.7.5 1.13V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8.17c0-.43.18-.84.5-1.13L12 3.1z"></path>
+      </svg>
+    </a>
+    <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+    </div>
+  </header>
+  <div class="page-content">
+    <section>
+      <h2 class="section-heading no-divider">Saif's DNF list</h2>
+      <div class="poster-grid" id="dnf-grid">
+      </div>
+    </section>
+  </div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© <a href="/about/"><strong>tvbox</strong></a> 2023 | Data from <a href="https://www.themoviedb.org/">TMDB</a>
+</p>
+</div>
+</footer>
+<script>
+(function () {
+var btn = document.querySelector('.footer-email-btn');
+if (!btn) return;
+function fallbackCopy(text) {
+var ta = document.createElement('textarea');
+ta.value = text;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+try { document.execCommand('copy'); } catch (e) {}
+document.body.removeChild(ta);
+}
+function showCopied() {
+btn.classList.remove('-copied');
+void btn.offsetWidth;
+btn.classList.add('-copied');
+clearTimeout(btn._copiedTimeout);
+btn._copiedTimeout = setTimeout(function () {
+btn.classList.remove('-copied');
+}, 1400);
+}
+btn.addEventListener('click', function () {
+var email = btn.getAttribute('data-email');
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(email).then(showCopied).catch(function () {
+fallbackCopy(email);
+showCopied();
+});
+} else {
+fallbackCopy(email);
+showCopied();
+}
+});
+})();
+</script>
+  <div id="page-loading-overlay" class="page-loading-overlay">
+    <div class="spinner">
+      <div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var form = document.getElementById('home-search-form');
+      var input = document.getElementById('home-search-input');
+      var overlay = document.getElementById('page-loading-overlay');
+      function goToResults() {
+        var value = input.value.trim();
+        if (!value) return;
+        overlay.classList.add('-visible');
+        window.location.href = '/search/?q=' + encodeURIComponent(value);
+      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        goToResults();
+      });
+      input.addEventListener('search', function () {
+        goToResults();
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          goToResults();
+        }
+      });
+      window.addEventListener('pageshow', function () {
+        overlay.classList.remove('-visible');
+      });
+    })();
+  </script>
+  <script src="/js/shows.js?v=1"></script>
+  <script>
+    (function () {
+      var grid = document.getElementById('dnf-grid');
+      var shows = SHOWS.filter(function (s) { return s.list === 'dnf'; });
+      if (!shows.length) {
+        grid.innerHTML = '<p class="dnf-empty">Nothing marked as did-not-finish yet.</p>';
+        return;
+      }
+      var EAGER_ROW_SIZE = 4;
+      var frag = document.createDocumentFragment();
+      shows.forEach(function (s, i) {
+        var titleAttr = s.title.replace(/"/g, '&quot;');
+        var loadingAttr = i < EAGER_ROW_SIZE ? 'eager' : 'lazy';
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.title = s.title;
+        card.dataset.imdb = s.imdb;
+        card.innerHTML =
+          '<a href="/show/?imdb=' + s.imdb + '">' +
+            '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="' + loadingAttr + '" decoding="async">' +
+          '</a>';
+        frag.appendChild(card);
+      });
+      grid.appendChild(frag);
+    })();
+  </script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>

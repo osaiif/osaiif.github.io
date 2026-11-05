@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>tvbox</title>
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp" media="(min-width: 641px)" fetchpriority="high">
+<link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20vert.webp" media="(max-width: 640px)" fetchpriority="high">
+</head>
+<body class="about-page">
+<div class="about-layout">
+<div class="about-media">
+  <header class="site-header">
+    <div class="header-container">
+    <a href="/home/" class="floating-home" aria-label="Home">
+      <svg class="home-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.1l8.5 7.6c.32.29.5.7.5 1.13V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8.17c0-.43.18-.84.5-1.13L12 3.1z"></path>
+      </svg>
+    </a>
+    <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+    </div>
+  </header>
+<picture>
+<source media="(min-width: 641px)" srcset="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp">
+<source media="(max-width: 640px)" srcset="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20vert.webp">
+<img src="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp" alt="TVbox" fetchpriority="high" decoding="async">
+</picture>
+<div class="about-content">
+<p class="about-paragraph about-intro"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0; position: relative; top: 2px; left: 0px;">
+<circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+<text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+</svg><strong> tvbox</strong> is a small project that<br>tracks <span class="word-rotator"><span class="word-rotator-sizer" aria-hidden="true">anime</span><span class="word-rotator-item">show</span><span class="word-rotator-item -b">anime</span></span> entries.</p>
+<p class="about-paragraph"><span style="opacity: 1;">(public release tbd)<br><span style="opacity: 0.4;"></span></span></p>
+</div>
+<a class="credit-mark" href="mailto:ocaif@outlook.com" aria-label="Email ocaif@outlook.com">
+<svg viewBox="0 0 892 981" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,0 L892,0 L892,981 L0,981 Z M33,22 L33,785 L576,785 L576,783 L566,779 L551,771 L533,759 L522,750 L510,739 L501,729 L490,714 L482,701 L472,680 L463,654 L458,627 L457,620 L457,580 L460,558 L466,533 L475,509 L484,490 L493,475 L505,458 L516,445 L520,440 L528,433 L537,424 L550,414 L566,403 L582,394 L594,388 L605,384 L614,380 L637,373 L656,369 L679,366 L732,366 L759,370 L775,374 L798,381 L806,385 L813,388 L830,397 L848,409 L859,418 L863,420 L863,22 Z " fill="currentColor" transform="translate(0,0)"/>
+<path d="M0,0 L31,0 L51,5 L68,13 L79,21 L92,34 L102,49 L110,66 L115,81 L120,102 L123,128 L123,159 L121,178 L117,193 L113,207 L104,226 L95,239 L84,251 L70,261 L53,269 L39,273 L22,276 L0,276 L-19,273 L-38,266 L-54,256 L-64,247 L-75,233 L-84,217 L-92,194 L-96,168 L-96,124 L-92,98 L-86,77 L-80,61 L-71,45 L-61,32 L-51,22 L-36,12 L-21,5 Z " fill="#0b121e" transform="translate(686,450)"/>
+<path d="M0,0 L21,0 L34,1 L54,9 L65,17 L73,25 L80,37 L84,49 L85,56 L85,71 L81,89 L74,102 L66,112 L56,120 L44,126 L27,131 L0,131 L-10,129 L-20,126 L-33,119 L-43,110 L-50,101 L-55,90 L-59,75 L-59,55 L-56,42 L-50,30 L-43,21 L-36,14 L-23,6 L-7,1 Z " fill="#0b121e" transform="translate(87,833)"/>
+<path d="M0,0 L19,0 L36,2 L48,6 L61,15 L67,23 L71,32 L72,38 L73,115 L75,128 L36,128 L35,118 L34,116 L26,123 L15,128 L2,131 L-19,131 L-29,129 L-41,123 L-49,114 L-53,105 L-54,100 L-54,88 L-52,78 L-46,69 L-38,62 L-28,57 L-11,53 L16,50 L27,47 L31,43 L31,36 L26,31 L19,28 L5,28 L-4,31 L-9,36 L-11,44 L-50,44 L-49,34 L-45,24 L-39,16 L-31,9 L-23,5 L-13,2 Z " fill="#0b121e" transform="translate(362,833)"/>
+<path d="M0,0 L20,0 L30,1 L42,5 L53,12 L63,21 L69,30 L73,40 L74,49 L34,49 L31,40 L26,35 L20,32 L16,31 L5,31 L-5,36 L-11,44 L-14,53 L-14,76 L-9,89 L-5,94 L3,98 L7,99 L16,99 L26,95 L31,89 L34,79 L74,79 L74,87 L70,99 L63,111 L56,118 L45,125 L30,130 L25,131 L0,131 L-17,127 L-31,119 L-41,110 L-47,102 L-53,90 L-56,80 L-57,70 L-57,54 L-53,38 L-45,24 L-34,13 L-20,5 L-7,1 Z " fill="#0b121e" transform="translate(232,833)"/>
+<path d="M0,0 L25,0 L33,1 L33,28 L13,29 L8,34 L7,43 L33,43 L33,73 L7,73 L7,164 L-33,164 L-33,73 L-50,73 L-50,42 L-33,42 L-33,25 L-29,15 L-22,7 L-14,2 Z " fill="#0b121e" transform="translate(537,797)"/>
+<path d="M0,0 L40,0 L40,122 L0,122 Z " fill="#0b121e" transform="translate(443,839)"/>
+<path d="M0,0 L12,0 L23,4 L31,11 L35,20 L36,26 L36,47 L30,59 L22,66 L14,69 L-1,69 L-11,64 L-16,59 L-21,50 L-23,43 L-23,28 L-21,19 L-16,10 L-8,3 Z " fill="currentColor" transform="translate(93,863)"/>
+<path d="M0,0 L40,0 L40,30 L0,30 Z " fill="#0b121e" transform="translate(443,797)"/>
+<path d="M0,0 L2,0 L2,16 L-1,23 L-5,28 L-14,33 L-18,34 L-32,34 L-39,31 L-42,28 L-44,24 L-44,16 L-39,10 L-29,6 L-6,2 Z " fill="currentColor" transform="translate(392,903)"/>
+<path d="M0,0 L2,0 L2,29 L-52,29 L-50,27 L-34,20 L-13,9 Z " fill="#0b121e" transform="translate(852,755)"/>
+<path d="M0,0 L3,0 L3,89 L2,89 L1,80 L0,80 L0,4 L0,1 Z " fill="currentColor" transform="translate(501,872)"/>
+<path d="M0,0 L2,1 L-1,18 L-3,18 L-6,25 L-9,26 L-6,17 L-4,10 L-3,2 L-42,2 L-42,1 L-1,1 Z " fill="currentColor" transform="translate(309,910)"/>
+<path d="M0,0 L2,1 L3,23 L-1,25 L-2,16 L-1,1 Z " fill="currentColor" transform="translate(173,888)"/>
+<path d="M0,0 L24,0 L23,3 L9,3 L8,2 L0,1 Z " fill="currentColor" transform="translate(546,870)"/>
+<path d="M0,0 L2,1 L-3,6 L-10,13 L-12,13 L-13,17 L-16,16 L-7,6 Z " fill="#0b121e" transform="translate(201,844)"/>
+<path d="M0,0 L25,0 L25,1 L4,1 L4,3 L0,3 Z " fill="#0b121e" transform="translate(34,22)"/>
+<path d="M0,0 L1,4 L0,9 L-2,10 L-3,13 L-5,13 L-2,4 Z " fill="currentColor" transform="translate(798,657)"/>
+<path d="M0,0 L2,1 L-5,10 L-7,9 L-5,5 Z " fill="#0b121e" transform="translate(327,845)"/>
+<path d="M0,0 L3,0 L3,9 L0,9 Z " fill="currentColor" transform="translate(501,829)"/>
+<path d="M0,0 L9,3 L9,4 L1,4 L-3,2 Z " fill="#0b121e" transform="translate(566,780)"/>
+<path d="M0,0 L2,2 L-7,12 L-9,11 L-2,3 Z " fill="currentColor" transform="translate(298,938)"/>
+<path d="M0,0 L2,1 L-2,6 L-6,8 L-6,5 Z " fill="currentColor" transform="translate(546,416)"/>
+<path d="M0,0 L2,0 L0,6 L-4,10 L-3,5 Z " fill="#0b121e" transform="translate(610,504)"/>
+<path d="M0,0 L10,0 L9,3 L2,3 L-1,1 Z " fill="#0b121e" transform="translate(664,364)"/>
+<path d="M0,0 L2,3 L-3,9 L-4,7 Z " fill="#0b121e" transform="translate(319,854)"/>
+<path d="M0,0 L7,6 L5,8 L0,3 Z " fill="#0b121e" transform="translate(766,473)"/>
+<path d="M0,0 L2,1 L-1,4 L-3,4 L-3,6 L-6,6 L-5,3 Z " fill="currentColor" transform="translate(360,862)"/>
+<path d="M0,0 L2,1 L-4,9 L-6,7 Z " fill="#0b121e" transform="translate(625,482)"/>
+<path d="M0,0 L2,4 L0,8 L-3,9 Z " fill="currentColor" transform="translate(303,927)"/>
+<path d="M0,0 L2,2 L1,6 L-1,10 L-2,7 Z " fill="#0b121e" transform="translate(179,871)"/>
+<path d="M0,0 L7,1 L3,4 L-2,2 Z " fill="currentColor" transform="translate(549,826)"/>
+</svg>
+</a>
+</div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© <a href="/about/"><strong>tvbox</strong></a> 2023 | Data from <a href="https://www.themoviedb.org/">TMDB</a>
+</p>
+</div>
+</footer>
+<script>
+(function () {
+var btn = document.querySelector('.footer-email-btn');
+if (!btn) return;
+function fallbackCopy(text) {
+var ta = document.createElement('textarea');
+ta.value = text;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+try { document.execCommand('copy'); } catch (e) {}
+document.body.removeChild(ta);
+}
+function showCopied() {
+btn.classList.remove('-copied');
+void btn.offsetWidth;
+btn.classList.add('-copied');
+clearTimeout(btn._copiedTimeout);
+btn._copiedTimeout = setTimeout(function () {
+btn.classList.remove('-copied');
+}, 1400);
+}
+btn.addEventListener('click', function () {
+var email = btn.getAttribute('data-email');
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(email).then(showCopied).catch(function () {
+fallbackCopy(email);
+showCopied();
+});
+} else {
+fallbackCopy(email);
+showCopied();
+}
+});
+})();
+</script>
+</div>
+<div id="page-loading-overlay" class="page-loading-overlay">
+<div class="spinner -inline">
+<div></div><div></div><div></div><div></div><div></div><div></div>
+</div>
+</div>
+<script>
+(function () {
+var form = document.getElementById('home-search-form');
+var input = document.getElementById('home-search-input');
+var overlay = document.getElementById('page-loading-overlay');
+function goToResults() {
+var value = input.value.trim();
+if (!value) return;
+overlay.classList.add('-visible');
+window.location.href = '/search/?q=' + encodeURIComponent(value);
+}
+form.addEventListener('submit', function (e) {
+e.preventDefault();
+goToResults();
+});
+input.addEventListener('search', function () {
+goToResults();
+});
+input.addEventListener('keydown', function (e) {
+if (e.key === 'Enter' || e.keyCode === 13) {
+e.preventDefault();
+goToResults();
+}
+});
+window.addEventListener('pageshow', function () {
+overlay.classList.remove('-visible');
+});
+})();
+</script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>

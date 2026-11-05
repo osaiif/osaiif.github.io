@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>search</title>
+  <link rel="stylesheet" href="/css/styles.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.themoviedb.org">
+  <link rel="preload" as="script" href="/js/search.js?v=4">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
+  <style>
+    #results-container.results-container {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 340px));
+      justify-content: center;
+      gap: 0.85rem;
+    }
+    #results-container .result-item {
+      display: flex;
+      gap: 1.1rem;
+      padding: 0.75rem;
+      border-radius: 12px;
+      align-items: flex-start;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid transparent;
+      width: 340px;
+      box-sizing: border-box;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+    #results-container .result-item:hover,
+    #results-container .result-item:focus-visible {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+    #results-container .poster {
+      width: 84px;
+      height: 126px;
+      flex-shrink: 0;
+      object-fit: cover;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    }
+    #results-container .details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+      padding-top: 0.1rem;
+    }
+    #results-container .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.6rem;
+      row-gap: 0.2rem;
+    }
+    #results-container .title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 0;
+    }
+    #results-container .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    #results-container .year {
+      opacity: 0.55;
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+    }
+    #results-container .rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: #F5C518;
+    }
+    #results-container .rating .star-icon {
+      width: 0.85em;
+      height: 0.85em;
+      fill: #F5C518;
+    }
+    #results-container .overview {
+      font-size: 0.88rem;
+      line-height: 1.45;
+      opacity: 0.7;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    #results-container .creator {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      opacity: 0.55;
+      margin-top: 0.15rem;
+    }
+    #results-container .creator-badge {
+      opacity: 0.9;
+    }
+    #results-container .creator-badge.-loading {
+      opacity: 0.4;
+    }
+    #results-container .person-item {
+      align-items: center;
+    }
+    #results-container .person-photo {
+      position: relative;
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      overflow: hidden;
+      background-color: #191f29;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    }
+    #results-container .person-photo img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #results-container .person-initial {
+      font-size: 1.4rem;
+      color: #505a6b;
+    }
+    #results-container .person-item .details {
+      justify-content: center;
+    }
+    #results-container .result-group-label {
+      grid-column: 1 / -1;
+      padding: 0.4rem 0.25rem 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(234, 238, 245, 0.5);
+    }
+    #results-container .result-group-label:not(:first-child) {
+      margin-top: 0.6rem;
+    }
+    #results-container .no-results {
+      grid-column: 1 / -1;
+      opacity: 0.6;
+      padding: 1rem 0;
+    }
+    .search-page-heading {
+      padding-bottom: 0.5rem;
+      margin-bottom: -0.4rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    @media (max-width: 480px) {
+      #results-container.results-container {
+        grid-template-columns: 100%;
+        justify-content: stretch;
+      }
+      #results-container .result-item {
+        width: 100%;
+      }
+      #results-container .poster {
+        width: 64px;
+        height: 96px;
+      }
+      #results-container .person-photo {
+        width: 56px;
+        height: 56px;
+      }
+      #results-container .title {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-container">
+    <a href="/about/" class="floating-tvbox" aria-label="TV Box">
+      <svg class="tvbox-icon" aria-hidden="true" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0;">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+      </svg>
+    </a>
+    <a href="/home/" class="floating-home -beside-tvbox" aria-label="Home">
+      <svg class="home-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.1l8.5 7.6c.32.29.5.7.5 1.13V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8.17c0-.43.18-.84.5-1.13L12 3.1z"></path>
+      </svg>
+    </a>
+    <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+    </div>
+  </header>
+  <div class="page-content">
+    <h2 class="section-heading search-page-heading">Search results</h2>
+    <div id="search-status" class="search-status" hidden></div>
+    <div id="results-container" class="results-container"></div>
+  </div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© <a href="/about/"><strong>tvbox</strong></a> 2023 | Data from <a href="https://www.themoviedb.org/">TMDB</a>
+</p>
+</div>
+</footer>
+<script>
+(function () {
+var btn = document.querySelector('.footer-email-btn');
+if (!btn) return;
+function fallbackCopy(text) {
+var ta = document.createElement('textarea');
+ta.value = text;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+try { document.execCommand('copy'); } catch (e) {}
+document.body.removeChild(ta);
+}
+function showCopied() {
+btn.classList.remove('-copied');
+void btn.offsetWidth;
+btn.classList.add('-copied');
+clearTimeout(btn._copiedTimeout);
+btn._copiedTimeout = setTimeout(function () {
+btn.classList.remove('-copied');
+}, 1400);
+}
+btn.addEventListener('click', function () {
+var email = btn.getAttribute('data-email');
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(email).then(showCopied).catch(function () {
+fallbackCopy(email);
+showCopied();
+});
+} else {
+fallbackCopy(email);
+showCopied();
+}
+});
+})();
+</script>
+  <script>
+  (function () {
+    var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    var container = document.getElementById('results-container');
+    function blank(img) {
+      if (img.getAttribute('data-blanked')) return;
+      img.setAttribute('data-blanked', '1');
+      img.onerror = null;
+      img.removeAttribute('srcset');
+      img.alt = '';
+      img.removeAttribute('title');
+      img.src = BLANK_IMG;
+    }
+    function check(img) {
+      if (img.getAttribute('data-blanked')) return;
+      var src = img.getAttribute('src') || '';
+      if (!src || /placeholder|no[-_]?image|no[-_]?poster/i.test(src) || /\/null$|\/undefined$/i.test(src)) {
+        blank(img);
+        return;
+      }
+      if (img.complete && img.naturalWidth === 0) blank(img);
+    }
+    function scan(root) {
+      if (root.nodeType !== 1) return;
+      if (root.tagName === 'IMG') { check(root); return; }
+      var imgs = root.querySelectorAll('img');
+      for (var i = 0; i < imgs.length; i++) check(imgs[i]);
+    }
+    window.addEventListener('error', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'IMG' && container && container.contains(t)) {
+        e.stopImmediatePropagation();
+        blank(t);
+      }
+    }, true);
+    if (container && window.MutationObserver) {
+      new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var m = mutations[i];
+          if (m.type === 'attributes') { check(m.target); continue; }
+          for (var j = 0; j < m.addedNodes.length; j++) scan(m.addedNodes[j]);
+        }
+      }).observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+    }
+  })();
+  </script>
+  <script src="/js/search.js?v=4"></script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>
