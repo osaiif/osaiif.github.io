@@ -19,6 +19,10 @@
       background: #ffffff;
       color: #000000;
     }
+    .page-content {
+      width: 100%;
+      min-width: 0;
+    }
   </style>
 </head>
 <body>
@@ -338,7 +342,7 @@ showCopied();
         for (var i = 0; i < 6; i++) {
           var card = document.createElement('div');
           card.className = 'carousel-card -skeleton';
-          card.innerHTML = '<div class="carousel-poster"><img width="132" height="198"></div>';
+          card.innerHTML = '<div class="carousel-poster"></div>';
           track.appendChild(card);
         }
         wrap.appendChild(track);
