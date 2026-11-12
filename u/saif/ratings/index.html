@@ -14,35 +14,6 @@
   <link rel="preload" as="script" href="/js/shows.js?v=1">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
   <style>
-    .sort-pills {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      margin-bottom: 20px;
-    }
-    .sort-pill {
-      flex: 0 0 auto;
-      padding: 4px 12px;
-      border: 1px solid #223558;
-      border-radius: 999px;
-      background-color: rgba(255, 255, 255, 0.02);
-      color: #a6b2c9;
-      font-family: var(--font-numbers);
-      font-size: 13px;
-      letter-spacing: 0.03em;
-      cursor: pointer;
-      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-    }
-    .sort-pill:hover {
-      border-color: #344c79;
-    }
-    .sort-pill.-active {
-      background-color: #23314a;
-      border-color: #344c79;
-      color: #eaf0f6;
-    }
     .ratings-empty {
       color: rgba(234, 240, 246, 0.5);
       font-size: 13px;
@@ -117,7 +88,6 @@
   <div class="page-content">
     <section>
       <h2 class="section-heading no-divider">Saif's show ratings</h2>
-      <div class="sort-pills" id="sort-pills"></div>
       <div class="poster-grid" id="ratings-grid"></div>
     </section>
   </div>
@@ -209,16 +179,10 @@ showCopied();
         return '\u2605'.repeat(full) + (half ? '\u00BD' : '');
       }
       var RATED_SHOWS = SHOWS.filter(function (s) { return s.rating != null; });
-      var SORTS = {
-        highest: { label: 'Highest Rated', compare: function (a, b) { return b.rating - a.rating; } },
-        lowest:  { label: 'Lowest Rated',  compare: function (a, b) { return a.rating - b.rating; } }
-      };
-      var DEFAULT_SORT = 'highest';
-      var pillsMount = document.getElementById('sort-pills');
       var grid = document.getElementById('ratings-grid');
       var EAGER_ROW_SIZE = 4;
-      function renderGrid(sortKey) {
-        var shows = RATED_SHOWS.slice().sort(SORTS[sortKey].compare);
+      function renderGrid() {
+        var shows = RATED_SHOWS.slice().sort(function (a, b) { return b.rating - a.rating; });
         if (!shows.length) {
           grid.innerHTML = '<p class="ratings-empty">No rated shows yet.</p>';
           return;
@@ -236,25 +200,7 @@ showCopied();
           );
         }).join('');
       }
-      function setActiveSort(sortKey) {
-        var pills = pillsMount.querySelectorAll('.sort-pill');
-        pills.forEach(function (pill) {
-          pill.classList.toggle('-active', pill.dataset.sort === sortKey);
-        });
-        renderGrid(sortKey);
-      }
-      Object.keys(SORTS).forEach(function (sortKey) {
-        var pill = document.createElement('button');
-        pill.type = 'button';
-        pill.className = 'sort-pill';
-        pill.textContent = SORTS[sortKey].label;
-        pill.dataset.sort = sortKey;
-        pill.addEventListener('click', function () {
-          setActiveSort(sortKey);
-        });
-        pillsMount.appendChild(pill);
-      });
-      setActiveSort(DEFAULT_SORT);
+      renderGrid();
     })();
   </script>
 <script src="/js/auth.js?v=1"></script>
