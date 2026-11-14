@@ -20,7 +20,6 @@
   <link rel="preload" as="image" href="https://raw.githubusercontent.com/osaiif/r/main/r.webp">
   <link rel="preload" as="image" href="https://raw.githubusercontent.com/osaiif/r/main/b.webp">
   <link rel="preload" as="script" href="/js/shows.js?v=1">
-  <link rel="preload" as="script" href="/js/stats.js?v=1">
   <link rel="preload" as="script" href="/js/bio.js?v=3">
   <style>
     .ratings-chart { --chart-h: 48px; }
@@ -53,6 +52,12 @@
     }
     .profile-stats-embed {
       display: none;
+    }
+    body.profile-page .profile-stats-embed .stats-box {
+      width: 100%;
+      max-width: none;
+      height: 48px;
+      margin: 0;
     }
     @media (min-width: 900px) and (max-width: 1023px) {
       .page-content {
@@ -129,55 +134,6 @@
       .profile-ratings-journal .dash-card:first-child {
         margin-bottom: 24px;
       }
-      .profile-stats-embed .stats-hero-card {
-        padding: 18px 6px 16px;
-      }
-      .profile-stats-embed .stats-hero-card .value {
-        font-size: 1.5rem;
-      }
-      .profile-stats-embed .stats-hero-row {
-        gap: 8px;
-        margin-bottom: 20px;
-      }
-      .profile-stats-embed .stats-donut-panel {
-        flex-direction: row;
-        align-items: center;
-        gap: 14px;
-        padding: 16px;
-      }
-      .profile-stats-embed .stats-donut {
-        width: 108px;
-        height: 108px;
-      }
-      .profile-stats-embed .stats-legend {
-        width: auto;
-      }
-      .profile-stats-embed .stats-legend-item {
-        font-size: 11.5px;
-        gap: 6px;
-      }
-      .profile-stats-embed .stats-legend-name {
-        max-width: 110px;
-      }
-      .profile-stats-embed .stats-hero-card::before {
-        display: none;
-        background: none;
-      }
-      .profile-stats-embed .stats-hero-card::after {
-        display: none;
-      }
-      .profile-stats-embed .stats-hero-card .value {
-        background: none;
-        -webkit-background-clip: initial;
-        background-clip: initial;
-        -webkit-text-fill-color: initial;
-        color: #fff;
-      }
-      .profile-stats-embed .stats-hero-card:nth-child(1) .value,
-      .profile-stats-embed .stats-hero-card:nth-child(2) .value,
-      .profile-stats-embed .stats-hero-card:nth-child(3) .value {
-        color: #fff;
-      }
       .profile-favorites {
         margin-bottom: 12px !important;
       }
@@ -241,36 +197,6 @@
       }
       .profile-ratings-journal .dash-card:first-child {
         margin-bottom: 18px;
-      }
-      .profile-stats-embed .stats-hero-card {
-        padding: 12px 4px 10px;
-      }
-      .profile-stats-embed .stats-hero-card .value {
-        font-size: 1.25rem;
-      }
-      .profile-stats-embed .stats-hero-row {
-        gap: 6px;
-        margin-bottom: 14px;
-      }
-      .profile-stats-embed .stats-donut-panel {
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-        padding: 12px;
-      }
-      .profile-stats-embed .stats-donut {
-        width: 84px;
-        height: 84px;
-      }
-      .profile-stats-embed .stats-legend {
-        width: auto;
-      }
-      .profile-stats-embed .stats-legend-item {
-        font-size: 11px;
-        gap: 5px;
-      }
-      .profile-stats-embed .stats-legend-name {
-        max-width: 85px;
       }
       body::before {
         -webkit-mask-image: linear-gradient(to bottom,
@@ -380,23 +306,6 @@
       }
     }
     @media (min-aspect-ratio: 5/4) and (max-aspect-ratio: 4/3) and (min-width: 700px), (min-width: 900px) and (max-width: 1023px) {
-      .profile-stats-embed .stats-hero-card::before {
-        display: none;
-        background: none;
-      }
-      .profile-stats-embed .stats-hero-card::after {
-        display: none;
-      }
-      .profile-stats-embed .stats-hero-card .value,
-      .profile-stats-embed .stats-hero-card:nth-child(1) .value,
-      .profile-stats-embed .stats-hero-card:nth-child(2) .value,
-      .profile-stats-embed .stats-hero-card:nth-child(3) .value {
-        background: none;
-        -webkit-background-clip: initial;
-        background-clip: initial;
-        -webkit-text-fill-color: initial;
-        color: #fff;
-      }
     }
     body.profile-page::before {
       display: none !important;
@@ -532,28 +441,10 @@
     </div>
   </section>
   <section class="profile-stats-embed" id="section-embed-stats">
-    <h2 class="section-heading"><a href="/u/saif/stats/" class="section-heading-link" id="embed-stats-heading">Stats</a></h2>
-    <div id="embed-stats-status" class="stats-status"></div>
-    <div id="embed-stats-content" hidden>
-      <div class="stats-hero-row">
-        <div class="stats-hero-card">
-          <span class="value numbers" id="embed-stat-hours">–</span>
-          <span class="definition">Hours</span>
-        </div>
-        <div class="stats-hero-card">
-          <span class="value numbers" id="embed-stat-episodes">–</span>
-          <span class="definition">Episodes</span>
-        </div>
-        <div class="stats-hero-card">
-          <span class="value numbers" id="embed-stat-seasons">–</span>
-          <span class="definition">Seasons</span>
-        </div>
-      </div>
-      <div class="stats-donut-panel">
-        <div id="embed-platform-donut-mount"></div>
-        <ul class="stats-legend" id="embed-platform-legend"></ul>
-      </div>
-    </div>
+    <a href="/u/saif/stats/" class="stats-box">
+      <span class="year numbers" id="stats-box-year-side">–</span>
+      <span class="label">STATS</span>
+    </a>
   </section>
   <section class="profile-ratings-journal">
     <div class="dashboard-row">
@@ -665,15 +556,14 @@ showCopied();
     </div>
   </div>
   <script src="/js/shows.js?v=1"></script>
-  <script src="/js/stats.js?v=1"></script>
   <script src="/js/bio.js?v=3"></script>
   <script>
     (function () {
       var y = new Date().getFullYear();
       var boxYear = document.getElementById('stats-box-year');
-      var heading = document.getElementById('embed-stats-heading');
+      var boxYearSide = document.getElementById('stats-box-year-side');
       if (boxYear) boxYear.textContent = y;
-      if (heading) heading.textContent = y + ' Stats';
+      if (boxYearSide) boxYearSide.textContent = y;
     })();
   </script>
   <script>
@@ -814,95 +704,6 @@ showCopied();
         var pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
         bar.style.height = pct + '%';
         bar.title = r + '★ · ' + count;
-      });
-    })();
-  </script>
-  <script>
-    (function () {
-      if (!window.matchMedia('(min-width: 1024px), (min-aspect-ratio: 5/4) and (max-aspect-ratio: 4/3) and (min-width: 700px), (min-width: 900px) and (max-width: 1023px)').matches) return;
-      if (!window.STATS_YEARS || !window.TVStats) return;
-      var SPINNER_HTML =
-        '<div class="spinner -inline"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
-      var PALETTE = ['#ffffff', '#c9ced6', '#9aa2af', '#6f7785', '#4f5663', '#3f4652', '#343a45', '#2b303a', '#242933'];
-      var OTHER_COLOR = '#3a4351';
-      function colorFor(item, i) {
-        return item.name === 'Other' ? OTHER_COLOR : PALETTE[i % PALETTE.length];
-      }
-      function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str || '';
-        return div.innerHTML;
-      }
-      function fmtPct(v) {
-        return (Math.round(v * 10) / 10).toString();
-      }
-      function buildDonut(list, centerValue, centerLabel) {
-        var size = 168, cx = 84, cy = 84, r = 64, sw = 22;
-        var circumference = 2 * Math.PI * r;
-        var total = list.reduce(function (s, i) { return s + i.value; }, 0) || 1;
-        var offset = 0;
-        var segments = list.map(function (item, i) {
-          var frac = item.value / total;
-          var len = Math.max(frac * circumference, list.length > 1 ? 1.5 : circumference);
-          var gap = list.length > 1 ? 2 : 0;
-          var dasharray = Math.max(len - gap, 0) + ' ' + (circumference - len + gap);
-          var dashoffset = -offset;
-          offset += len;
-          return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" ' +
-            'stroke="' + colorFor(item, i) + '" stroke-width="' + sw + '" ' +
-            'stroke-dasharray="' + dasharray + '" stroke-dashoffset="' + dashoffset + '" ' +
-            'stroke-linecap="round" transform="rotate(-90 ' + cx + ' ' + cy + ')" />';
-        }).join('');
-        return (
-          '<svg viewBox="0 0 ' + size + ' ' + size + '" class="stats-donut" role="img" aria-label="Platform distribution">' +
-            '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="' + sw + '"/>' +
-            segments +
-            '<text x="' + cx + '" y="' + (cy - 3) + '" text-anchor="middle" class="stats-donut-center-value numbers">' + escapeHtml(centerValue) + '</text>' +
-            '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" class="stats-donut-center-label">' + escapeHtml(centerLabel) + '</text>' +
-          '</svg>'
-        );
-      }
-      var statusEl = document.getElementById('embed-stats-status');
-      var content = document.getElementById('embed-stats-content');
-      var heroHours = document.getElementById('embed-stat-hours');
-      var heroEpisodes = document.getElementById('embed-stat-episodes');
-      var heroSeasons = document.getElementById('embed-stat-seasons');
-      var platformMount = document.getElementById('embed-platform-donut-mount');
-      var platformLegend = document.getElementById('embed-platform-legend');
-      if (!statusEl || !content) return;
-      statusEl.hidden = false;
-      statusEl.innerHTML = SPINNER_HTML;
-      var showList = STATS_YEARS[new Date().getFullYear()] || [];
-      var ids = showList.map(function (s) { return s.imdb; });
-      TVStats.fetchAll(ids).then(function (records) {
-        var summary = TVStats.aggregate(showList, records);
-        statusEl.hidden = true;
-        statusEl.innerHTML = '';
-        if (!summary.showCount) {
-          statusEl.hidden = false;
-          statusEl.innerHTML = '<p class="stats-empty">No shows logged yet.</p>';
-          return;
-        }
-        content.hidden = false;
-        heroHours.textContent = fmtPct(summary.hours);
-        heroEpisodes.textContent = Math.round(summary.episodes);
-        heroSeasons.textContent = Math.round(summary.seasons);
-        var platformList = TVStats.toRanked(summary.platforms, 5);
-        platformMount.innerHTML = buildDonut(platformList, fmtPct(summary.hours), 'HOURS');
-        platformLegend.innerHTML = platformList.map(function (item, i) {
-          var pct = summary.hours ? fmtPct((item.value / summary.hours) * 100) : '0';
-          return (
-            '<li class="stats-legend-item">' +
-              '<span class="stats-legend-dot" style="background:' + colorFor(item, i) + '"></span>' +
-              '<span class="stats-legend-name">' + escapeHtml(item.name) + '</span>' +
-              '<span class="stats-legend-value"><span class="numbers">' + pct + '%</span></span>' +
-            '</li>'
-          );
-        }).join('');
-      }).catch(function () {
-        statusEl.hidden = false;
-        statusEl.classList.add('-error');
-        statusEl.textContent = 'Something went wrong pulling stats.';
       });
     })();
   </script>
