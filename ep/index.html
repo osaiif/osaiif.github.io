@@ -381,6 +381,11 @@
       function slugOf(label) {
         return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'tab';
       }
+      var GENERIC_ROLE = /^(self|himself|herself|themselves|themself|narrator|presenter|host|guest|various|archive footage)\b/i;
+      function cleanRole(role) {
+        var r = String(role || '').trim();
+        return GENERIC_ROLE.test(r) ? '' : r;
+      }
       function isVoice(c) {
         return /\(voice\)/i.test(c.character || '');
       }
@@ -413,10 +418,10 @@
         var crew = credits.crew || ep.crew || [];
         groups = [];
         addGroup('Cast', mergePeople(cast.filter(function (c) { return !isVoice(c); }),
-          function (c) { return c.character; }));
+          function (c) { return cleanRole(c.character); }));
         addGroup('Voice', mergePeople(cast.filter(isVoice),
-          function (c) { return (c.character || '').replace(/\s*\(voice\)/ig, ''); }));
-        addGroup('Guest Stars', mergePeople(guests, function (c) { return c.character; }));
+          function (c) { return cleanRole((c.character || '').replace(/\s*\(voice\)/ig, '')); }));
+        addGroup('Guest Stars', mergePeople(guests, function (c) { return cleanRole(c.character); }));
         var depts = {};
         crew.forEach(function (c) {
           var d = c.department || 'Crew';
