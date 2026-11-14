@@ -6,7 +6,7 @@
   <title>tvbox - not found</title>
   <script>
   (function () {
-    var m = location.pathname.match(/^\/(p|g|y)\/([^\/]+)\/?$/);
+    var m = location.pathname.match(/^\/(p|g|y|m)\/([^\/]+)\/?$/);
     if (!m) return;
     var key = m[1] === 'y' ? 'y' : 's';
     var extra = location.search ? '&' + location.search.slice(1) : '';
