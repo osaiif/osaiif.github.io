@@ -7,82 +7,74 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Genres | tvbox</title>
-  <link rel="stylesheet" href="/css/styles.css?v=4">
+  <link rel="stylesheet" href="/css/styles.css?v=8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org">
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preload" as="script" href="/js/g.js?v=1">
+  <link rel="preload" as="script" href="/js/g.js?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400..700&display=swap" rel="stylesheet">
   <style>
     .site-header { position: relative; height: 52px; background-color: #0b121e; }
     @media (min-width: 1024px) { .site-header { height: 76px; } }
     .page-content { padding-top: 0px; width: 100%; min-width: 0; }
     .cg-page { margin-top: 6px; }
-    .cg-top { margin-bottom: 18px; }
-    .cg-top-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .cg-title { margin: 0; font-size: 1.5rem; line-height: 1.15; color: #fff; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; min-width: 0; }
-    .cg-title-name { color: #fff; font-weight: 500; }
+    .cg-top { margin-bottom: 4px; }
+    .cg-title { margin: 0; font-size: 1.5rem; line-height: 1.2; color: #fff; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; min-width: 0; }
+    .cg-pick { position: relative; display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%; cursor: pointer; }
+    .cg-pick-text { color: #fff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cg-pick-chevron { flex: none; align-self: center; width: 14px; height: 14px; fill: none; stroke: #8490a4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s ease; }
+    .cg-pick-select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; appearance: none; -webkit-appearance: none; background: transparent; }
+    .cg-pick-select option { background-color: #0b121e; color: #eaeef5; }
+    .cg-pick:hover .cg-pick-chevron, .cg-pick:focus-within .cg-pick-chevron { stroke: #fff; }
     .cg-title-label { color: #eaeef5; }
     .cg-meta { margin: 8px 0 0; font-size: 12.5px; color: #8490a4; min-height: 1.4em; }
     .cg-meta .numbers { color: #b3c2db; }
-    .cg-yearnav { display: flex; gap: 8px; flex: none; }
-    .cg-arrow { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid #1f2b3b; border-radius: 999px; background-color: rgba(255,255,255,0.02); color: #9cb2c2; text-decoration: none; font-size: 18px; line-height: 1; transition: border-color 0.15s ease, color 0.15s ease; }
-    .cg-arrow:hover { border-color: #30485a; color: #e6eef7; }
-    .cg-arrow.-disabled { opacity: 0.35; pointer-events: none; }
-    .cg-pills { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
-    .cg-pills::-webkit-scrollbar { display: none; }
-    .cg-pills[hidden] { display: none; }
-    .cg-pill { flex: 0 0 auto; padding: 4px 12px; border: 1px solid #1f2b3b; border-radius: 999px; background-color: rgba(255,255,255,0.02); color: #9cb2c2; font-family: var(--font-text, inherit); font-size: 13px; letter-spacing: 0.03em; line-height: 1.4; text-decoration: none; cursor: pointer; transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease; }
-    .cg-pill.numbers { font-family: var(--font-numbers); }
-    .cg-pill:hover { border-color: #30485a; }
-    .cg-pill.-active { background-color: #1d222a; border-color: #30485a; color: #e6eef7; }
-    .cg-block { margin-top: 20px; }
-    .cg-block .section-heading { padding-bottom: 6px; margin-bottom: 12px; }
-    .cg-block .cg-pills { margin-top: 10px; }
-    .cg-decades { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-    .cg-decade { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-width: 0; padding: 10px 10px; border: 1px solid #1e2a3e; border-radius: 12px; background-color: #0b121e; color: #9cb2c2; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.15s ease, background-color 0.15s ease; }
-    .cg-decade:hover { border-color: #30485a; }
-    .cg-decade.-active { background-color: #1d222a; border-color: #30485a; }
-    .cg-decade-label { font-size: 0.98rem; font-weight: 600; color: #eaeef5; line-height: 1.2; }
-    .cg-decade-range { display: none; font-size: 10.5px; color: #8490a4; letter-spacing: 0.02em; white-space: nowrap; }
-    .cg-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 10px; align-items: end; }
-    .cg-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-    .cg-field-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #8490a4; }
-    .cg-select { width: 100%; height: 38px; padding: 0 32px 0 12px; border: 1px solid #1e2a3e; border-radius: 10px; background-color: #0b121e; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238490a4' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; color: #eaeef5; font: inherit; font-size: 13px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; cursor: pointer; transition: border-color 0.15s ease; }
+    .cg-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; align-items: center; }
+    .cg-bar[hidden], .cg-extra[hidden] { display: none; }
+    .cg-extra { margin-top: 8px; }
+    .cg-select { width: 100%; min-width: 0; height: 34px; padding: 0 28px 0 11px; border: 1px solid #1a2436; border-radius: 8px; background-color: transparent; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238490a4' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; background-size: 13px; color: #8490a4; font: inherit; font-size: 12.5px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
+    .cg-select[hidden] { display: none; }
+    .cg-select.-set { color: #fff; border-color: #30485a; }
     .cg-select:hover { border-color: #30485a; }
     .cg-select:focus-visible { outline: none; border-color: #4a6a85; }
     .cg-select option, .cg-select optgroup { background-color: #0b121e; color: #eaeef5; }
-    .cg-reset { height: 38px; padding: 0 16px; border: 1px solid #1f2b3b; border-radius: 999px; background-color: rgba(255,255,255,0.02); color: #9cb2c2; font: inherit; font-size: 13px; cursor: pointer; justify-self: start; transition: border-color 0.15s ease, color 0.15s ease; }
-    .cg-reset:hover { border-color: #30485a; color: #e6eef7; }
-    .cg-reset[hidden] { display: none; }
+    .cg-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; min-height: 22px; }
+    .cg-link { padding: 0; border: 0; background: none; color: #8490a4; font: inherit; font-size: 12.5px; cursor: pointer; transition: color 0.15s ease; }
+    .cg-link:hover { color: #fff; }
+    .cg-link[hidden] { display: none; }
     .cg-status { display: flex; align-items: center; justify-content: center; gap: 10px; color: #8490a4; font-size: 13px; padding: 48px 0; }
     .cg-status.-error { color: #fff; }
     .cg-status[hidden] { display: none; }
-    .cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 16px 10px; margin-top: 18px; }
+    .cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 16px 10px; margin-top: 20px; }
     .cg-card { display: flex; flex-direction: column; min-width: 0; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
-    .cg-poster { position: relative; display: block; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; background-color: #191f29; box-shadow: 0 2px 8px rgba(0,0,0,0.28); }
+    .cg-poster { position: relative; display: block; aspect-ratio: 2 / 3; border-radius: 6px; overflow: hidden; background-color: #191f29; }
     .cg-poster img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
     .cg-initials { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #505a6b; }
-    .cg-card-title { margin-top: 8px; font-size: 12.5px; font-weight: 600; line-height: 1.3; color: #eaeef5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color 0.15s ease; }
-    .cg-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 11.5px; color: #8490a4; }
-    .cg-rating { color: #F5C518; font-weight: 600; }
-    .cg-more { display: block; margin: 26px auto 8px; padding: 9px 22px; border: 1px solid #1f2b3b; border-radius: 999px; background-color: rgba(255,255,255,0.02); color: #9cb2c2; font: inherit; font-size: 13px; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
-    .cg-more:hover { border-color: #30485a; color: #e6eef7; }
-    .cg-more:disabled { opacity: 0.5; cursor: default; }
-    .cg-more[hidden] { display: none; }
+    .cg-card-title { margin-top: 8px; font-size: 12.5px; font-weight: 600; line-height: 1.3; color: #dde2eb; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color 0.15s ease; }
+    .cg-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 11px; color: #8490a4; }
+    .cg-rating { display: inline-flex; align-items: center; gap: 4px; color: #8490a4; }
+    .cg-rating svg { width: 10px; height: 10px; fill: #fff; flex: none; }
+    .cg-sentinel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 64px; margin-top: 8px; color: #8490a4; font-size: 12.5px; text-align: center; }
+    .cg-sentinel[hidden], #cg-loader[hidden], #cg-note[hidden] { display: none; }
+    #cg-loader { display: flex; justify-content: center; }
     @media (hover: hover) and (pointer: fine) {
-      .cg-card:hover .cg-card-title { color: #29a6ff; }
+      .cg-card:hover .cg-card-title { color: #fff; }
     }
-    @media (min-width: 560px) {
-      .cg-decade-range { display: block; }
-      .cg-decade { padding: 10px 12px; }
+    @media (min-width: 600px) {
+      .cg-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+      .cg-bar .cg-select { width: auto; flex: 0 1 148px; }
+      .cg-extra { display: flex; flex-wrap: wrap; gap: 8px; }
+      .cg-extra .cg-select { width: auto; flex: 0 1 148px; }
+      .cg-actions { grid-column: auto; margin-left: 4px; }
+      .cg-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 20px 12px; }
     }
     @media (min-width: 700px) {
-      #cg-genres { flex-wrap: wrap; overflow-x: visible; }
       .cg-title { font-size: 1.7rem; }
-      .cg-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 22px 14px; }
       .cg-card-title { font-size: 13px; }
+    }
+    @media (min-width: 1024px) {
+      .cg-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 22px 14px; }
     }
   </style>
 </head>
@@ -133,33 +125,31 @@
   <div class="page-content">
     <div class="cg-page">
       <div class="cg-top">
-        <div class="cg-top-head">
-          <h1 class="cg-title"><span class="cg-title-name" id="cg-title-name"></span><span class="cg-title-label">TV Shows</span></h1>
-        </div>
+        <h1 class="cg-title"><span class="cg-pick"><span class="cg-pick-text" id="cg-title-name"></span><svg class="cg-pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="cg-pick-select" id="f-genre" aria-label="Genre"></select></span><span class="cg-title-label">TV Shows</span></h1>
         <p class="cg-meta" id="cg-meta"></p>
       </div>
-      <nav class="cg-pills" id="cg-genres" aria-label="Genres"></nav>
-      <div id="cg-browse">
-        <section class="cg-block">
-          <h2 class="section-heading">Decade</h2>
-          <div class="cg-decades" id="cg-decades"></div>
-          <div class="cg-pills" id="cg-years" hidden></div>
-        </section>
-        <section class="cg-block">
-          <h2 class="section-heading">Filters</h2>
-    <div class="cg-filters">
-      <label class="cg-field"><span class="cg-field-label">Sort by</span><select class="cg-select" id="f-sort"></select></label>
-      <label class="cg-field"><span class="cg-field-label">Country</span><select class="cg-select" id="f-country"></select></label>
-      <label class="cg-field"><span class="cg-field-label">Language</span><select class="cg-select" id="f-lang"></select></label>
-      <label class="cg-field"><span class="cg-field-label">Status</span><select class="cg-select" id="f-status"></select></label>
-      <label class="cg-field"><span class="cg-field-label">Type</span><select class="cg-select" id="f-type"></select></label>
-      <label class="cg-field"><span class="cg-field-label">Rating</span><select class="cg-select" id="f-rating"></select></label>
-      <button type="button" class="cg-reset" id="cg-reset" hidden>Reset filters</button>
-    </div>
-        </section>
-    <div id="cg-status" class="cg-status" hidden></div>
-    <div id="cg-grid" class="cg-grid"></div>
-    <button type="button" class="cg-more" id="cg-more" hidden>Load more</button>
+      <div class="cg-bar" id="cg-bar">
+        <select class="cg-select" id="f-decade" aria-label="Decade"></select>
+        <select class="cg-select" id="f-year" aria-label="Year"></select>
+        <select class="cg-select" id="f-sort" aria-label="Sort by"></select>
+        <select class="cg-select" id="f-country" aria-label="Country"></select>
+        <select class="cg-select" id="f-lang" aria-label="Language"></select>
+        <div class="cg-actions">
+          <button type="button" class="cg-link" id="cg-more-toggle" aria-expanded="false">More filters</button>
+          <button type="button" class="cg-link" id="cg-reset" hidden>Reset</button>
+        </div>
+      </div>
+      <div class="cg-extra" id="cg-extra" hidden>
+        <select class="cg-select" id="f-status" aria-label="Status"></select>
+        <select class="cg-select" id="f-type" aria-label="Type"></select>
+        <select class="cg-select" id="f-rating" aria-label="Rating"></select>
+      </div>
+      <div id="cg-status" class="cg-status" hidden></div>
+      <div id="cg-grid" class="cg-grid"></div>
+      <div id="cg-sentinel" class="cg-sentinel">
+        <div id="cg-loader" hidden><div class="spinner -inline"><div></div><div></div><div></div><div></div><div></div><div></div></div></div>
+        <button type="button" class="cg-link" id="cg-retry" hidden>Couldn't load more. Try again</button>
+        <span id="cg-note" hidden>That's the first 10,000 results. Narrow the filters to see more.</span>
       </div>
     </div>
   </div>
@@ -170,7 +160,7 @@
 </p>
 </div>
 </footer>
-  <script src="/js/g.js?v=1"></script>
+  <script src="/js/g.js?v=2"></script>
 <script src="/js/auth.js?v=1"></script>
 </body>
 </html>
