@@ -213,6 +213,10 @@
       return '<option value="' + escapeHtml(pair[0]) + '"' + (pair[0] === selected ? ' selected' : '') + '>' + escapeHtml(pair[1]) + '</option>';
     }).join('');
   }
+  var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
+  function markSet(select) {
+    select.classList.toggle('-set', select.value !== '' && select.value !== 'all');
+  }
   function cardHtml(show) {
     var year = show.first_air_date ? show.first_air_date.slice(0, 4) : '';
     var rating = show.vote_count > 0 && show.vote_average > 0 ? show.vote_average.toFixed(1) : '';
@@ -224,7 +228,7 @@
       '<span class="cg-card-title">' + escapeHtml(show.name) + '</span>' +
       '<span class="cg-card-meta">' +
         (year ? '<span class="numbers">' + year + '</span>' : '') +
-        (rating ? '<span class="cg-rating numbers">★ ' + rating + '</span>' : '') +
+        (rating ? '<span class="cg-rating numbers">' + STAR_SVG + rating + '</span>' : '') +
       '</span>' +
     '</a>';
   }
@@ -242,11 +246,9 @@
   var SPINNER_HTML = '<div class="spinner -inline"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
   var DEFAULT_SORT = 'popularity.desc';
   var CURRENT_DECADE = Math.floor(NOW_YEAR / 10) * 10;
-  var DECADES = [{ key: 'all', label: 'All', range: 'Any year' }];
-  for (var d = CURRENT_DECADE; d >= 1950; d -= 10) {
-    DECADES.push({ key: String(d), label: d + 's', range: d + '–' + Math.min(d + 9, NOW_YEAR) });
-  }
-  DECADES.push({ key: 'early', label: '≤1949', range: 'Before 1950' });
+  var DECADES = [{ key: 'all', label: 'All decades' }];
+  for (var d = CURRENT_DECADE; d >= 1950; d -= 10) DECADES.push({ key: String(d), label: d + 's' });
+  DECADES.push({ key: 'early', label: 'Before 1950' });
   function decadeLabel(key) {
     for (var i = 0; i < DECADES.length; i++) if (DECADES[i].key === key) return DECADES[i].label;
     return '';
@@ -255,10 +257,10 @@
     var years = [];
     var i;
     if (key === 'early') {
-      for (i = 1930; i <= 1949; i++) years.push(i);
+      for (i = 1949; i >= 1930; i--) years.push(i);
     } else if (key !== 'all') {
       var start = parseInt(key, 10);
-      for (i = start; i <= Math.min(start + 9, NOW_YEAR); i++) years.push(i);
+      for (i = Math.min(start + 9, NOW_YEAR); i >= start; i--) years.push(i);
     }
     return years;
   }
@@ -267,28 +269,33 @@
   }
   var el = {
     titleName: document.getElementById('cg-title-name'),
+    genreSelect: document.getElementById('f-genre'),
     meta: document.getElementById('cg-meta'),
-    genres: document.getElementById('cg-genres'),
-    browse: document.getElementById('cg-browse'),
-    decades: document.getElementById('cg-decades'),
-    years: document.getElementById('cg-years'),
+    bar: document.getElementById('cg-bar'),
+    extra: document.getElementById('cg-extra'),
+    decade: document.getElementById('f-decade'),
+    year: document.getElementById('f-year'),
     sort: document.getElementById('f-sort'),
     country: document.getElementById('f-country'),
     lang: document.getElementById('f-lang'),
     status: document.getElementById('f-status'),
     type: document.getElementById('f-type'),
     rating: document.getElementById('f-rating'),
+    moreToggle: document.getElementById('cg-more-toggle'),
     reset: document.getElementById('cg-reset'),
     statusBox: document.getElementById('cg-status'),
     grid: document.getElementById('cg-grid'),
-    more: document.getElementById('cg-more')
+    sentinel: document.getElementById('cg-sentinel'),
+    loader: document.getElementById('cg-loader'),
+    retry: document.getElementById('cg-retry'),
+    note: document.getElementById('cg-note')
   };
+  GENRES.forEach(function (g) { g.slug = slugify(g.name); });
   var params = new URLSearchParams(window.location.search);
   var rawSlug = slugify(params.get('s') || '');
   var rawId = (params.get('id') || '').replace(/\D/g, '');
   var genre = null;
   GENRES.forEach(function (g) {
-    g.slug = slugify(g.name);
     if (!genre && ((rawSlug && g.slug === rawSlug) || (rawId && String(g.id) === rawId))) genre = g;
   });
   var state = {
@@ -304,14 +311,12 @@
   (function readState() {
     var yearParam = parseInt(params.get('year') || '', 10);
     var decadeParam = params.get('decade') || '';
-    if (!isNaN(yearParam) && yearParam >= 1930 && yearParam <= NOW_YEAR) {
-      decadeParam = decadeOfYear(yearParam);
-    }
+    var yearOk = !isNaN(yearParam) && yearParam >= 1930 && yearParam <= NOW_YEAR;
+    if (yearOk) decadeParam = decadeOfYear(yearParam);
     for (var i = 0; i < DECADES.length; i++) {
       if (DECADES[i].key === decadeParam) state.decade = decadeParam;
     }
-    if (!isNaN(yearParam) && yearParam >= 1930 && yearParam <= NOW_YEAR && state.decade !== 'all' &&
-        yearsForDecade(state.decade).indexOf(yearParam) !== -1) {
+    if (yearOk && state.decade !== 'all' && yearsForDecade(state.decade).indexOf(yearParam) !== -1) {
       state.year = String(yearParam);
     }
     var country = (params.get('country') || '').toUpperCase();
@@ -329,6 +334,10 @@
   var activeController = null;
   var page = 0;
   var totalPages = 0;
+  var capped = false;
+  var loading = false;
+  var exhausted = false;
+  var failed = false;
   var seen = {};
   function setStatus(content, isError) {
     if (!content) {
@@ -357,40 +366,33 @@
     } catch (e) {}
   }
   function filtersActive() {
-    return !!(state.country || state.lang || state.status || state.type || state.rating || state.sort !== DEFAULT_SORT);
+    return !!(state.decade !== 'all' || state.year || state.country || state.lang || state.status || state.type || state.rating || state.sort !== DEFAULT_SORT);
   }
-  function renderGenres() {
-    el.genres.innerHTML = GENRES.map(function (g) {
-      var active = genre && g.id === genre.id;
-      return '<a class="cg-pill' + (active ? ' -active' : '') + '" href="/g/?s=' + g.slug + '"' + (active ? ' aria-current="page"' : '') + '>' + escapeHtml(g.name) + '</a>';
+  function extraActive() {
+    return !!(state.status || state.type || state.rating);
+  }
+  function renderGenreSelect() {
+    var html = genre ? '' : '<option value="" selected disabled>Choose a genre</option>';
+    html += GENRES.map(function (g) {
+      return '<option value="' + g.slug + '"' + (genre && g.id === genre.id ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
+    el.genreSelect.innerHTML = html;
   }
-  function renderDecades() {
-    el.decades.innerHTML = DECADES.map(function (dec) {
-      var active = state.decade === dec.key;
-      return '<button type="button" class="cg-decade' + (active ? ' -active' : '') + '" data-decade="' + dec.key + '" aria-pressed="' + active + '">' +
-        '<span class="cg-decade-label' + (dec.key === 'all' ? '' : ' numbers') + '">' + escapeHtml(dec.label) + '</span>' +
-        '<span class="cg-decade-range">' + escapeHtml(dec.range) + '</span>' +
-      '</button>';
+  function renderDecadeSelect() {
+    el.decade.innerHTML = DECADES.map(function (dec) {
+      return '<option value="' + dec.key + '">' + escapeHtml(dec.label) + '</option>';
     }).join('');
+    el.decade.value = state.decade;
+    markSet(el.decade);
   }
-  function renderYears() {
+  function renderYearSelect() {
     var years = yearsForDecade(state.decade);
-    el.years.hidden = !years.length;
-    if (!years.length) {
-      el.years.innerHTML = '';
-      return;
-    }
-    var html = '<button type="button" class="cg-pill' + (state.year ? '' : ' -active') + '" data-year="">All ' + escapeHtml(decadeLabel(state.decade)) + '</button>';
-    html += years.map(function (y) {
-      return '<button type="button" class="cg-pill numbers' + (String(y) === state.year ? ' -active' : '') + '" data-year="' + y + '">' + y + '</button>';
+    el.year.hidden = !years.length;
+    el.year.innerHTML = '<option value="">All years</option>' + years.map(function (y) {
+      return '<option value="' + y + '">' + y + '</option>';
     }).join('');
-    el.years.innerHTML = html;
-    var active = el.years.querySelector('.-active');
-    if (active && state.year) {
-      var offset = active.getBoundingClientRect().left - el.years.getBoundingClientRect().left + el.years.scrollLeft;
-      el.years.scrollLeft = Math.max(0, offset - (el.years.clientWidth - active.offsetWidth) / 2);
-    }
+    el.year.value = state.year;
+    markSet(el.year);
   }
   function renderFilters() {
     el.sort.innerHTML = SORTS.map(function (pair) {
@@ -404,7 +406,19 @@
     el.rating.innerHTML = simpleOptionsHtml('Any rating', RATINGS, state.rating);
     el.country.value = state.country;
     el.lang.value = state.lang;
+    markSet(el.country);
+    markSet(el.lang);
+    markSet(el.status);
+    markSet(el.type);
+    markSet(el.rating);
+    el.sort.classList.toggle('-set', state.sort !== DEFAULT_SORT);
+    renderDecadeSelect();
+    renderYearSelect();
     el.reset.hidden = !filtersActive();
+    var open = extraActive();
+    el.extra.hidden = !open;
+    el.moreToggle.setAttribute('aria-expanded', String(open));
+    el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
   }
   function renderTitle() {
     if (!genre) return;
@@ -450,22 +464,30 @@
   }
   function renderMeta(data) {
     var total = data.total_results || 0;
-    var text = '<span class="numbers">' + formatCount(total) + '</span> ' + (total === 1 ? 'show' : 'shows');
-    if ((data.total_pages || 0) > MAX_PAGES) text += ' · browsing the first ' + formatCount(MAX_PAGES * 20);
-    el.meta.innerHTML = text;
+    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (total === 1 ? 'show' : 'shows');
+  }
+  function updateFooter() {
+    el.loader.hidden = !loading || page === 0;
+    el.retry.hidden = !failed || page === 0;
+    el.note.hidden = !(exhausted && capped);
   }
   function fetchPage() {
+    if (loading || exhausted || !genre) return;
     var rid = requestId;
     var next = page + 1;
     var controller = new AbortController();
     activeController = controller;
-    el.more.disabled = true;
-    el.more.textContent = 'Load more';
+    loading = true;
+    failed = false;
+    updateFooter();
     tmdbFetch('/discover/tv', buildQuery(next), controller.signal)
       .then(function (data) {
         if (rid !== requestId) return;
+        loading = false;
         page = next;
         totalPages = Math.min(data.total_pages || 0, MAX_PAGES);
+        capped = (data.total_pages || 0) > MAX_PAGES;
+        exhausted = page >= totalPages;
         var results = (data.results || []).filter(function (s) {
           if (!s || !s.name || seen[s.id]) return false;
           seen[s.id] = true;
@@ -476,83 +498,112 @@
           renderMeta(data);
           if (!results.length) {
             setStatus('No shows match these filters.');
-            el.more.hidden = true;
+            updateFooter();
             return;
           }
         }
         el.grid.insertAdjacentHTML('beforeend', results.map(cardHtml).join(''));
-        el.more.disabled = false;
-        el.more.hidden = page >= totalPages;
+        updateFooter();
+        window.requestAnimationFrame(maybeLoad);
       })
       .catch(function (err) {
         if (err.name === 'AbortError' || rid !== requestId) return;
-        el.more.disabled = false;
+        loading = false;
+        failed = true;
         if (page === 0) {
-          setStatus('Something went wrong: ' + escapeHtml(err.message), true);
-          el.more.hidden = true;
-        } else {
-          el.more.textContent = 'Try again';
-          el.more.hidden = false;
+          setStatus('Something went wrong: ' + escapeHtml(err.message) + ' <button type="button" class="cg-link" id="cg-retry-first">Try again</button>', true);
         }
+        updateFooter();
       });
+  }
+  function maybeLoad() {
+    if (loading || exhausted || failed || !genre || page === 0) return;
+    var rect = el.sentinel.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 900) fetchPage();
   }
   function startFresh() {
     requestId++;
     if (activeController) activeController.abort();
     page = 0;
     totalPages = 0;
+    capped = false;
+    loading = false;
+    exhausted = false;
+    failed = false;
     seen = {};
     el.grid.innerHTML = '';
-    el.more.hidden = true;
     el.meta.textContent = '';
+    updateFooter();
     setStatus(SPINNER_HTML);
     fetchPage();
   }
   function refresh() {
-    renderDecades();
-    renderYears();
+    renderDecadeSelect();
+    renderYearSelect();
     el.reset.hidden = !filtersActive();
     renderTitle();
     syncUrl();
     startFresh();
   }
-  renderGenres();
-  if (!genre) {
-    el.titleName.textContent = 'Genres';
-    el.meta.textContent = rawSlug || rawId ? 'That genre does not exist. Pick one below.' : 'Pick a genre to browse its shows.';
-    el.browse.hidden = true;
-    document.title = 'Genres | tvbox';
-    return;
+  function showBrowse(show) {
+    el.bar.hidden = !show;
+    if (!show) el.extra.hidden = true;
+    el.moreToggle.hidden = !show;
+    el.sentinel.hidden = !show;
   }
-  renderDecades();
-  renderYears();
-  renderFilters();
-  renderTitle();
-  syncUrl();
-  el.decades.addEventListener('click', function (e) {
-    var btn = e.target.closest('.cg-decade');
-    if (!btn) return;
-    var key = btn.getAttribute('data-decade');
-    if (key === state.decade && !state.year) return;
-    state.decade = key;
+  renderGenreSelect();
+  if (!genre) {
+    el.titleName.textContent = 'Choose a genre';
+    el.meta.textContent = rawSlug || rawId ? 'That genre does not exist. Pick one from the list.' : 'Pick a genre to browse its shows.';
+    document.title = 'Genres | tvbox';
+    showBrowse(false);
+  } else {
+    renderFilters();
+    renderTitle();
+    syncUrl();
+    showBrowse(true);
+  }
+  el.genreSelect.addEventListener('change', function () {
+    var slug = el.genreSelect.value;
+    var picked = null;
+    GENRES.forEach(function (g) { if (g.slug === slug) picked = g; });
+    if (!picked) return;
+    var first = !genre;
+    genre = picked;
+    if (first) {
+      renderGenreSelect();
+      renderFilters();
+      showBrowse(true);
+    }
+    refresh();
+  });
+  el.decade.addEventListener('change', function () {
+    state.decade = el.decade.value;
     state.year = '';
     refresh();
   });
-  el.years.addEventListener('click', function (e) {
-    var btn = e.target.closest('.cg-pill');
-    if (!btn) return;
-    var value = btn.getAttribute('data-year') || '';
-    if (value === state.year) return;
-    state.year = value;
+  el.year.addEventListener('change', function () {
+    state.year = el.year.value;
+    markSet(el.year);
     refresh();
   });
   [['sort', el.sort], ['country', el.country], ['lang', el.lang], ['status', el.status], ['type', el.type], ['rating', el.rating]].forEach(function (pair) {
     pair[1].addEventListener('change', function () {
       state[pair[0]] = pair[1].value;
+      if (pair[0] === 'sort') pair[1].classList.toggle('-set', state.sort !== DEFAULT_SORT);
+      else markSet(pair[1]);
       refresh();
     });
   });
+  el.moreToggle.addEventListener('click', function () {
+    var open = el.extra.hidden;
+    el.extra.hidden = !open;
+    el.moreToggle.setAttribute('aria-expanded', String(open));
+    el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
+  });
   el.reset.addEventListener('click', function () {
+    state.decade = 'all';
+    state.year = '';
     state.country = '';
     state.lang = '';
     state.status = '';
@@ -562,22 +613,45 @@
     renderFilters();
     refresh();
   });
-  el.more.addEventListener('click', function () {
+  function retry() {
+    failed = false;
+    if (page === 0) setStatus(SPINNER_HTML);
     fetchPage();
+  }
+  el.retry.addEventListener('click', retry);
+  el.statusBox.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'cg-retry-first') retry();
   });
   el.grid.addEventListener('error', replaceBrokenPoster, true);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) maybeLoad();
+    }, { rootMargin: '900px 0px' }).observe(el.sentinel);
+  }
+  var scrollTimer = null;
+  function onScroll() {
+    if (scrollTimer) return;
+    scrollTimer = window.setTimeout(function () {
+      scrollTimer = null;
+      maybeLoad();
+    }, 120);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
   window.addEventListener('pagehide', function () {
     if (activeController) activeController.abort();
   });
-  startFresh();
+  if (genre) startFresh();
   loadCountries().then(function (list) {
     countryList = list;
     el.country.innerHTML = optionsHtml('Any country', POPULAR_COUNTRIES, countryList, state.country);
     el.country.value = state.country;
+    markSet(el.country);
   }).catch(function () {});
   loadLanguages().then(function (list) {
     languageList = list;
     el.lang.innerHTML = optionsHtml('Any language', POPULAR_LANGS, languageList, state.lang);
     el.lang.value = state.lang;
+    markSet(el.lang);
   }).catch(function () {});
 })();
