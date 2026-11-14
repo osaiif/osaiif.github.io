@@ -21,21 +21,65 @@
     .show-hero.-no-actions .show-actions {
       display: none !important;
     }
+    #show-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    #show-meta > span {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    #show-meta .show-meta-dot {
+      margin: 0 8px;
+      color: rgba(255, 255, 255, 0.3);
+    }
     #show-meta a {
-      color: inherit;
+      color: #fff;
+      font-weight: 500;
       text-decoration: none;
       transition: color 0.15s ease;
     }
     #show-meta a:hover {
       color: #29a6ff;
     }
-    #show-genres a.genre-tag {
-      text-decoration: none;
-      transition: border-color 0.15s ease, color 0.15s ease;
+    #show-genres {
+      display: block;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.3);
     }
-    #show-genres a.genre-tag:hover {
-      border-color: rgba(255, 255, 255, 0.3);
+    #show-genres .genre-tag {
+      display: inline;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 13px;
+      font-weight: 500;
       color: #fff;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    #show-genres .genre-tag:hover {
+      color: #29a6ff;
+    }
+    #show-genres .genre-sep {
+      margin: 0 8px;
+    }
+    @media (min-width: 1024px) {
+      #show-meta, #show-genres, #show-genres .genre-tag {
+        font-size: 14px;
+      }
     }
     #watchlist-btn {
       background-color: #ffffff;
@@ -69,36 +113,6 @@
     @media (min-width: 641px) {
       .show-hero {
         align-items: center;
-      }
-    }
-    @media (min-width: 641px) {
-      #show-meta {
-        gap: 10px;
-      }
-      #show-meta .show-meta-dot {
-        display: none;
-      }
-      #show-meta > span:not(.show-meta-dot) {
-        padding: 6px 14px;
-        background-color: rgba(0, 0, 0, 0.28);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 8px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
-        color: #eaeef5;
-        font-weight: 600;
-      }
-      #show-genres {
-        gap: 10px;
-      }
-      #show-genres .genre-tag {
-        background-color: rgba(0, 0, 0, 0.28);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
-        color: #dde2eb;
       }
     }
   </style>
@@ -530,7 +544,7 @@ showCopied();
             if (genres.length) {
               genresEl.innerHTML = genres.map(function (g) {
                 return '<a class="genre-tag" href="/g/?s=' + slugifyGenre(g.name) + '">' + escapeHtml(g.name) + '</a>';
-              }).join('');
+              }).join('<span class="genre-sep">·</span>');
             }
             document.getElementById('show-rating-value').textContent =
               show.vote_average ? show.vote_average.toFixed(1) : '–';
