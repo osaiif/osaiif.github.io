@@ -120,23 +120,7 @@
       -webkit-line-clamp: 2;
     }
     .work-sub { font-size: 12px; color: #8490a4; }
-    .work-more {
-      display: block;
-      margin: 14px auto 0;
-      padding: 9px 20px;
-      background: transparent;
-      border: 1px solid #1e2a3e;
-      border-radius: 10px;
-      color: #b3c2db;
-      font-family: var(--font-text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.15s ease, border-color 0.15s ease;
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .work-more:hover { color: #ffffff; border-color: #30405a; }
-    }
+    .work-sentinel { height: 1px; }
     @media (max-width: 420px) {
       .work-row { gap: 12px; padding: 8px; }
       .work-poster { width: 48px; height: 72px; }
@@ -280,7 +264,7 @@
       }
       var PROFILE_BASE = 'https://image.tmdb.org/t/p/w342';
       var POSTER_BASE = 'https://image.tmdb.org/t/p/w154';
-      var WORK_LIMIT = 12;
+      var WORK_LIMIT = 20;
       var ROLE_LABELS = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Editing: 'Editor' };
       var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
       var BACKDROP_BASE = 'https://image.tmdb.org/t/p/original';
@@ -349,8 +333,13 @@
       function roleLabel(dept) {
         return ROLE_LABELS[dept] || dept;
       }
-      function isTv(c) {
-        return c && c.media_type === 'tv';
+      var GENERIC_ROLE = /^(self|himself|herself|themselves|themself|narrator|presenter|host|guest|various|archive footage)\b/i;
+      function isWork(c) {
+        return c && (c.media_type === 'tv' || c.media_type === 'movie');
+      }
+      function workUrl(w) {
+        if (w.type === 'movie') return '/m/?id=' + encodeURIComponent(w.id);
+        return showUrl(w.id);
       }
       function yearOf(str) {
         return /^\d{4}/.test(str || '') ? String(str).slice(0, 4) : '';
@@ -360,19 +349,22 @@
         var out = [];
         list.forEach(function (c) {
           if (c.id == null) return;
-          var w = map[c.id];
+          var key = c.media_type + ':' + c.id;
+          var w = map[key];
           if (!w) {
-            w = map[c.id] = {
+            w = map[key] = {
               id: c.id,
-              name: c.name || c.original_name || 'Untitled',
+              type: c.media_type,
+              name: c.name || c.title || c.original_name || c.original_title || 'Untitled',
               poster: c.poster_path || null,
-              date: c.first_air_date || '',
+              date: c.first_air_date || c.release_date || '',
               roles: [],
               episodes: 0
             };
             out.push(w);
           }
           var role = String(c[roleKey] || '').trim();
+          if (role && roleKey === 'character' && GENERIC_ROLE.test(role)) role = '';
           if (role && w.roles.indexOf(role) === -1) w.roles.push(role);
           if (c.episode_count && c.episode_count > w.episodes) w.episodes = c.episode_count;
         });
@@ -389,10 +381,11 @@
         var bits = [];
         var year = yearOf(w.date);
         if (year) bits.push('<span class="numbers">' + year + '</span>');
+        if (w.type === 'movie') bits.push('<span>Movie</span>');
         if (w.episodes > 0) {
           bits.push('<span class="numbers">' + w.episodes + '</span> episode' + (w.episodes === 1 ? '' : 's'));
         }
-        return '<a class="work-row" href="' + escapeHtml(showUrl(w.id)) + '">' +
+        return '<a class="work-row" href="' + escapeHtml(workUrl(w)) + '">' +
           '<span class="work-poster' + (posterUrl ? ' -has-img' : '') + '">' +
           '<span class="work-initial">' + escapeHtml(firstLetter(w.name)) + '</span>' +
           (posterUrl ? '<img src="' + escapeHtml(posterUrl) + '" alt="" loading="lazy" decoding="async">' : '') +
@@ -401,33 +394,62 @@
           (bits.length ? '<span class="work-sub">' + bits.join(' \u00b7 ') + '</span>' : '') +
           '</span></a>';
       }
-      function fillSection(key, all) {
-        var section = document.getElementById('work-' + key);
+      var workObserver = null;
+      var workOrder = [];
+      function appendWorks(key) {
         var list = works[key];
-        var shown = all ? list : list.slice(0, WORK_LIMIT);
-        section.querySelector('.work-list').innerHTML = shown.map(workRowHtml).join('');
-        var more = section.querySelector('.work-more');
-        more.hidden = all || list.length <= WORK_LIMIT;
-        more.textContent = 'Show all ' + list.length;
+        var listEl = document.querySelector('#work-' + key + ' .work-list');
+        var shown = listEl.children.length;
+        if (shown >= list.length) return false;
+        listEl.insertAdjacentHTML('beforeend', list.slice(shown, shown + WORK_LIMIT).map(workRowHtml).join(''));
+        return listEl.children.length < list.length;
       }
-      function renderWorks(person, tvCast, tvCrew) {
-        works = { acting: collectWorks(tvCast, 'character'), crew: collectWorks(tvCrew, 'job') };
-        var html = '';
-        [['acting', 'Acting'], ['crew', 'Crew']].forEach(function (s) {
-          if (!works[s[0]].length) return;
-          html += '<section class="work-section" id="work-' + s[0] + '">' +
-            '<h2 class="section-heading">' + s[1] + '</h2>' +
-            '<div class="work-list"></div>' +
-            '<button type="button" class="work-more" data-more="' + s[0] + '" hidden></button></section>';
-        });
-        if (!html) {
-          worksEl.innerHTML = '<p class="page-empty">No TV credits listed for ' + escapeHtml(person.name || 'this person') + ' yet.</p>';
+      function startSection(index) {
+        if (index >= workOrder.length) return;
+        var item = workOrder[index];
+        worksEl.insertAdjacentHTML('beforeend', '<section class="work-section" id="work-' + item[0] + '">' +
+          '<h2 class="section-heading">' + item[1] + '</h2>' +
+          '<div class="work-list"></div>' +
+          '<div class="work-sentinel" data-key="' + item[0] + '" data-index="' + index + '"></div></section>');
+        var sentinel = document.querySelector('#work-' + item[0] + ' .work-sentinel');
+        var more = appendWorks(item[0]);
+        if (more && workObserver) {
+          workObserver.observe(sentinel);
           return;
         }
-        worksEl.innerHTML = html;
-        Object.keys(works).forEach(function (key) {
-          if (works[key].length) fillSection(key, false);
+        while (more) more = appendWorks(item[0]);
+        sentinel.remove();
+        startSection(index + 1);
+      }
+      function onWorkSentinel(entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          var target = entry.target;
+          var more = appendWorks(target.getAttribute('data-key'));
+          workObserver.unobserve(target);
+          if (more) {
+            workObserver.observe(target);
+          } else {
+            var next = parseInt(target.getAttribute('data-index'), 10) + 1;
+            target.remove();
+            startSection(next);
+          }
         });
+      }
+      function renderWorks(person, workCast, workCrew) {
+        works = { acting: collectWorks(workCast, 'character'), crew: collectWorks(workCrew, 'job') };
+        if (workObserver) {
+          workObserver.disconnect();
+          workObserver = null;
+        }
+        workOrder = [['acting', 'Acting'], ['crew', 'Crew']].filter(function (item) { return works[item[0]].length; });
+        if (!workOrder.length) {
+          worksEl.innerHTML = '<p class="page-empty">No credits listed for ' + escapeHtml(person.name || 'this person') + ' yet.</p>';
+          return;
+        }
+        worksEl.innerHTML = '';
+        if ('IntersectionObserver' in window) workObserver = new IntersectionObserver(onWorkSentinel, { rootMargin: '800px 0px' });
+        startSection(0);
       }
       function updateBioToggle() {
         if (bioEl.hidden) return;
@@ -441,9 +463,9 @@
         var cc = person.combined_credits || {};
         var castAll = cc.cast || [];
         var crewAll = cc.crew || [];
-        var tvCast = castAll.filter(isTv);
-        var tvCrew = crewAll.filter(isTv);
-        var withBackdrop = tvCast.concat(tvCrew).filter(function (c) { return c.backdrop_path; })
+        var workCast = castAll.filter(isWork);
+        var workCrew = crewAll.filter(isWork);
+        var withBackdrop = workCast.concat(workCrew).filter(function (c) { return c.backdrop_path; })
           .sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
         if (withBackdrop.length) setBackdrop(BACKDROP_BASE + withBackdrop[0].backdrop_path);
         setImage(document.getElementById('person-photo'),
@@ -475,7 +497,7 @@
         bioBtn.textContent = 'More';
         hero.hidden = false;
         updateBioToggle();
-        renderWorks(person, tvCast, tvCrew);
+        renderWorks(person, workCast, workCrew);
       }
       bioBtn.addEventListener('click', function () {
         var open = bioEl.classList.toggle('-clamp') === false;
@@ -483,10 +505,6 @@
       });
       window.addEventListener('resize', updateBioToggle);
       worksEl.addEventListener('error', onPhotoError, true);
-      worksEl.addEventListener('click', function (e) {
-        var more = e.target.closest('.work-more');
-        if (more) fillSection(more.getAttribute('data-more'), true);
-      });
       function slugify(name) {
         var s = String(name || '');
         if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
