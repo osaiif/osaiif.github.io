@@ -213,6 +213,10 @@
       return '<option value="' + escapeHtml(pair[0]) + '"' + (pair[0] === selected ? ' selected' : '') + '>' + escapeHtml(pair[1]) + '</option>';
     }).join('');
   }
+  var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
+  function markSet(select) {
+    select.classList.toggle('-set', select.value !== '' && select.value !== 'all');
+  }
   function cardHtml(show) {
     var year = show.first_air_date ? show.first_air_date.slice(0, 4) : '';
     var rating = show.vote_count > 0 && show.vote_average > 0 ? show.vote_average.toFixed(1) : '';
@@ -224,7 +228,7 @@
       '<span class="cg-card-title">' + escapeHtml(show.name) + '</span>' +
       '<span class="cg-card-meta">' +
         (year ? '<span class="numbers">' + year + '</span>' : '') +
-        (rating ? '<span class="cg-rating numbers">★ ' + rating + '</span>' : '') +
+        (rating ? '<span class="cg-rating numbers">' + STAR_SVG + rating + '</span>' : '') +
       '</span>' +
     '</a>';
   }
@@ -245,11 +249,9 @@
   var MAX_YEAR = 2100;
   var el = {
     titleName: document.getElementById('cg-title-name'),
+    yearSelect: document.getElementById('f-year'),
     meta: document.getElementById('cg-meta'),
-    prev: document.getElementById('cg-prev'),
-    next: document.getElementById('cg-next'),
-    years: document.getElementById('cg-years'),
-    year: document.getElementById('f-year'),
+    extra: document.getElementById('cg-extra'),
     genre: document.getElementById('f-genre'),
     sort: document.getElementById('f-sort'),
     country: document.getElementById('f-country'),
@@ -257,10 +259,14 @@
     status: document.getElementById('f-status'),
     type: document.getElementById('f-type'),
     rating: document.getElementById('f-rating'),
+    moreToggle: document.getElementById('cg-more-toggle'),
     reset: document.getElementById('cg-reset'),
     statusBox: document.getElementById('cg-status'),
     grid: document.getElementById('cg-grid'),
-    more: document.getElementById('cg-more')
+    sentinel: document.getElementById('cg-sentinel'),
+    loader: document.getElementById('cg-loader'),
+    retry: document.getElementById('cg-retry'),
+    note: document.getElementById('cg-note')
   };
   GENRES.forEach(function (g) { g.slug = slugify(g.name); });
   var params = new URLSearchParams(window.location.search);
@@ -295,6 +301,10 @@
   var activeController = null;
   var page = 0;
   var totalPages = 0;
+  var capped = false;
+  var loading = false;
+  var exhausted = false;
+  var failed = false;
   var seen = {};
   function genreBySlug(slug) {
     for (var i = 0; i < GENRES.length; i++) if (GENRES[i].slug === slug) return GENRES[i];
@@ -322,10 +332,6 @@
     if (state.sort !== DEFAULT_SORT) q.push('sort=' + state.sort);
     return q.join('&');
   }
-  function yearHref(y) {
-    var q = filterQuery();
-    return '/y/?y=' + y + (q ? '&' + q : '');
-  }
   function syncUrl() {
     var q = filterQuery();
     try {
@@ -335,30 +341,8 @@
   function filtersActive() {
     return !!(state.genre || state.country || state.lang || state.status || state.type || state.rating || state.sort !== DEFAULT_SORT);
   }
-  function renderYearNav() {
-    var decadeStart = Math.floor(year / 10) * 10;
-    var last = Math.min(decadeStart + 9, Math.max(NOW_YEAR, year));
-    var html = '';
-    for (var y = decadeStart; y <= last; y++) {
-      var active = y === year;
-      html += '<a class="cg-pill numbers' + (active ? ' -active' : '') + '" href="' + yearHref(y) + '" data-year="' + y + '"' + (active ? ' aria-current="page"' : '') + '>' + y + '</a>';
-    }
-    el.years.innerHTML = html;
-    var activeEl = el.years.querySelector('.-active');
-    if (activeEl) {
-      var offset = activeEl.getBoundingClientRect().left - el.years.getBoundingClientRect().left + el.years.scrollLeft;
-      el.years.scrollLeft = Math.max(0, offset - (el.years.clientWidth - activeEl.offsetWidth) / 2);
-    }
-    var hasPrev = year > 1900;
-    var hasNext = year < NOW_YEAR;
-    el.prev.href = yearHref(year - 1);
-    el.prev.setAttribute('data-year', String(year - 1));
-    el.prev.classList.toggle('-disabled', !hasPrev);
-    el.prev.setAttribute('aria-disabled', String(!hasPrev));
-    el.next.href = yearHref(year + 1);
-    el.next.setAttribute('data-year', String(year + 1));
-    el.next.classList.toggle('-disabled', !hasNext);
-    el.next.setAttribute('aria-disabled', String(!hasNext));
+  function extraActive() {
+    return !!(state.status || state.type || state.rating);
   }
   function yearOptionsHtml() {
     var html = '';
@@ -370,8 +354,8 @@
     return html;
   }
   function renderFilters() {
-    el.year.innerHTML = yearOptionsHtml();
-    el.year.value = String(year);
+    el.yearSelect.innerHTML = yearOptionsHtml();
+    el.yearSelect.value = String(year);
     el.genre.innerHTML = '<option value="">Any genre</option>' + GENRES.map(function (g) {
       return '<option value="' + g.slug + '"' + (g.slug === state.genre ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
@@ -387,7 +371,18 @@
     el.rating.innerHTML = simpleOptionsHtml('Any rating', RATINGS, state.rating);
     el.country.value = state.country;
     el.lang.value = state.lang;
+    markSet(el.genre);
+    markSet(el.country);
+    markSet(el.lang);
+    markSet(el.status);
+    markSet(el.type);
+    markSet(el.rating);
+    el.sort.classList.toggle('-set', state.sort !== DEFAULT_SORT);
     el.reset.hidden = !filtersActive();
+    var open = extraActive();
+    el.extra.hidden = !open;
+    el.moreToggle.setAttribute('aria-expanded', String(open));
+    el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
   }
   function renderTitle() {
     el.titleName.textContent = String(year);
@@ -422,22 +417,30 @@
   function renderMeta(data) {
     var total = data.total_results || 0;
     var g = genreBySlug(state.genre);
-    var text = '<span class="numbers">' + formatCount(total) + '</span> ' + (g ? escapeHtml(g.name) + ' ' : '') + (total === 1 ? 'show' : 'shows') + ' first aired in <span class="numbers">' + year + '</span>';
-    if ((data.total_pages || 0) > MAX_PAGES) text += ' · browsing the first ' + formatCount(MAX_PAGES * 20);
-    el.meta.innerHTML = text;
+    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (g ? escapeHtml(g.name) + ' ' : '') + (total === 1 ? 'show' : 'shows') + ' first aired in <span class="numbers">' + year + '</span>';
+  }
+  function updateFooter() {
+    el.loader.hidden = !loading || page === 0;
+    el.retry.hidden = !failed || page === 0;
+    el.note.hidden = !(exhausted && capped);
   }
   function fetchPage() {
+    if (loading || exhausted) return;
     var rid = requestId;
     var next = page + 1;
     var controller = new AbortController();
     activeController = controller;
-    el.more.disabled = true;
-    el.more.textContent = 'Load more';
+    loading = true;
+    failed = false;
+    updateFooter();
     tmdbFetch('/discover/tv', buildQuery(next), controller.signal)
       .then(function (data) {
         if (rid !== requestId) return;
+        loading = false;
         page = next;
         totalPages = Math.min(data.total_pages || 0, MAX_PAGES);
+        capped = (data.total_pages || 0) > MAX_PAGES;
+        exhausted = page >= totalPages;
         var results = (data.results || []).filter(function (s) {
           if (!s || !s.name || seen[s.id]) return false;
           seen[s.id] = true;
@@ -448,75 +451,73 @@
           renderMeta(data);
           if (!results.length) {
             setStatus('No shows match these filters.');
-            el.more.hidden = true;
+            updateFooter();
             return;
           }
         }
         el.grid.insertAdjacentHTML('beforeend', results.map(cardHtml).join(''));
-        el.more.disabled = false;
-        el.more.hidden = page >= totalPages;
+        updateFooter();
+        window.requestAnimationFrame(maybeLoad);
       })
       .catch(function (err) {
         if (err.name === 'AbortError' || rid !== requestId) return;
-        el.more.disabled = false;
+        loading = false;
+        failed = true;
         if (page === 0) {
-          setStatus('Something went wrong: ' + escapeHtml(err.message), true);
-          el.more.hidden = true;
-        } else {
-          el.more.textContent = 'Try again';
-          el.more.hidden = false;
+          setStatus('Something went wrong: ' + escapeHtml(err.message) + ' <button type="button" class="cg-link" id="cg-retry-first">Try again</button>', true);
         }
+        updateFooter();
       });
+  }
+  function maybeLoad() {
+    if (loading || exhausted || failed || page === 0) return;
+    var rect = el.sentinel.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 900) fetchPage();
   }
   function startFresh() {
     requestId++;
     if (activeController) activeController.abort();
     page = 0;
     totalPages = 0;
+    capped = false;
+    loading = false;
+    exhausted = false;
+    failed = false;
     seen = {};
     el.grid.innerHTML = '';
-    el.more.hidden = true;
     el.meta.textContent = '';
+    updateFooter();
     setStatus(SPINNER_HTML);
     fetchPage();
   }
   function refresh() {
-    renderYearNav();
     el.reset.hidden = !filtersActive();
     renderTitle();
     syncUrl();
     startFresh();
   }
-  function goToYear(target) {
-    if (isNaN(target) || target === year || target < 1900 || target > NOW_YEAR) return;
-    year = target;
-    el.year.innerHTML = yearOptionsHtml();
-    el.year.value = String(year);
-    refresh();
-  }
   renderFilters();
-  renderYearNav();
   renderTitle();
   syncUrl();
-  function onYearLink(e) {
-    var link = e.target.closest('a[data-year]');
-    if (!link) return;
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    if (link.classList.contains('-disabled')) return;
-    goToYear(parseInt(link.getAttribute('data-year'), 10));
-  }
-  el.years.addEventListener('click', onYearLink);
-  el.prev.addEventListener('click', onYearLink);
-  el.next.addEventListener('click', onYearLink);
-  el.year.addEventListener('change', function () {
-    goToYear(parseInt(el.year.value, 10));
+  el.yearSelect.addEventListener('change', function () {
+    var target = parseInt(el.yearSelect.value, 10);
+    if (isNaN(target) || target === year) return;
+    year = target;
+    refresh();
   });
   [['genre', el.genre], ['sort', el.sort], ['country', el.country], ['lang', el.lang], ['status', el.status], ['type', el.type], ['rating', el.rating]].forEach(function (pair) {
     pair[1].addEventListener('change', function () {
       state[pair[0]] = pair[1].value;
+      if (pair[0] === 'sort') pair[1].classList.toggle('-set', state.sort !== DEFAULT_SORT);
+      else markSet(pair[1]);
       refresh();
     });
+  });
+  el.moreToggle.addEventListener('click', function () {
+    var open = el.extra.hidden;
+    el.extra.hidden = !open;
+    el.moreToggle.setAttribute('aria-expanded', String(open));
+    el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
   });
   el.reset.addEventListener('click', function () {
     state.genre = '';
@@ -529,10 +530,31 @@
     renderFilters();
     refresh();
   });
-  el.more.addEventListener('click', function () {
+  function retry() {
+    failed = false;
+    if (page === 0) setStatus(SPINNER_HTML);
     fetchPage();
+  }
+  el.retry.addEventListener('click', retry);
+  el.statusBox.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'cg-retry-first') retry();
   });
   el.grid.addEventListener('error', replaceBrokenPoster, true);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) maybeLoad();
+    }, { rootMargin: '900px 0px' }).observe(el.sentinel);
+  }
+  var scrollTimer = null;
+  function onScroll() {
+    if (scrollTimer) return;
+    scrollTimer = window.setTimeout(function () {
+      scrollTimer = null;
+      maybeLoad();
+    }, 120);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
   window.addEventListener('pagehide', function () {
     if (activeController) activeController.abort();
   });
@@ -541,10 +563,12 @@
     countryList = list;
     el.country.innerHTML = optionsHtml('Any country', POPULAR_COUNTRIES, countryList, state.country);
     el.country.value = state.country;
+    markSet(el.country);
   }).catch(function () {});
   loadLanguages().then(function (list) {
     languageList = list;
     el.lang.innerHTML = optionsHtml('Any language', POPULAR_LANGS, languageList, state.lang);
     el.lang.value = state.lang;
+    markSet(el.lang);
   }).catch(function () {});
 })();
