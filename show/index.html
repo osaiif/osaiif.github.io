@@ -652,6 +652,10 @@ showCopied();
       var params = new URLSearchParams(window.location.search);
       var showId = params.get('id');
       var imdbId = params.get('imdb');
+      if (!showId && !imdbId) {
+        var slugMatch = (params.get('s') || '').toLowerCase().match(/(?:^|-)(\d+)$/);
+        if (slugMatch) showId = slugMatch[1];
+      }
       function loadShow(id) {
         setStatus(SPINNER_HTML);
         tmdbGet('/tv/' + encodeURIComponent(id), 'append_to_response=external_ids,videos')
@@ -705,6 +709,10 @@ showCopied();
             }
             document.getElementById('show-title').textContent = show.name || 'Untitled';
             document.title = (show.name || 'Untitled') + ' ǀ tvbox';
+            try {
+              var pathBase = slugifyGenre(show.name);
+              history.replaceState(null, '', '/show/' + (pathBase ? pathBase + '-' + show.id : String(show.id)) + window.location.hash);
+            } catch (e) {}
             window.tvboxShowMeta = {
               id: show.id,
               name: show.name || 'this show',
@@ -787,6 +795,6 @@ showCopied();
     });
   </script>
 <script src="/js/auth.js?v=1"></script>
-<script src="/js/showmarking.js?v=4"></script>
+<script src="/js/showmarking.js?v=5"></script>
 </body>
 </html>

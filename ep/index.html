@@ -723,6 +723,12 @@
         overview.hidden = !ep.overview;
         hero.hidden = false;
         renderCredits(ep);
+        try {
+          var epBase = String(showName || '');
+          if (epBase.normalize) epBase = epBase.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          epBase = epBase.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          history.replaceState(null, '', '/ep/' + (epBase ? epBase + '-' : '') + tvId + '-s' + seasonNo + 'e' + epNo + window.location.hash);
+        } catch (e) {}
       }
       panelEl.addEventListener('error', onPhotoError, true);
       tabsEl.addEventListener('click', function (e) {
@@ -733,6 +739,14 @@
       var tvId = parseInt(params.get('tv'), 10);
       var seasonNo = parseInt(params.get('season'), 10);
       var epNo = parseInt(params.get('ep'), 10);
+      if (!isFinite(tvId) || !isFinite(seasonNo) || !isFinite(epNo)) {
+        var epSlug = (params.get('s') || '').toLowerCase().match(/(?:^|-)(\d+)-s(\d+)e(\d+)$/);
+        if (epSlug) {
+          tvId = parseInt(epSlug[1], 10);
+          seasonNo = parseInt(epSlug[2], 10);
+          epNo = parseInt(epSlug[3], 10);
+        }
+      }
       if (!isFinite(tvId) || !isFinite(seasonNo) || !isFinite(epNo)) {
         setStatus('No episode selected. Head back to <a href="/search/">search</a> and pick a show.', true);
       } else {

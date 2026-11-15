@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   seasonsApi.getLog  = (n) => (seasonLogs[n] ? Object.assign({}, seasonLogs[n]) : null);
   document.addEventListener('tvbox:show-loaded', () => {
-    try { sessionStorage.setItem('tvbox-show-path', window.location.pathname); } catch (e) {}
+    try { sessionStorage.setItem('tvbox-show-path', '/show/'); } catch (e) {}
   });
   document.addEventListener('tvbox:show-loaded', renderSeasons);
   if (window.tvboxShowMeta) renderSeasons();
