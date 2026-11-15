@@ -255,6 +255,54 @@
   };
   var TABS = [['all', 'All'], ['tv', 'TV Shows'], ['movie', 'Movies'], ['anime', 'Anime'], ['person', 'People']];
   var MAX_PAGES = 500;
+  var NOW_YEAR = new Date().getFullYear();
+  var MIN_YEAR = 1900;
+  var MIN_VOTES = 30;
+  var EMPTY_LIMIT = 10;
+  var CONFIG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  var FILTER_TABS = { tv: true, movie: true, anime: true };
+  function genreDef(name, tvIds, movieIds) {
+    return { name: name, slug: slugify(name), ids: { tv: tvIds || [], movie: movieIds || [] } };
+  }
+  var TV_GENRES = [
+    genreDef('Action & Adventure', [10759]), genreDef('Animation', [16]), genreDef('Comedy', [35]),
+    genreDef('Crime', [80]), genreDef('Documentary', [99]), genreDef('Drama', [18]),
+    genreDef('Family', [10751]), genreDef('Kids', [10762]), genreDef('Mystery', [9648]),
+    genreDef('News', [10763]), genreDef('Reality', [10764]), genreDef('Sci-Fi & Fantasy', [10765]),
+    genreDef('Soap', [10766]), genreDef('Talk', [10767]), genreDef('War & Politics', [10768]),
+    genreDef('Western', [37])
+  ];
+  var MOVIE_GENRES = [
+    genreDef('Action', null, [28]), genreDef('Adventure', null, [12]), genreDef('Animation', null, [16]),
+    genreDef('Comedy', null, [35]), genreDef('Crime', null, [80]), genreDef('Documentary', null, [99]),
+    genreDef('Drama', null, [18]), genreDef('Family', null, [10751]), genreDef('Fantasy', null, [14]),
+    genreDef('History', null, [36]), genreDef('Horror', null, [27]), genreDef('Music', null, [10402]),
+    genreDef('Mystery', null, [9648]), genreDef('Romance', null, [10749]), genreDef('Science Fiction', null, [878]),
+    genreDef('Thriller', null, [53]), genreDef('TV Movie', null, [10770]), genreDef('War', null, [10752]),
+    genreDef('Western', null, [37])
+  ];
+  var ANIME_GENRES = [
+    genreDef('Action & Adventure', [10759], [28, 12]), genreDef('Comedy', [35], [35]),
+    genreDef('Crime', [80], [80]), genreDef('Documentary', [99], [99]), genreDef('Drama', [18], [18]),
+    genreDef('Family', [10751], [10751]), genreDef('Horror', [], [27]), genreDef('Kids', [10762], []),
+    genreDef('Music', [], [10402]), genreDef('Mystery', [9648], [9648]), genreDef('Romance', [], [10749]),
+    genreDef('Sci-Fi & Fantasy', [10765], [878, 14]), genreDef('Thriller', [], [53]),
+    genreDef('War & Politics', [10768], [10752]), genreDef('Western', [37], [37])
+  ];
+  var RATINGS = [['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']];
+  var POPULAR_COUNTRIES = [
+    ['US', 'United States of America'], ['GB', 'United Kingdom'], ['CA', 'Canada'], ['AU', 'Australia'],
+    ['JP', 'Japan'], ['KR', 'South Korea'], ['CN', 'China'], ['IN', 'India'], ['FR', 'France'],
+    ['DE', 'Germany'], ['ES', 'Spain'], ['IT', 'Italy'], ['BR', 'Brazil'], ['MX', 'Mexico'],
+    ['TR', 'Turkey'], ['SE', 'Sweden'], ['DK', 'Denmark'], ['NO', 'Norway'], ['NL', 'Netherlands'],
+    ['PL', 'Poland'], ['TH', 'Thailand']
+  ];
+  var POPULAR_LANGS = [
+    ['en', 'English'], ['ko', 'Korean'], ['ja', 'Japanese'], ['es', 'Spanish'], ['fr', 'French'],
+    ['de', 'German'], ['hi', 'Hindi'], ['it', 'Italian'], ['pt', 'Portuguese'], ['zh', 'Mandarin'],
+    ['tr', 'Turkish'], ['ru', 'Russian'], ['sv', 'Swedish'], ['da', 'Danish'], ['no', 'Norwegian'],
+    ['nl', 'Dutch'], ['th', 'Thai'], ['pl', 'Polish']
+  ];
   var STAR_ICON_SVG =
     '<svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.75l2.87 6.13 6.63.7-4.93 4.6 1.32 6.62L12 17.9l-5.89 3.9 1.32-6.62-4.93-4.6 6.63-.7L12 2.75z"></path></svg>';
   var SPINNER_HTML =
@@ -289,6 +337,88 @@
     for (var i = 0; i < TABS.length; i++) if (TABS[i][0] === value) return true;
     return false;
   }
+  function validOption(list, value) {
+    for (var i = 0; i < list.length; i++) if (list[i][0] === value) return true;
+    return false;
+  }
+  function genreListFor(kind) {
+    return kind === 'movie' ? MOVIE_GENRES : (kind === 'anime' ? ANIME_GENRES : TV_GENRES);
+  }
+  function genreBySlug(slug) {
+    var list = genreListFor(tab);
+    for (var i = 0; i < list.length; i++) if (list[i].slug === slug) return list[i];
+    return null;
+  }
+  function matchesGenre(item, def) {
+    var ids = def.ids[item.media_type] || [];
+    var have = item.genre_ids || [];
+    for (var i = 0; i < ids.length; i++) if (have.indexOf(ids[i]) !== -1) return true;
+    return false;
+  }
+  function cachedConfig(key, path, build) {
+    var storageKey = 'tvbox:cfg:' + key;
+    try {
+      var raw = localStorage.getItem(storageKey);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.data) && parsed.data.length && (Date.now() - parsed.ts) < CONFIG_TTL_MS) {
+          return Promise.resolve(parsed.data);
+        }
+      }
+    } catch (e) {}
+    return tmdbFetch(path).then(function (list) {
+      var data = build(list || []);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ data: data, ts: Date.now() }));
+      } catch (e) {}
+      return data;
+    });
+  }
+  function loadCountries() {
+    return cachedConfig('countries', '/configuration/countries', function (list) {
+      return list
+        .filter(function (c) { return c && c.iso_3166_1 && c.english_name; })
+        .map(function (c) { return [c.iso_3166_1, c.english_name]; })
+        .sort(function (a, b) { return a[1].localeCompare(b[1]); });
+    });
+  }
+  function loadLanguages() {
+    return cachedConfig('languages', '/configuration/languages', function (list) {
+      return list
+        .filter(function (l) { return l && l.iso_639_1 && l.iso_639_1 !== 'xx' && (l.english_name || l.name); })
+        .map(function (l) { return [l.iso_639_1, l.english_name || l.name]; })
+        .sort(function (a, b) { return a[1].localeCompare(b[1]); });
+    });
+  }
+  function optionsHtml(anyLabel, popular, full, selected) {
+    var html = '<option value="">' + escapeHtml(anyLabel) + '</option>';
+    function opt(pair) {
+      return '<option value="' + escapeHtml(pair[0]) + '"' + (pair[0] === selected ? ' selected' : '') + '>' + escapeHtml(pair[1]) + '</option>';
+    }
+    if (full && full.length) {
+      var names = {};
+      full.forEach(function (pair) { names[pair[0]] = pair[1]; });
+      var top = popular.filter(function (pair) { return names[pair[0]]; }).map(function (pair) { return [pair[0], names[pair[0]]]; });
+      html += '<optgroup label="Popular">' + top.map(opt).join('') + '</optgroup>';
+      html += '<optgroup label="A–Z">' + full.map(opt).join('') + '</optgroup>';
+    } else {
+      html += popular.map(opt).join('');
+    }
+    return html;
+  }
+  function simpleOptionsHtml(anyLabel, list, selected) {
+    return '<option value="">' + escapeHtml(anyLabel) + '</option>' + list.map(function (pair) {
+      return '<option value="' + escapeHtml(pair[0]) + '"' + (pair[0] === selected ? ' selected' : '') + '>' + escapeHtml(pair[1]) + '</option>';
+    }).join('');
+  }
+  function syncField(select) {
+    var field = select.closest('.cg-field');
+    if (!field) return;
+    var isDefault = select.value === field.getAttribute('data-default');
+    var option = select.options[select.selectedIndex];
+    field.querySelector('.cg-field-text').textContent = isDefault || !option ? field.getAttribute('data-label') : option.textContent;
+    field.classList.toggle('-set', !isDefault);
+  }
   var input = document.getElementById('home-search-input');
   var resultsContainer = document.getElementById('results-container');
   var statusEl = document.getElementById('search-status');
@@ -296,6 +426,20 @@
   var sentinel = document.getElementById('results-sentinel');
   var loaderEl = document.getElementById('results-loader');
   var retryEl = document.getElementById('results-retry');
+  var filtersEl = document.getElementById('search-filters');
+  var filterResetEl = document.getElementById('f-reset');
+  var filterEls = {
+    genre: document.getElementById('f-genre'),
+    year: document.getElementById('f-year'),
+    country: document.getElementById('f-country'),
+    lang: document.getElementById('f-lang'),
+    rating: document.getElementById('f-rating')
+  };
+  var filters = { genre: '', year: '', country: '', lang: '', rating: '' };
+  var countryList = null;
+  var languageList = null;
+  var configRequested = false;
+  var emptyStreak = 0;
   var debounceTimer = null;
   var activeController = null;
   var requestId = 0;
@@ -459,29 +603,121 @@
       return '<button type="button" class="search-tab' + (on ? ' -active' : '') + '" role="tab" aria-selected="' + on + '" data-tab="' + t[0] + '">' + escapeHtml(t[1]) + '</button>';
     }).join('');
   }
+  function renderYearOptions() {
+    var html = '<option value="">All years</option>';
+    for (var y = NOW_YEAR + 1; y >= MIN_YEAR; y--) {
+      html += '<option value="' + y + '"' + (String(y) === filters.year ? ' selected' : '') + '>' + y + '</option>';
+    }
+    filterEls.year.innerHTML = html;
+    filterEls.year.value = filters.year;
+    syncField(filterEls.year);
+  }
+  function renderCountryOptions() {
+    filterEls.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, filters.country);
+    filterEls.country.value = filters.country;
+    syncField(filterEls.country);
+  }
+  function renderLangOptions() {
+    filterEls.lang.innerHTML = optionsHtml('All languages', POPULAR_LANGS, languageList, filters.lang);
+    filterEls.lang.value = filters.lang;
+    syncField(filterEls.lang);
+  }
+  function ensureConfigs() {
+    if (configRequested) return;
+    configRequested = true;
+    loadCountries().then(function (list) {
+      countryList = list;
+      renderCountryOptions();
+    }).catch(function () {});
+    loadLanguages().then(function (list) {
+      languageList = list;
+      renderLangOptions();
+    }).catch(function () {});
+  }
+  function renderFilters() {
+    var show = !!query && !!FILTER_TABS[tab];
+    filtersEl.hidden = !show;
+    if (!show) return;
+    if (filters.genre && !genreBySlug(filters.genre)) filters.genre = '';
+    filterEls.genre.innerHTML = '<option value="">All genres</option>' + genreListFor(tab).map(function (g) {
+      return '<option value="' + g.slug + '"' + (g.slug === filters.genre ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
+    }).join('');
+    filterEls.genre.value = filters.genre;
+    syncField(filterEls.genre);
+    renderYearOptions();
+    renderCountryOptions();
+    renderLangOptions();
+    filterEls.rating.innerHTML = simpleOptionsHtml('Any rating', RATINGS, filters.rating);
+    filterEls.rating.value = filters.rating;
+    syncField(filterEls.rating);
+    filterResetEl.hidden = !isFiltering();
+    ensureConfigs();
+  }
   function syncUrl() {
     var q = [];
     if (query) q.push('q=' + encodeURIComponent(query));
     if (query && tab !== 'all') q.push('type=' + tab);
+    if (query && FILTER_TABS[tab]) {
+      if (filters.genre) q.push('genre=' + encodeURIComponent(filters.genre));
+      if (filters.year) q.push('year=' + filters.year);
+      if (filters.country) q.push('country=' + filters.country);
+      if (filters.lang) q.push('lang=' + filters.lang);
+      if (filters.rating) q.push('rating=' + filters.rating);
+    }
     try {
       history.replaceState(null, '', window.location.pathname + (q.length ? '?' + q.join('&') : '') + window.location.hash);
     } catch (e) {}
   }
   function updateFooter() {
-    loaderEl.hidden = !loading || page === 0;
-    retryEl.hidden = !failed || page === 0;
+    loaderEl.hidden = !loading || !shownAny;
+    retryEl.hidden = !failed || !shownAny;
   }
   function endpointFor(kind) {
     return { all: '/search/multi', tv: '/search/tv', movie: '/search/movie', person: '/search/person' }[kind];
   }
-  function pageParams(pageNumber) {
-    return 'query=' + encodeURIComponent(query) + '&include_adult=false&page=' + pageNumber;
+  function isFiltering() {
+    return !!(FILTER_TABS[tab] && (filters.genre || filters.year || filters.country || filters.lang || filters.rating));
+  }
+  function pageParams(pageNumber, kind) {
+    var params = 'query=' + encodeURIComponent(query) + '&include_adult=false&page=' + pageNumber;
+    if (filters.year && FILTER_TABS[tab]) {
+      params += (kind === 'movie' ? '&primary_release_year=' : '&first_air_date_year=') + filters.year;
+    }
+    return params;
+  }
+  function applyFilters(items, signal) {
+    if (!isFiltering()) return Promise.resolve(items);
+    var def = filters.genre ? genreBySlug(filters.genre) : null;
+    var minRating = filters.rating ? parseFloat(filters.rating) : 0;
+    var kept = items.filter(function (item) {
+      if (def && !matchesGenre(item, def)) return false;
+      if (filters.lang && item.original_language !== filters.lang) return false;
+      if (minRating && !(item.vote_average >= minRating && item.vote_count >= MIN_VOTES)) return false;
+      return true;
+    });
+    if (!filters.country) return Promise.resolve(kept);
+    return Promise.all(kept.map(function (item) {
+      if (item.media_type === 'tv' && item.origin_country && item.origin_country.length) {
+        return Promise.resolve(item.origin_country.indexOf(filters.country) !== -1 ? item : null);
+      }
+      var path = (item.media_type === 'movie' ? '/movie/' : '/tv/') + item.id;
+      return tmdbFetch(path, '', signal).then(function (d) {
+        var codes = ((d && d.production_countries) || []).map(function (c) { return c.iso_3166_1; });
+        if (d && d.origin_country) codes = codes.concat(d.origin_country);
+        return codes.indexOf(filters.country) !== -1 ? item : null;
+      }).catch(function (e) {
+        if (e && e.name === 'AbortError') throw e;
+        return null;
+      });
+    })).then(function (list) {
+      return list.filter(Boolean);
+    });
   }
   function fetchResults(pageNumber, signal) {
     if (tab === 'anime') {
       return Promise.all([
-        tmdbFetch('/search/tv', pageParams(pageNumber), signal).catch(function (e) { if (e && e.name === 'AbortError') throw e; return null; }),
-        tmdbFetch('/search/movie', pageParams(pageNumber), signal).catch(function (e) { if (e && e.name === 'AbortError') throw e; return null; })
+        tmdbFetch('/search/tv', pageParams(pageNumber, 'tv'), signal).catch(function (e) { if (e && e.name === 'AbortError') throw e; return null; }),
+        tmdbFetch('/search/movie', pageParams(pageNumber, 'movie'), signal).catch(function (e) { if (e && e.name === 'AbortError') throw e; return null; })
       ]).then(function (pair) {
         if (!pair[0] && !pair[1]) throw new Error('TMDB request failed');
         var items = [];
@@ -498,7 +734,7 @@
         };
       });
     }
-    return tmdbFetch(endpointFor(tab), pageParams(pageNumber), signal).then(function (data) {
+    return tmdbFetch(endpointFor(tab), pageParams(pageNumber, tab), signal).then(function (data) {
       var kind = tab;
       (data.results || []).forEach(function (r) {
         if (kind !== 'all') r.media_type = kind;
@@ -525,46 +761,58 @@
     fetchResults(next, controller.signal)
       .then(function (data) {
         if (rid !== requestId) return;
-        loading = false;
-        page = next;
-        totalPages = Math.min(data.total_pages || 0, MAX_PAGES);
-        exhausted = page >= totalPages;
-        var items = (data.results || []).filter(function (item) {
+        var fresh = (data.results || []).filter(function (item) {
           if (!keepItem(item)) return false;
           var key = item.media_type + ':' + item.id;
           if (seen[key]) return false;
           seen[key] = true;
           return true;
         });
-        setStatus('');
-        var fragment = document.createDocumentFragment();
-        if (next === 1) {
-          var withSaif = matchesSaif(query) && (tab === 'all' || tab === 'person');
-          if (withSaif) {
-            if (items.length) fragment.appendChild(buildGroupLabel('Profile'));
-            fragment.appendChild(buildSaifCard());
-            if (items.length) fragment.appendChild(buildGroupLabel('Results'));
-            shownAny = true;
+        return applyFilters(fresh, controller.signal).then(function (items) {
+          if (rid !== requestId) return;
+          loading = false;
+          page = next;
+          totalPages = Math.min(data.total_pages || 0, MAX_PAGES);
+          exhausted = page >= totalPages;
+          emptyStreak = items.length ? 0 : emptyStreak + 1;
+          if (emptyStreak >= EMPTY_LIMIT) exhausted = true;
+          var fragment = document.createDocumentFragment();
+          if (next === 1) {
+            var withSaif = matchesSaif(query) && (tab === 'all' || tab === 'person');
+            if (withSaif) {
+              if (items.length) fragment.appendChild(buildGroupLabel('Profile'));
+              fragment.appendChild(buildSaifCard());
+              if (items.length) fragment.appendChild(buildGroupLabel('Results'));
+              shownAny = true;
+            }
           }
-        }
-        items.forEach(function (item) {
-          fragment.appendChild(buildCard(item));
-          shownAny = true;
-        });
-        if (next === 1 && !shownAny) {
-          resultsContainer.innerHTML = '<p class="no-results">No results for “' + escapeHtml(query) + '”</p>';
-        } else {
+          items.forEach(function (item) {
+            fragment.appendChild(buildCard(item));
+            shownAny = true;
+          });
+          if (!shownAny) {
+            if (!exhausted) {
+              updateFooter();
+              fetchPage();
+              return;
+            }
+            setStatus('');
+            resultsContainer.innerHTML = '<p class="no-results">No results for “' + escapeHtml(query) + '”' + (isFiltering() ? ' with these filters' : '') + '</p>';
+            updateFooter();
+            return;
+          }
+          setStatus('');
           resultsContainer.appendChild(fragment);
           watchCredits(resultsContainer);
-        }
-        updateFooter();
-        window.requestAnimationFrame(maybeLoad);
+          updateFooter();
+          window.requestAnimationFrame(maybeLoad);
+        });
       })
       .catch(function (err) {
         if (err.name === 'AbortError' || rid !== requestId) return;
         loading = false;
         failed = true;
-        if (page === 0) {
+        if (!shownAny) {
           if (matchesSaif(query) && (tab === 'all' || tab === 'person')) {
             setStatus('');
             resultsContainer.appendChild(buildSaifCard());
@@ -590,9 +838,11 @@
     failed = false;
     seen = {};
     shownAny = false;
+    emptyStreak = 0;
     clearResults();
     updateFooter();
     renderTabs();
+    renderFilters();
     syncUrl();
     document.title = query ? query + ' | tvbox' : 'Search ǀ tvbox';
     if (!query) {
@@ -622,9 +872,20 @@
     tab = next;
     startSearch();
   });
+  Object.keys(filterEls).forEach(function (key) {
+    filterEls[key].addEventListener('change', function () {
+      filters[key] = filterEls[key].value;
+      syncField(filterEls[key]);
+      startSearch();
+    });
+  });
+  filterResetEl.addEventListener('click', function () {
+    filters = { genre: '', year: '', country: '', lang: '', rating: '' };
+    startSearch();
+  });
   function retry() {
     failed = false;
-    if (page === 0) setStatus(LOADING_HTML);
+    if (!shownAny) setStatus(LOADING_HTML);
     fetchPage();
   }
   retryEl.addEventListener('click', retry);
@@ -649,6 +910,16 @@
   var params = new URLSearchParams(window.location.search);
   var initialTab = params.get('type');
   if (initialTab && validTab(initialTab)) tab = initialTab;
+  (function readFilters() {
+    var yearParam = parseInt(params.get('year') || '', 10);
+    if (!isNaN(yearParam) && yearParam >= MIN_YEAR && yearParam <= NOW_YEAR + 1) filters.year = String(yearParam);
+    var country = (params.get('country') || '').toUpperCase();
+    if (/^[A-Z]{2}$/.test(country)) filters.country = country;
+    var lang = (params.get('lang') || '').toLowerCase();
+    if (/^[a-z]{2,3}$/.test(lang)) filters.lang = lang;
+    if (validOption(RATINGS, params.get('rating') || '')) filters.rating = params.get('rating');
+    filters.genre = slugify(params.get('genre') || '');
+  })();
   var initialQuery = params.get('q');
   renderTabs();
   if (initialQuery) {
