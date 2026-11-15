@@ -202,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const wdShowNameEl    = document.getElementById('wd-show-name');
   const wdShowYearEl    = document.getElementById('wd-show-year');
   const wdCalendarEl    = document.getElementById('wd-calendar');
-  const wdHintEl        = document.getElementById('wd-hint');
   const wdDurationEl    = document.getElementById('wd-duration');
   const wdFieldStart    = document.getElementById('wd-field-start');
   const wdFieldEnd      = document.getElementById('wd-field-end');
@@ -336,11 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
       wdDurationEl.hidden = false;
     } else {
       wdDurationEl.hidden = true;
-    }
-    if (wdActiveField === 'start') {
-      wdHintEl.textContent = wdRange.start ? 'Tap a day to change when you started' : 'Tap the day you started watching';
-    } else {
-      wdHintEl.textContent = wdRange.end ? 'Tap a day to change when you finished' : 'Now tap the day you finished';
     }
   }
   function wdSelectDate(date) {
