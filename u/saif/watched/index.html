@@ -179,6 +179,7 @@ showCopied();
         card.dataset.title = s.title;
         card.dataset.imdb = s.imdb;
         if (s.rating != null) card.dataset.myRating = String(s.rating);
+        if (s.journalOrder != null) card.dataset.journal = String(s.journalOrder);
         var titleAttr = s.title.replace(/"/g, '&quot;');
         var ratingHtml = s.rating != null
           ? '<p class="rating"><a href="/u/saif/rating/?stars=' + s.rating + '" class="rating-link">' + starGlyph(s.rating) + '</a></p>'
