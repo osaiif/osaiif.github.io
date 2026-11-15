@@ -7,7 +7,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>...</title>
-  <link rel="stylesheet" href="/css/styles.css?v=8">
+  <link rel="stylesheet" href="/css/styles.css?v=9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
@@ -200,9 +200,6 @@
           <label for="watchdate-toggle" class="watchdate-backdrop" aria-hidden="true"></label>
           <div class="watchdate-popover" id="watchdate-popover">
             <div class="wd-header">
-              <div class="wd-clapper" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M20 8H4l.9-3.6c.14-.56.65-.96 1.22-1.02L20 2.5V8zM19.4 3.9l-3.9.42.7 2.68 3.9-.9-.7-2.2zM14.1 4.5l-3.9.42.7 2.68 3.9-.9-.7-2.2zM8.8 5.1l-3.9.42.6 2.28 3.9-.7-.6-2z"/><rect x="4" y="9" width="16" height="12" rx="2"/></svg>
-              </div>
               <div class="wd-header-text">
                 <span class="wd-title">Log your watch</span>
                 <span class="wd-subtitle"><span class="wd-show-name" id="wd-show-name">this show</span><span class="wd-show-year" id="wd-show-year"></span></span>
@@ -211,7 +208,6 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </label>
             </div>
-            <p class="wd-hint" id="wd-hint">Tap the day you started watching</p>
             <div class="wd-stub-row">
               <button type="button" class="wd-stub -active" id="wd-field-start" data-field="start">
                 <span class="wd-stub-label">Started</span>
@@ -795,6 +791,6 @@ showCopied();
     });
   </script>
 <script src="/js/auth.js?v=1"></script>
-<script src="/js/showmarking.js?v=3"></script>
+<script src="/js/showmarking.js?v=4"></script>
 </body>
 </html>
