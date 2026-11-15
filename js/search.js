@@ -259,7 +259,7 @@
     '<svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.75l2.87 6.13 6.63.7-4.93 4.6 1.32 6.62L12 17.9l-5.89 3.9 1.32-6.62-4.93-4.6 6.63-.7L12 2.75z"></path></svg>';
   var SPINNER_HTML =
     '<div class="spinner -inline"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
-  var LOADING_HTML = '<div class="loading-shimmer">' + SPINNER_HTML + '</div>';
+  var LOADING_HTML = SPINNER_HTML;
   function matchesSaif(query) {
     var t = String(query || '').trim().toLowerCase().replace(/^@/, '');
     return t.length >= 3 && ('saif'.indexOf(t) === 0 || t === 'osaif');
