@@ -202,7 +202,7 @@
       full.forEach(function (pair) { names[pair[0]] = pair[1]; });
       var top = popular.filter(function (pair) { return names[pair[0]]; }).map(function (pair) { return [pair[0], names[pair[0]]]; });
       html += '<optgroup label="Popular">' + top.map(opt).join('') + '</optgroup>';
-      html += '<optgroup label="All">' + full.map(opt).join('') + '</optgroup>';
+      html += '<optgroup label="A–Z">' + full.map(opt).join('') + '</optgroup>';
     } else {
       html += popular.map(opt).join('');
     }
@@ -214,8 +214,16 @@
     }).join('');
   }
   var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
-  function markSet(select) {
-    select.classList.toggle('-set', select.value !== '' && select.value !== 'all');
+  function syncField(select) {
+    var field = select.closest('.cg-field');
+    if (!field) return;
+    var isDefault = select.value === field.getAttribute('data-default');
+    var option = select.options[select.selectedIndex];
+    field.querySelector('.cg-field-text').textContent = isDefault || !option ? field.getAttribute('data-label') : option.textContent;
+    field.classList.toggle('-set', !isDefault);
+  }
+  function fieldOf(select) {
+    return select.closest('.cg-field');
   }
   function cardHtml(show) {
     var year = show.first_air_date ? show.first_air_date.slice(0, 4) : '';
@@ -383,35 +391,35 @@
       return '<option value="' + dec.key + '">' + escapeHtml(dec.label) + '</option>';
     }).join('');
     el.decade.value = state.decade;
-    markSet(el.decade);
+    syncField(el.decade);
   }
   function renderYearSelect() {
     var years = yearsForDecade(state.decade);
-    el.year.hidden = !years.length;
+    fieldOf(el.year).hidden = !years.length;
     el.year.innerHTML = '<option value="">All years</option>' + years.map(function (y) {
       return '<option value="' + y + '">' + y + '</option>';
     }).join('');
     el.year.value = state.year;
-    markSet(el.year);
+    syncField(el.year);
   }
   function renderFilters() {
     el.sort.innerHTML = SORTS.map(function (pair) {
       return '<option value="' + pair[0] + '">' + escapeHtml(pair[1]) + '</option>';
     }).join('');
     el.sort.value = state.sort;
-    el.country.innerHTML = optionsHtml('Any country', POPULAR_COUNTRIES, countryList, state.country);
-    el.lang.innerHTML = optionsHtml('Any language', POPULAR_LANGS, languageList, state.lang);
-    el.status.innerHTML = simpleOptionsHtml('Any status', STATUSES, state.status);
-    el.type.innerHTML = simpleOptionsHtml('Any type', TYPES, state.type);
-    el.rating.innerHTML = simpleOptionsHtml('Any rating', RATINGS, state.rating);
+    el.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, state.country);
+    el.lang.innerHTML = optionsHtml('All languages', POPULAR_LANGS, languageList, state.lang);
+    el.status.innerHTML = simpleOptionsHtml('All statuses', STATUSES, state.status);
+    el.type.innerHTML = simpleOptionsHtml('All types', TYPES, state.type);
+    el.rating.innerHTML = simpleOptionsHtml('All ratings', RATINGS, state.rating);
     el.country.value = state.country;
     el.lang.value = state.lang;
-    markSet(el.country);
-    markSet(el.lang);
-    markSet(el.status);
-    markSet(el.type);
-    markSet(el.rating);
-    el.sort.classList.toggle('-set', state.sort !== DEFAULT_SORT);
+    syncField(el.country);
+    syncField(el.lang);
+    syncField(el.status);
+    syncField(el.type);
+    syncField(el.rating);
+    syncField(el.sort);
     renderDecadeSelect();
     renderYearSelect();
     el.reset.hidden = !filtersActive();
@@ -584,14 +592,13 @@
   });
   el.year.addEventListener('change', function () {
     state.year = el.year.value;
-    markSet(el.year);
+    syncField(el.year);
     refresh();
   });
   [['sort', el.sort], ['country', el.country], ['lang', el.lang], ['status', el.status], ['type', el.type], ['rating', el.rating]].forEach(function (pair) {
     pair[1].addEventListener('change', function () {
       state[pair[0]] = pair[1].value;
-      if (pair[0] === 'sort') pair[1].classList.toggle('-set', state.sort !== DEFAULT_SORT);
-      else markSet(pair[1]);
+      syncField(pair[1]);
       refresh();
     });
   });
@@ -644,14 +651,14 @@
   if (genre) startFresh();
   loadCountries().then(function (list) {
     countryList = list;
-    el.country.innerHTML = optionsHtml('Any country', POPULAR_COUNTRIES, countryList, state.country);
+    el.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, state.country);
     el.country.value = state.country;
-    markSet(el.country);
+    syncField(el.country);
   }).catch(function () {});
   loadLanguages().then(function (list) {
     languageList = list;
-    el.lang.innerHTML = optionsHtml('Any language', POPULAR_LANGS, languageList, state.lang);
+    el.lang.innerHTML = optionsHtml('All languages', POPULAR_LANGS, languageList, state.lang);
     el.lang.value = state.lang;
-    markSet(el.lang);
+    syncField(el.lang);
   }).catch(function () {});
 })();
