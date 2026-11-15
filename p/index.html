@@ -289,6 +289,17 @@
       var PROFILE_BASE = 'https://image.tmdb.org/t/p/w342';
       var POSTER_BASE = 'https://image.tmdb.org/t/p/w154';
       var WORK_LIMIT = 20;
+      // Credits that TMDB is missing but IMDb lists. Keyed by TMDB person id.
+      // Only "imdb" (the title id, e.g. tt1234567) and "section" are required; the page looks the
+      // title up on TMDB for its poster/year/link and falls back to the fields given here
+      // (name, year, type) when TMDB doesn't know the title at all.
+      //   section: 'acting' | 'crew'      role: character name (acting) or job (crew)
+      //   type: 'movie' | 'tv'            year: 2021
+      var EXTRA_CREDITS = {
+        '5563583': [
+          // { section: 'acting', imdb: 'tt0000000', name: 'Title', year: 2021, type: 'movie', role: 'Character' },
+        ]
+      };
       var ROLE_LABELS = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Editing: 'Editor' };
       var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
       var BACKDROP_BASE = 'https://image.tmdb.org/t/p/original';
@@ -374,6 +385,7 @@
         return c && (c.media_type === 'tv' || c.media_type === 'movie');
       }
       function workUrl(w) {
+        if (w.external) return w.imdb ? 'https://www.imdb.com/title/' + encodeURIComponent(w.imdb) + '/' : '';
         if (w.type === 'movie') return '/m/?id=' + encodeURIComponent(w.id);
         return showUrl(w.id);
       }
@@ -394,6 +406,8 @@
               name: c.name || c.title || c.original_name || c.original_title || 'Untitled',
               poster: c.poster_path || null,
               date: c.first_air_date || c.release_date || '',
+              imdb: c.imdb || '',
+              external: !!c.external,
               roles: [],
               episodes: 0
             };
@@ -421,14 +435,18 @@
         if (w.episodes > 0) {
           bits.push('<span class="numbers">' + w.episodes + '</span> episode' + (w.episodes === 1 ? '' : 's'));
         }
-        return '<a class="work-row" href="' + escapeHtml(workUrl(w)) + '">' +
+        var href = workUrl(w);
+        var open = href
+          ? '<a class="work-row" href="' + escapeHtml(href) + '"' + (w.external ? ' target="_blank" rel="noopener"' : '') + '>'
+          : '<div class="work-row">';
+        return open +
           '<span class="work-poster' + (posterUrl ? ' -has-img' : '') + '">' +
           '<span class="work-initial">' + escapeHtml(firstLetter(w.name)) + '</span>' +
           (posterUrl ? '<img src="' + escapeHtml(posterUrl) + '" alt="" loading="lazy" decoding="async">' : '') +
           '</span><span class="work-info"><span class="work-title">' + escapeHtml(w.name) + '</span>' +
           (w.roles.length ? '<span class="work-role">' + escapeHtml(w.roles.join(', ')) + '</span>' : '') +
           (bits.length ? '<span class="work-sub">' + bits.join(' \u00b7 ') + '</span>' : '') +
-          '</span></a>';
+          '</span>' + (href ? '</a>' : '</div>');
       }
       var workObserver = null;
       var workOrder = [];
@@ -541,6 +559,62 @@
       searchInput.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeSearch();
       });
+      function resolveExtra(item, index) {
+        var fallback = {
+          media_type: item.type === 'tv' ? 'tv' : 'movie',
+          id: 'x' + index,
+          name: item.name || 'Untitled',
+          title: item.name || 'Untitled',
+          release_date: item.year ? String(item.year) : '',
+          first_air_date: item.year ? String(item.year) : '',
+          poster_path: null,
+          imdb: item.imdb || '',
+          external: true
+        };
+        if (!item.imdb) return Promise.resolve(fallback);
+        return tmdbGet('/find/' + encodeURIComponent(item.imdb), 'external_source=imdb_id')
+          .then(function (res) {
+            var tv = res.tv_results && res.tv_results[0];
+            var movie = res.movie_results && res.movie_results[0];
+            var hit = tv || movie;
+            if (!hit) return fallback;
+            return {
+              media_type: tv ? 'tv' : 'movie',
+              id: hit.id,
+              name: hit.name || hit.title || fallback.name,
+              title: hit.title || hit.name || fallback.name,
+              release_date: hit.release_date || hit.first_air_date || fallback.release_date,
+              first_air_date: hit.first_air_date || hit.release_date || fallback.first_air_date,
+              poster_path: hit.poster_path || null,
+              imdb: item.imdb,
+              external: false
+            };
+          })
+          .catch(function () { return fallback; });
+      }
+      function withExtras(person, workCast, workCrew, done) {
+        var extras = EXTRA_CREDITS[String(person.id)] || [];
+        if (!extras.length) {
+          done(workCast, workCrew);
+          return;
+        }
+        Promise.all(extras.map(resolveExtra)).then(function (resolved) {
+          var cast = workCast.slice();
+          var crew = workCrew.slice();
+          resolved.forEach(function (entry, i) {
+            var item = extras[i];
+            var role = String(item.role || '').trim();
+            if (item.section === 'crew') {
+              entry.job = role;
+              crew.push(entry);
+            } else {
+              entry.character = role;
+              cast.push(entry);
+            }
+          });
+          done(cast, crew);
+        });
+      }
       function renderWorks(person, workCast, workCrew) {
         currentPerson = person;
         works = { acting: collectWorks(workCast, 'character'), crew: collectWorks(workCrew, 'job') };
@@ -603,7 +677,9 @@
         bioBtn.textContent = 'More';
         hero.hidden = false;
         updateBioToggle();
-        renderWorks(person, workCast, workCrew);
+        withExtras(person, workCast, workCrew, function (cast, crew) {
+          renderWorks(person, cast, crew);
+        });
       }
       bioBtn.addEventListener('click', function () {
         var open = bioEl.classList.toggle('-clamp') === false;
