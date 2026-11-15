@@ -232,6 +232,7 @@
       <div></div><div></div><div></div><div></div><div></div><div></div>
     </div>
   </div>
+  <script src="/js/urlslug.js?v=1"></script>
   <script>
 
 (function () {
@@ -898,9 +899,12 @@
         tmdbGet('/person/' + encodeURIComponent(personId), 'append_to_response=combined_credits')
           .then(function (person) {
             render(person);
-            try {
-              history.replaceState(null, '', personPath(person.name, person.id) + window.location.hash);
-            } catch (e) {}
+            if (window.tvboxSlug) {
+              window.tvboxSlug.slugFor('person', person, tmdbGet).then(function (slug) {
+                if (!slug) return;
+                try { history.replaceState(null, '', '/p/' + slug + window.location.hash); } catch (e) {}
+              });
+            }
           })
           .catch(function (err) {
             setStatus('Something went wrong: ' + err.message, true);
@@ -915,13 +919,9 @@
           window.location.replace('/u/saif/');
           return;
         }
-        var idMatch = rawSlug.match(/(?:^|-)(\d+)$/);
-        if (idMatch) personId = idMatch[1];
-        else nameQuery = rawSlug.replace(/-/g, ' ');
+        nameQuery = rawSlug.replace(/-/g, ' ');
       }
-      if (personId) {
-        load(personId);
-      } else if (nameQuery) {
+      function searchByName() {
         setStatus(SPINNER_HTML);
         tmdbGet('/search/person', 'query=' + encodeURIComponent(nameQuery) + '&include_adult=false&page=1')
           .then(function (data) {
@@ -940,6 +940,19 @@
           .catch(function (err) {
             setStatus('Something went wrong: ' + err.message, true);
           });
+      }
+      if (personId) {
+        load(personId);
+      } else if (rawSlug && window.tvboxSlug) {
+        setStatus(SPINNER_HTML);
+        window.tvboxSlug.resolve('person', rawSlug, tmdbGet)
+          .then(function (id) {
+            if (id) load(id);
+            else searchByName();
+          })
+          .catch(function () { searchByName(); });
+      } else if (nameQuery) {
+        searchByName();
       } else {
         setStatus('No person selected. Head back to <a href="/search/">search</a> and pick someone.', true);
       }

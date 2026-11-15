@@ -374,6 +374,7 @@ showCopied();
       <div></div><div></div><div></div><div></div><div></div><div></div>
     </div>
   </div>
+  <script src="/js/urlslug.js?v=1"></script>
   <script>
     (function () {
       var TMDB_API_KEYS = [
@@ -924,10 +925,12 @@ showCopied();
         var details = detailsHtml(movie);
         document.getElementById('movie-details').innerHTML = details;
         document.getElementById('movie-details-section').hidden = !details;
-        try {
-          var base = slugify(title);
-          history.replaceState(null, '', '/m/' + (base ? base + '-' + movie.id : String(movie.id)) + window.location.hash);
-        } catch (e) {}
+        if (window.tvboxSlug) {
+          window.tvboxSlug.slugFor('movie', movie, tmdbGet).then(function (slug) {
+            if (!slug) return;
+            try { history.replaceState(null, '', '/m/' + slug + window.location.hash); } catch (e) {}
+          });
+        }
       }
       function loadMovie(id) {
         setStatus(SPINNER_HTML);
@@ -939,12 +942,19 @@ showCopied();
       }
       var params = new URLSearchParams(window.location.search);
       var movieId = (params.get('id') || '').replace(/\D/g, '');
-      if (!movieId) {
-        var idMatch = (params.get('s') || '').toLowerCase().match(/(?:^|-)(\d+)$/);
-        if (idMatch) movieId = idMatch[1];
-      }
+      var movieSlug = (params.get('s') || '').trim();
       if (movieId) {
         loadMovie(movieId);
+      } else if (movieSlug && window.tvboxSlug) {
+        setStatus(SPINNER_HTML);
+        window.tvboxSlug.resolve('movie', movieSlug, tmdbGet)
+          .then(function (id) {
+            if (!id) throw new Error('No matching movie found');
+            loadMovie(id);
+          })
+          .catch(function (err) {
+            setStatus('Something went wrong: ' + escapeHtml(err.message), true);
+          });
       } else {
         setStatus('No movie selected. Head back to <a href="/search/">search</a> and pick one.', true);
       }

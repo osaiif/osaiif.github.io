@@ -309,6 +309,7 @@ showCopied();
       <div></div><div></div><div></div><div></div><div></div><div></div>
     </div>
   </div>
+  <script src="/js/urlslug.js?v=1"></script>
   <script>
     (function () {
       var TMDB_API_KEYS = [
@@ -652,10 +653,7 @@ showCopied();
       var params = new URLSearchParams(window.location.search);
       var showId = params.get('id');
       var imdbId = params.get('imdb');
-      if (!showId && !imdbId) {
-        var slugMatch = (params.get('s') || '').toLowerCase().match(/(?:^|-)(\d+)$/);
-        if (slugMatch) showId = slugMatch[1];
-      }
+      var slugParam = (params.get('s') || '').trim();
       function loadShow(id) {
         setStatus(SPINNER_HTML);
         tmdbGet('/tv/' + encodeURIComponent(id), 'append_to_response=external_ids,videos')
@@ -673,6 +671,16 @@ showCopied();
             var match = found.tv_results && found.tv_results[0];
             if (!match) throw new Error('No matching show found on TMDB');
             loadShow(match.id);
+          })
+          .catch(function (err) {
+            setStatus('Something went wrong: ' + err.message, true);
+          });
+      } else if (slugParam && window.tvboxSlug) {
+        setStatus(SPINNER_HTML);
+        window.tvboxSlug.resolve('tv', slugParam, tmdbGet)
+          .then(function (id) {
+            if (!id) throw new Error('No matching show found');
+            loadShow(id);
           })
           .catch(function (err) {
             setStatus('Something went wrong: ' + err.message, true);
@@ -709,10 +717,12 @@ showCopied();
             }
             document.getElementById('show-title').textContent = show.name || 'Untitled';
             document.title = (show.name || 'Untitled') + ' ǀ tvbox';
-            try {
-              var pathBase = slugifyGenre(show.name);
-              history.replaceState(null, '', '/show/' + (pathBase ? pathBase + '-' + show.id : String(show.id)) + window.location.hash);
-            } catch (e) {}
+            if (window.tvboxSlug) {
+              window.tvboxSlug.slugFor('tv', show, tmdbGet).then(function (slug) {
+                if (!slug) return;
+                try { history.replaceState(null, '', '/show/' + slug + window.location.hash); } catch (e) {}
+              });
+            }
             window.tvboxShowMeta = {
               id: show.id,
               name: show.name || 'this show',

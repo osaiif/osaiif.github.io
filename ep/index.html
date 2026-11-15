@@ -242,6 +242,7 @@
       <div></div><div></div><div></div><div></div><div></div><div></div>
     </div>
   </div>
+  <script src="/js/urlslug.js?v=1"></script>
   <script>
 
 (function () {
@@ -723,12 +724,12 @@
         overview.hidden = !ep.overview;
         hero.hidden = false;
         renderCredits(ep);
-        try {
-          var epBase = String(showName || '');
-          if (epBase.normalize) epBase = epBase.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          epBase = epBase.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-          history.replaceState(null, '', '/ep/' + (epBase ? epBase + '-' : '') + tvId + '-s' + seasonNo + 'e' + epNo + window.location.hash);
-        } catch (e) {}
+        if (show && window.tvboxSlug) {
+          window.tvboxSlug.slugFor('tv', show, tmdbGet).then(function (slug) {
+            if (!slug) return;
+            try { history.replaceState(null, '', '/ep/' + slug + '-s' + seasonNo + 'e' + epNo + window.location.hash); } catch (e) {}
+          });
+        }
       }
       panelEl.addEventListener('error', onPhotoError, true);
       tabsEl.addEventListener('click', function (e) {
@@ -739,17 +740,8 @@
       var tvId = parseInt(params.get('tv'), 10);
       var seasonNo = parseInt(params.get('season'), 10);
       var epNo = parseInt(params.get('ep'), 10);
-      if (!isFinite(tvId) || !isFinite(seasonNo) || !isFinite(epNo)) {
-        var epSlug = (params.get('s') || '').toLowerCase().match(/(?:^|-)(\d+)-s(\d+)e(\d+)$/);
-        if (epSlug) {
-          tvId = parseInt(epSlug[1], 10);
-          seasonNo = parseInt(epSlug[2], 10);
-          epNo = parseInt(epSlug[3], 10);
-        }
-      }
-      if (!isFinite(tvId) || !isFinite(seasonNo) || !isFinite(epNo)) {
-        setStatus('No episode selected. Head back to <a href="/search/">search</a> and pick a show.', true);
-      } else {
+      var epSlug = (params.get('s') || '').trim().toLowerCase().match(/^(.+)-s(\d+)e(\d+)$/);
+      function startEpisode(tvId, seasonNo, epNo) {
         setStatus(SPINNER_HTML);
         var showReq = tmdbGet('/tv/' + tvId).catch(function () { return null; });
         var epReq = tmdbGet('/tv/' + tvId + '/season/' + seasonNo + '/episode/' + epNo, 'append_to_response=credits');
@@ -758,6 +750,21 @@
         }).catch(function (err) {
           setStatus('Something went wrong: ' + err.message, true);
         });
+      }
+      if (isFinite(tvId) && isFinite(seasonNo) && isFinite(epNo)) {
+        startEpisode(tvId, seasonNo, epNo);
+      } else if (epSlug && window.tvboxSlug) {
+        setStatus(SPINNER_HTML);
+        window.tvboxSlug.resolve('tv', epSlug[1], tmdbGet)
+          .then(function (id) {
+            if (!id) throw new Error('No matching show found');
+            startEpisode(parseInt(id, 10), parseInt(epSlug[2], 10), parseInt(epSlug[3], 10));
+          })
+          .catch(function (err) {
+            setStatus('Something went wrong: ' + err.message, true);
+          });
+      } else {
+        setStatus('No episode selected. Head back to <a href="/search/">search</a> and pick a show.', true);
       }
 })();
 
