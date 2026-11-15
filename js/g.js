@@ -435,8 +435,7 @@
     if (!isActive()) return;
     var titleText = genre ? genre.name : 'All genres';
     el.titleName.textContent = titleText;
-    var scope = state.year || (state.decade !== 'all' ? decadeLabel(state.decade) : '');
-    document.title = (genre ? genre.name : 'All') + ' TV Shows' + (scope ? ' (' + scope + ')' : '') + ' | tvbox';
+    document.title = titleText + ' ǀ tvbox';
   }
   function buildQuery(pageNumber) {
     var q = [
@@ -567,7 +566,7 @@
   if (!isActive()) {
     el.titleName.textContent = 'Choose a genre';
     el.meta.textContent = rawSlug || rawId ? 'That genre does not exist. Pick one from the list.' : 'Pick a genre to browse its shows.';
-    document.title = 'Genres | tvbox';
+    document.title = 'Genres ǀ tvbox';
     showBrowse(false);
   } else {
     renderFilters();
