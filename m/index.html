@@ -309,10 +309,6 @@
             <span class="value numbers" id="movie-runtime-value">–</span>
             <span class="definition title-all-caps -small">Runtime</span>
           </div>
-          <div class="show-stat">
-            <span class="value numbers" id="movie-votes-value">–</span>
-            <span class="definition title-all-caps -small">Votes</span>
-          </div>
         </div>
         <p id="movie-tagline" class="movie-tagline" hidden></p>
         <p id="show-overview" class="show-overview"></p>
@@ -550,12 +546,6 @@ showCopied();
         if (v >= 1e6) return '$' + (Math.round(v / 1e5) / 10) + 'M';
         return '$' + Math.round(v).toLocaleString('en-US');
       }
-      function formatVotes(n) {
-        var v = Number(n);
-        if (!isFinite(v) || v <= 0) return '–';
-        if (v >= 1000) return (Math.round(v / 100) / 10) + 'K';
-        return String(v);
-      }
       function cleanRole(role) {
         var r = String(role || '').trim();
         return GENERIC_ROLE.test(r) ? '' : r;
@@ -727,7 +717,6 @@ showCopied();
         }).join('<span class="genre-sep">·</span>');
         document.getElementById('show-rating-value').textContent = movie.vote_average ? movie.vote_average.toFixed(1) : '–';
         document.getElementById('movie-runtime-value').textContent = runtime || '–';
-        document.getElementById('movie-votes-value').textContent = formatVotes(movie.vote_count);
         var tagline = document.getElementById('movie-tagline');
         tagline.textContent = movie.tagline || '';
         tagline.hidden = !movie.tagline;
