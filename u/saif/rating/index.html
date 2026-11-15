@@ -152,9 +152,8 @@ showCopied();
         return;
       }
       var matches = SHOWS.filter(function (s) { return s.rating === stars; });
-      heading.innerHTML =
-        '<span class="rating-heading-star">' + starGlyph(stars) + '</span> ' +
-        '<span class="numbers">' + matches.length + '</span> show' + (matches.length === 1 ? '' : 's');
+      heading.innerHTML = '<span class="rating-heading-star">' + starGlyph(stars) + '</span>';
+      heading.setAttribute('aria-label', starGlyph(stars) + ' rated shows');
       if (!matches.length) {
         grid.innerHTML = '<p class="no-results">No shows rated ' + starGlyph(stars) + ' yet.</p>';
         return;
@@ -170,6 +169,7 @@ showCopied();
         card.dataset.title = s.title;
         card.dataset.imdb = imdbId;
         card.dataset.myRating = s.rating;
+        if (s.journalOrder != null) card.dataset.journal = String(s.journalOrder);
         card.innerHTML =
           '<a href="/show/?imdb=' + imdbId + '">' +
             '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="' + loadingAttr + '" decoding="async">' +
@@ -181,7 +181,8 @@ showCopied();
       TVSort.init({
         grid: grid,
         mount: document.getElementById('rating-sort-mount'),
-        storageKey: 'tvbox:sort:star'
+        storageKey: 'tvbox:sort:star',
+        hide: ['mine']
       });
     })();
   </script>
