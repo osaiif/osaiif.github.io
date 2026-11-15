@@ -38,16 +38,18 @@
     .stx-fig-label { font-size: 12px; color: #8490a4; }
     .stx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
     .stx-section { min-width: 0; }
-    .stx-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-    .stx-section-title { margin: 0; font-size: 14px; font-weight: 600; color: #eaeef5; }
-    .stx-section-title a { color: inherit; text-decoration: none; transition: color 0.15s ease; }
+    .stx-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 1px solid #1e2a3e; }
+    .stx-section-title { margin: 0; font-size: 12.6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(234, 238, 245, 0.5); }
+    .stx-section-title a { color: #fff; text-decoration: none; transition: color 0.15s ease; }
     .stx-section-note { flex: none; font-size: 12px; color: #8490a4; text-align: right; }
     .stx-section-note strong { color: #b3c2db; font-weight: 500; }
+    .stx-section-note strong.-up { color: #46c37b; }
+    .stx-section-note strong.-down { color: #f0605d; }
     .stx-list { display: flex; flex-direction: column; gap: 14px; }
     .stx-row { display: flex; flex-direction: column; gap: 6px; }
     .stx-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .stx-row-label { flex: 1; min-width: 0; font-size: 13.5px; color: #eaeef5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    a.stx-row-label { text-decoration: none; transition: color 0.15s ease; }
+    .stx-row-label { flex: 1; min-width: 0; font-size: 13.5px; color: rgba(255, 255, 255, 0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    a.stx-row-label { color: #fff; font-weight: 500; text-decoration: none; transition: color 0.15s ease; }
     .stx-row-value { flex: none; font-size: 12.5px; color: #8490a4; font-variant-numeric: tabular-nums; }
     .stx-row-value b { margin-right: 6px; color: #eaeef5; font-weight: 400; }
     .stx-bar { height: 2px; background-color: rgba(255,255,255,0.08); }
@@ -61,6 +63,8 @@
     .stx-record-row.-current .stx-record-fill { background-color: #fff; }
     .stx-record-value { font-size: 13px; color: #eaeef5; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .stx-record-delta { font-size: 12px; color: #8490a4; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .stx-record-delta.-up { color: #46c37b; }
+    .stx-record-delta.-down { color: #f0605d; }
     .stx-hl { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #151e2e; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
     .stx-hl:first-child { padding-top: 0; border-top: 0; }
     .stx-hl:last-child { padding-bottom: 0; }
@@ -68,7 +72,7 @@
     .stx-hl-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .stx-hl-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     .stx-hl-label { font-size: 12px; color: #8490a4; }
-    .stx-hl-title { font-size: 13.5px; color: #eaeef5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s ease; }
+    .stx-hl-title { font-size: 13.5px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s ease; }
     .stx-hl-value { flex: none; text-align: right; font-size: 14px; line-height: 1.2; color: #eaeef5; font-variant-numeric: tabular-nums; }
     .stx-hl-value .unit { display: block; margin-top: 2px; font-size: 11px; color: #8490a4; font-family: var(--font-text); }
     .stx-page .numbers { font-variant-numeric: tabular-nums; }
@@ -162,19 +166,19 @@
             </div>
             <div id="highlight-list"></div>
           </section>
-          <section class="stx-section" id="section-platforms">
-            <div class="stx-section-head">
-              <h2 class="stx-section-title">Platforms</h2>
-              <span class="stx-section-note" id="platform-insight"></span>
-            </div>
-            <div class="stx-list" id="platform-bars"></div>
-          </section>
           <section class="stx-section" id="section-genres">
             <div class="stx-section-head">
               <h2 class="stx-section-title">Genres</h2>
               <span class="stx-section-note" id="genre-insight"></span>
             </div>
             <div class="stx-list" id="genre-bars"></div>
+          </section>
+          <section class="stx-section" id="section-platforms">
+            <div class="stx-section-head">
+              <h2 class="stx-section-title">Platforms</h2>
+              <span class="stx-section-note" id="platform-insight"></span>
+            </div>
+            <div class="stx-list" id="platform-bars"></div>
           </section>
           <section class="stx-section" id="section-directors">
             <div class="stx-section-head">
@@ -286,6 +290,16 @@ showCopied();
         var base = s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         return '/p/' + (base ? base + '-' + id : String(id));
       }
+      var GENRE_PAGES = {
+        'Action & Adventure': 1, 'Animation': 1, 'Comedy': 1, 'Crime': 1, 'Documentary': 1, 'Drama': 1,
+        'Family': 1, 'Kids': 1, 'Mystery': 1, 'News': 1, 'Reality': 1, 'Sci-Fi & Fantasy': 1, 'Soap': 1,
+        'Talk': 1, 'War & Politics': 1, 'Western': 1
+      };
+      function genrePath(name) {
+        var s = String(name || '');
+        if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return '/g/?s=' + s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      }
       function fmt1(v) {
         return (Math.round(v * 10) / 10).toString();
       }
@@ -326,8 +340,8 @@ showCopied();
           return (
             '<div class="stx-row">' +
               '<div class="stx-row-top">' +
-                (item.id
-                  ? '<a class="stx-row-label" href="' + escapeHtml(personPath(item.name, item.id)) + '">' + escapeHtml(item.name) + '</a>'
+                (item.href
+                  ? '<a class="stx-row-label" href="' + escapeHtml(item.href) + '">' + escapeHtml(item.name) + '</a>'
                   : '<span class="stx-row-label">' + escapeHtml(item.name) + '</span>') +
                 '<span class="stx-row-value numbers"><b>' + fmt1(pct) + '%</b>' + abs + '</span>' +
               '</div>' +
@@ -428,6 +442,9 @@ showCopied();
         }
         renderHighlights(summary.details);
         var genreList = TVStats.toRanked(summary.genres, 8);
+        genreList.forEach(function (item) {
+          if (GENRE_PAGES[item.name]) item.href = genrePath(item.name);
+        });
         renderBarList(genreBars, genreList, summary.hours, 'h');
         if (genreList.length) {
           genreInsight.innerHTML = '<strong>' + escapeHtml(genreList[0].name) + '</strong> led the year';
@@ -435,7 +452,10 @@ showCopied();
           genreInsight.textContent = '';
         }
         var directorList = TVStats.toRanked(summary.directors, 8);
-        directorList.forEach(function (item) { item.id = summary.directorIds[item.name]; });
+        directorList.forEach(function (item) {
+          item.id = summary.directorIds[item.name];
+          if (item.id) item.href = personPath(item.name, item.id);
+        });
         renderBarList(directorBars, directorList, summary.episodes, 'eps');
         if (directorList.length) {
           directorInsight.innerHTML = '<strong>' + escapeHtml(directorList[0].name) + '</strong> most episodes';
@@ -510,11 +530,14 @@ showCopied();
           var maxHours = Math.max.apply(null, points.map(function (p) { return p.hours; })) || 1;
           mount.innerHTML = '<div class="stx-record">' + points.map(function (p, i) {
             var delta = '–';
+            var deltaClass = '';
             if (i > 0) {
               var prev = points[i - 1].hours;
               if (prev > 0) {
                 var change = ((p.hours - prev) / prev) * 100;
                 delta = (change > 0 ? '+' : '') + fmt1(change) + '%';
+                if (change > 0.05) deltaClass = ' -up';
+                else if (change < -0.05) deltaClass = ' -down';
               } else if (p.hours > 0) {
                 delta = 'new';
               }
@@ -525,7 +548,7 @@ showCopied();
                 '<span class="stx-record-year numbers">' + p.year + '</span>' +
                 '<div class="stx-record-bar"><div class="stx-record-fill" style="width:' + (p.hours / maxHours) * 100 + '%"></div></div>' +
                 '<span class="stx-record-value numbers">' + fmt1(p.hours) + 'h</span>' +
-                '<span class="stx-record-delta numbers">' + delta + '</span>' +
+                '<span class="stx-record-delta numbers' + deltaClass + '">' + delta + '</span>' +
               '</div>'
             );
           }).join('') + '</div>';
@@ -535,7 +558,8 @@ showCopied();
             if (before.hours > 0) {
               var overallChange = ((last.hours - before.hours) / before.hours) * 100;
               var word = overallChange > 1 ? 'up' : (overallChange < -1 ? 'down' : 'flat');
-              insight.innerHTML = '<strong>' + (overallChange > 0 ? '+' : '') + fmt1(overallChange) + '%</strong> ' + word + ' vs ' + before.year;
+              var tone = word === 'up' ? ' class="-up"' : (word === 'down' ? ' class="-down"' : '');
+              insight.innerHTML = '<strong' + tone + '>' + (overallChange > 0 ? '+' : '') + fmt1(overallChange) + '%</strong> ' + word + ' compared to ' + before.year;
             }
           }
         }).catch(function () {
