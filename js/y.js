@@ -278,8 +278,10 @@
   };
   GENRES.forEach(function (g) { g.slug = slugify(g.name); });
   var params = new URLSearchParams(window.location.search);
-  var yearParam = parseInt((params.get('y') || params.get('s') || '').replace(/\D/g, ''), 10);
+  var rawYearParam = params.get('y') || params.get('s') || '';
+  var yearParam = parseInt(rawYearParam.replace(/\D/g, ''), 10);
   var year = !isNaN(yearParam) && yearParam >= 1900 && yearParam <= MAX_YEAR ? yearParam : NOW_YEAR;
+  if (rawYearParam.toLowerCase() === 'all') year = null;
   var state = {
     genre: '',
     country: '',
@@ -343,7 +345,7 @@
   function syncUrl() {
     var q = filterQuery();
     try {
-      history.replaceState(null, '', '/y/' + year + (q ? '?' + q : '') + window.location.hash);
+      history.replaceState(null, '', '/y/' + (year === null ? 'all' : year) + (q ? '?' + q : '') + window.location.hash);
     } catch (e) {}
   }
   function filtersActive() {
@@ -353,9 +355,9 @@
     return !!(state.status || state.type || state.rating);
   }
   function yearOptionsHtml() {
-    var html = '';
-    var lowest = Math.min(MIN_YEAR, year);
-    var highest = Math.max(NOW_YEAR, year);
+    var html = '<option value="all"' + (year === null ? ' selected' : '') + '>All</option>';
+    var lowest = year === null ? MIN_YEAR : Math.min(MIN_YEAR, year);
+    var highest = year === null ? NOW_YEAR : Math.max(NOW_YEAR, year);
     for (var y = highest; y >= lowest; y--) {
       html += '<option value="' + y + '"' + (y === year ? ' selected' : '') + '>' + y + '</option>';
     }
@@ -363,7 +365,7 @@
   }
   function renderFilters() {
     el.yearSelect.innerHTML = yearOptionsHtml();
-    el.yearSelect.value = String(year);
+    el.yearSelect.value = year === null ? 'all' : String(year);
     el.genre.innerHTML = '<option value="">All genres</option>' + GENRES.map(function (g) {
       return '<option value="' + g.slug + '"' + (g.slug === state.genre ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
@@ -393,20 +395,22 @@
     el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
   }
   function renderTitle() {
-    el.titleName.textContent = String(year);
+    el.titleName.textContent = year === null ? 'All years' : String(year);
     var g = genreBySlug(state.genre);
-    document.title = (g ? g.name + ' ' : '') + 'TV Shows from ' + year + ' | tvbox';
+    document.title = (g ? g.name + ' ' : '') + 'TV Shows' + (year === null ? '' : ' from ' + year) + ' | tvbox';
   }
   function buildQuery(pageNumber) {
     var q = [
       'include_adult=false',
       'include_null_first_air_dates=false',
       'language=en-US',
-      'first_air_date.gte=' + year + '-01-01',
-      'first_air_date.lte=' + year + '-12-31',
       'sort_by=' + state.sort,
       'page=' + pageNumber
     ];
+    if (year !== null) {
+      q.push('first_air_date.gte=' + year + '-01-01');
+      q.push('first_air_date.lte=' + year + '-12-31');
+    }
     var g = genreBySlug(state.genre);
     if (g) q.push('with_genres=' + g.id);
     if (state.country) q.push('with_origin_country=' + state.country);
@@ -425,7 +429,7 @@
   function renderMeta(data) {
     var total = data.total_results || 0;
     var g = genreBySlug(state.genre);
-    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (g ? escapeHtml(g.name) + ' ' : '') + (total === 1 ? 'show' : 'shows') + ' first aired in <span class="numbers">' + year + '</span>';
+    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (g ? escapeHtml(g.name) + ' ' : '') + (total === 1 ? 'show' : 'shows') + (year === null ? '' : ' first aired in <span class="numbers">' + year + '</span>');
   }
   function updateFooter() {
     el.loader.hidden = !loading || page === 0;
@@ -508,8 +512,9 @@
   renderTitle();
   syncUrl();
   el.yearSelect.addEventListener('change', function () {
-    var target = parseInt(el.yearSelect.value, 10);
-    if (isNaN(target) || target === year) return;
+    var target = el.yearSelect.value === 'all' ? null : parseInt(el.yearSelect.value, 10);
+    if (target !== null && isNaN(target)) return;
+    if (target === year) return;
     year = target;
     refresh();
   });

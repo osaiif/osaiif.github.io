@@ -306,6 +306,8 @@
   GENRES.forEach(function (g) {
     if (!genre && ((rawSlug && g.slug === rawSlug) || (rawId && String(g.id) === rawId))) genre = g;
   });
+  var allGenres = !genre && rawSlug === 'all';
+  function isActive() { return !!genre || allGenres; }
   var state = {
     decade: 'all',
     year: '',
@@ -359,7 +361,7 @@
     el.statusBox.classList.toggle('-error', !!isError);
   }
   function syncUrl() {
-    if (!genre) return;
+    if (!isActive()) return;
     var q = [];
     if (state.decade !== 'all') q.push('decade=' + state.decade);
     if (state.year) q.push('year=' + state.year);
@@ -370,7 +372,7 @@
     if (state.rating) q.push('rating=' + state.rating);
     if (state.sort !== DEFAULT_SORT) q.push('sort=' + state.sort);
     try {
-      history.replaceState(null, '', '/g/' + genre.slug + (q.length ? '?' + q.join('&') : '') + window.location.hash);
+      history.replaceState(null, '', '/g/' + (genre ? genre.slug : 'all') + (q.length ? '?' + q.join('&') : '') + window.location.hash);
     } catch (e) {}
   }
   function filtersActive() {
@@ -380,7 +382,8 @@
     return !!(state.status || state.type || state.rating);
   }
   function renderGenreSelect() {
-    var html = genre ? '' : '<option value="" selected disabled>Choose a genre</option>';
+    var html = isActive() ? '' : '<option value="" selected disabled>Choose a genre</option>';
+    html += '<option value="all"' + (allGenres ? ' selected' : '') + '>All</option>';
     html += GENRES.map(function (g) {
       return '<option value="' + g.slug + '"' + (genre && g.id === genre.id ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
@@ -429,20 +432,21 @@
     el.moreToggle.textContent = open ? 'Fewer filters' : 'More filters';
   }
   function renderTitle() {
-    if (!genre) return;
-    el.titleName.textContent = genre.name;
+    if (!isActive()) return;
+    var titleText = genre ? genre.name : 'All genres';
+    el.titleName.textContent = titleText;
     var scope = state.year || (state.decade !== 'all' ? decadeLabel(state.decade) : '');
-    document.title = genre.name + ' TV Shows' + (scope ? ' (' + scope + ')' : '') + ' | tvbox';
+    document.title = (genre ? genre.name : 'All') + ' TV Shows' + (scope ? ' (' + scope + ')' : '') + ' | tvbox';
   }
   function buildQuery(pageNumber) {
     var q = [
       'include_adult=false',
       'include_null_first_air_dates=false',
       'language=en-US',
-      'with_genres=' + genre.id,
       'sort_by=' + state.sort,
       'page=' + pageNumber
     ];
+    if (genre) q.push('with_genres=' + genre.id);
     var gte = '';
     var lte = '';
     if (state.year) {
@@ -480,7 +484,7 @@
     el.note.hidden = !(exhausted && capped);
   }
   function fetchPage() {
-    if (loading || exhausted || !genre) return;
+    if (loading || exhausted || !isActive()) return;
     var rid = requestId;
     var next = page + 1;
     var controller = new AbortController();
@@ -525,7 +529,7 @@
       });
   }
   function maybeLoad() {
-    if (loading || exhausted || failed || !genre || page === 0) return;
+    if (loading || exhausted || failed || !isActive() || page === 0) return;
     var rect = el.sentinel.getBoundingClientRect();
     if (rect.top < window.innerHeight + 900) fetchPage();
   }
@@ -560,7 +564,7 @@
     el.sentinel.hidden = !show;
   }
   renderGenreSelect();
-  if (!genre) {
+  if (!isActive()) {
     el.titleName.textContent = 'Choose a genre';
     el.meta.textContent = rawSlug || rawId ? 'That genre does not exist. Pick one from the list.' : 'Pick a genre to browse its shows.';
     document.title = 'Genres | tvbox';
@@ -575,9 +579,11 @@
     var slug = el.genreSelect.value;
     var picked = null;
     GENRES.forEach(function (g) { if (g.slug === slug) picked = g; });
-    if (!picked) return;
-    var first = !genre;
+    if (!picked && slug !== 'all') return;
+    if (!picked && allGenres) return;
+    var first = !isActive();
     genre = picked;
+    allGenres = !picked;
     if (first) {
       renderGenreSelect();
       renderFilters();
@@ -648,7 +654,7 @@
   window.addEventListener('pagehide', function () {
     if (activeController) activeController.abort();
   });
-  if (genre) startFresh();
+  if (isActive()) startFresh();
   loadCountries().then(function (list) {
     countryList = list;
     el.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, state.country);
