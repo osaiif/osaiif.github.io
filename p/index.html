@@ -121,6 +121,21 @@
     }
     .work-sub { font-size: 12px; color: #8490a4; }
     .work-sentinel { height: 1px; }
+    .works-wrap { position: relative; }
+    .work-search { position: absolute; top: 0; right: 0; z-index: 2; display: flex; align-items: center; height: 21px; }
+    .work-search[hidden], .work-search-input[hidden] { display: none; }
+    .work-search-input { width: min(220px, calc(100vw - 160px)); height: 21px; margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid #4a6a85; border-radius: 0; background: transparent; color: #ffffff; font-family: var(--font-text); font-size: 16px; outline: none; -webkit-appearance: none; appearance: none; }
+    .work-search-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .work-search-input::-webkit-search-decoration, .work-search-input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+    .work-search-btn { display: flex; align-items: center; justify-content: center; width: 26px; height: 21px; padding: 0; border: 0; background: none; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.15s ease; }
+    .work-search-btn:hover, .work-search-btn:focus-visible { color: #ffffff; outline: none; }
+    .work-search-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .work-search-btn .work-search-close { display: none; }
+    .work-search-btn.-open .work-search-icon { display: none; }
+    .work-search-btn.-open .work-search-close { display: block; }
+    @media (min-width: 700px) {
+      .work-search-input { font-size: 13.5px; }
+    }
     @media (max-width: 420px) {
       .work-row { gap: 12px; padding: 8px; }
       .work-poster { width: 48px; height: 72px; }
@@ -194,7 +209,16 @@
         <button type="button" id="bio-toggle" class="bio-toggle" hidden>More</button>
       </div>
     </section>
-    <div id="works"></div>
+    <div class="works-wrap">
+      <div class="work-search" id="work-search" hidden>
+        <input type="search" class="work-search-input" id="work-search-input" placeholder="Search credits" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search credits" hidden>
+        <button type="button" class="work-search-btn" id="work-search-btn" aria-label="Search credits" aria-expanded="false">
+          <svg class="work-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <svg class="work-search-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div id="works"></div>
+    </div>
   </div>
 <footer class="site-footer">
 <div class="footer-container">
@@ -330,6 +354,18 @@
       var bioEl = document.getElementById('person-bio');
       var bioBtn = document.getElementById('bio-toggle');
       var works = {};
+      var currentPerson = null;
+      var searching = false;
+      var SEARCH_MIN = 8;
+      var searchEl = document.getElementById('work-search');
+      var searchInput = document.getElementById('work-search-input');
+      var searchBtn = document.getElementById('work-search-btn');
+      var searchTimer = null;
+      function normalizeText(str) {
+        var s = String(str || '').toLowerCase();
+        if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return s;
+      }
       function roleLabel(dept) {
         return ROLE_LABELS[dept] || dept;
       }
@@ -436,20 +472,90 @@
           }
         });
       }
-      function renderWorks(person, workCast, workCrew) {
-        works = { acting: collectWorks(workCast, 'character'), crew: collectWorks(workCrew, 'job') };
+      function showWorks() {
         if (workObserver) {
           workObserver.disconnect();
           workObserver = null;
         }
         workOrder = [['acting', 'Acting'], ['crew', 'Crew']].filter(function (item) { return works[item[0]].length; });
         if (!workOrder.length) {
-          worksEl.innerHTML = '<p class="page-empty">No credits listed for ' + escapeHtml(person.name || 'this person') + ' yet.</p>';
+          worksEl.innerHTML = '<p class="page-empty">No credits listed for ' + escapeHtml((currentPerson && currentPerson.name) || 'this person') + ' yet.</p>';
           return;
         }
         worksEl.innerHTML = '';
         if ('IntersectionObserver' in window) workObserver = new IntersectionObserver(onWorkSentinel, { rootMargin: '800px 0px' });
         startSection(0);
+      }
+      function showMatches(q, raw) {
+        if (workObserver) {
+          workObserver.disconnect();
+          workObserver = null;
+        }
+        var html = '';
+        [['acting', 'Acting'], ['crew', 'Crew']].forEach(function (item) {
+          var list = works[item[0]].filter(function (w) { return w.q.indexOf(q) !== -1; });
+          if (!list.length) return;
+          html += '<section class="work-section"><h2 class="section-heading">' + item[1] + '</h2>' +
+            '<div class="work-list">' + list.map(workRowHtml).join('') + '</div></section>';
+        });
+        worksEl.innerHTML = html || '<p class="page-empty">No credits match “' + escapeHtml(raw) + '”.</p>';
+      }
+      function applySearch() {
+        var raw = searchInput.value.trim();
+        var q = normalizeText(raw);
+        if (!q) {
+          if (searching) {
+            searching = false;
+            showWorks();
+          }
+          return;
+        }
+        searching = true;
+        showMatches(q, raw);
+      }
+      function openSearch() {
+        searchInput.hidden = false;
+        searchBtn.classList.add('-open');
+        searchBtn.setAttribute('aria-expanded', 'true');
+        searchBtn.setAttribute('aria-label', 'Close search');
+        searchInput.focus();
+      }
+      function closeSearch() {
+        clearTimeout(searchTimer);
+        searchInput.value = '';
+        searchInput.hidden = true;
+        searchBtn.classList.remove('-open');
+        searchBtn.setAttribute('aria-expanded', 'false');
+        searchBtn.setAttribute('aria-label', 'Search credits');
+        applySearch();
+        searchBtn.focus();
+      }
+      searchBtn.addEventListener('click', function () {
+        if (searchInput.hidden) openSearch();
+        else closeSearch();
+      });
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applySearch, 120);
+      });
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeSearch();
+      });
+      function renderWorks(person, workCast, workCrew) {
+        currentPerson = person;
+        works = { acting: collectWorks(workCast, 'character'), crew: collectWorks(workCrew, 'job') };
+        ['acting', 'crew'].forEach(function (key) {
+          works[key].forEach(function (w) {
+            w.q = normalizeText(w.name + ' ' + w.roles.join(' ') + ' ' + w.date.slice(0, 4));
+          });
+        });
+        searching = false;
+        searchInput.value = '';
+        searchInput.hidden = true;
+        searchBtn.classList.remove('-open');
+        searchBtn.setAttribute('aria-expanded', 'false');
+        searchEl.hidden = works.acting.length + works.crew.length < SEARCH_MIN;
+        showWorks();
       }
       function updateBioToggle() {
         if (bioEl.hidden) return;
