@@ -376,7 +376,7 @@
           shownAny = true;
         });
         if (next === 1 && !shownAny) {
-          resultsContainer.innerHTML = '<p class="no-results">No results found for “' + escapeHtml(query) + '”.</p>';
+          resultsContainer.innerHTML = '<p class="no-results">No results for “' + escapeHtml(query) + '”</p>';
         } else {
           resultsContainer.appendChild(fragment);
           watchCredits(resultsContainer);
