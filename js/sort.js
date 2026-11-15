@@ -72,42 +72,47 @@
       });
     });
   }
-  var CACHE_PREFIX = 'tvbox:tmdb:';
+  var CACHE_PREFIX = 'tvbox:tmdb2:';
   var CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   var SORT_GROUPS = [
     {
+      id: 'date',
       label: 'Date',
       options: [
-        { key: 'date_desc', label: 'Newest first' },
-        { key: 'date_asc', label: 'Earliest first' }
+        { key: 'date_desc', label: 'Newest' },
+        { key: 'date_asc', label: 'Oldest' }
       ]
     },
     {
-      label: 'Average Rating',
+      id: 'mine',
+      label: 'Saif\'s rating',
       options: [
-        { key: 'avg_desc', label: 'Highest first' },
-        { key: 'avg_asc', label: 'Lowest first' }
+        { key: 'mine_desc', label: 'Highest' },
+        { key: 'mine_asc', label: 'Lowest' }
       ]
     },
     {
-      label: 'Saif\'s Rating',
+      id: 'avg',
+      label: 'Average rating',
       options: [
-        { key: 'mine_desc', label: 'Highest first' },
-        { key: 'mine_asc', label: 'Lowest first' }
+        { key: 'avg_desc', label: 'Highest' },
+        { key: 'avg_asc', label: 'Lowest' }
       ]
     },
     {
+      id: 'pop',
       label: 'Popularity',
       options: [
-        { key: 'pop_desc', label: 'Most popular first' },
-        { key: 'pop_asc', label: 'Least popular first' }
+        { key: 'pop_desc', label: 'Most' },
+        { key: 'pop_asc', label: 'Least' }
       ]
     },
     {
+      id: 'name',
       label: 'Name',
       options: [
-        { key: 'name_asc', label: 'A \u2192 Z' },
-        { key: 'name_desc', label: 'Z \u2192 A' }
+        { key: 'name_asc', label: 'A\u2013Z' },
+        { key: 'name_desc', label: 'Z\u2013A' }
       ]
     }
   ];
@@ -117,9 +122,9 @@
     pop_desc: true,
     pop_asc: true
   };
-  var GEAR_SVG =
+  var SORT_SVG =
     '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-    '<path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.42-.48-.42h-3.84c-.24 0-.44.18-.47.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.86c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94L2.85 14.5c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.03.24.24.42.48.42h3.84c.24 0 .44-.18.47-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.56ZM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6Z"/>' +
+    '<path d="M4 6h16M4 12h11M4 18h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
     '</svg>';
   function readCache(imdbId) {
     try {
@@ -153,7 +158,7 @@
           avg: (match && typeof match.vote_average === 'number') ? match.vote_average : null,
           popularity: (match && typeof match.popularity === 'number') ? match.popularity : null
         };
-        writeCache(imdbId, info);
+        if (data) writeCache(imdbId, info);
         return info;
       })
       .catch(function () {
@@ -184,10 +189,28 @@
     var n = parseFloat(v);
     return isNaN(n) ? null : n;
   }
+  var collator = (typeof Intl !== 'undefined' && Intl.Collator)
+    ? new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+    : null;
+  function nameKey(title) {
+    return String(title || '').trim().replace(/^(the|an|a)\s+/i, '');
+  }
+  function compareNames(a, b) {
+    var x = nameKey(a);
+    var y = nameKey(b);
+    return collator ? collator.compare(x, y) : x.localeCompare(y);
+  }
+  function compareNullable(av, bv, desc) {
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return desc ? (bv - av) : (av - bv);
+  }
   function init(config) {
     var grid = config.grid;
     var mount = config.mount;
     var storageKey = config.storageKey || 'tvbox:sort';
+    var hidden = config.hide || [];
     if (!grid || !mount) return;
     var cards = Array.prototype.slice.call(grid.children).filter(function (el) {
       return el.classList && el.classList.contains('card');
@@ -202,49 +225,50 @@
     trigger.setAttribute('aria-label', 'Sort shows');
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
-    trigger.innerHTML = GEAR_SVG;
+    trigger.innerHTML = SORT_SVG;
     var menu = document.createElement('div');
     menu.className = 'sort-menu';
     menu.setAttribute('role', 'menu');
     var optionEls = {};
-    var defaultBtn = document.createElement('button');
-    defaultBtn.type = 'button';
-    defaultBtn.className = 'sort-option';
-    defaultBtn.dataset.key = 'default';
-    defaultBtn.textContent = 'Default order';
-    menu.appendChild(defaultBtn);
-    optionEls['default'] = defaultBtn;
-    var topDivider = document.createElement('div');
-    topDivider.className = 'sort-divider';
-    menu.appendChild(topDivider);
-    SORT_GROUPS.forEach(function (group, gi) {
-      var groupLabel = document.createElement('div');
-      groupLabel.className = 'sort-group-label';
-      groupLabel.textContent = group.label;
-      menu.appendChild(groupLabel);
-      group.options.forEach(function (opt) {
+    function addRow(labelText, options) {
+      var row = document.createElement('div');
+      row.className = 'sort-row';
+      var label = document.createElement('span');
+      label.className = 'sort-label';
+      label.textContent = labelText;
+      var choices = document.createElement('div');
+      choices.className = 'sort-choices';
+      options.forEach(function (opt) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'sort-option';
+        btn.setAttribute('role', 'menuitemradio');
+        btn.setAttribute('aria-checked', 'false');
         btn.dataset.key = opt.key;
         btn.textContent = opt.label;
-        menu.appendChild(btn);
+        choices.appendChild(btn);
         optionEls[opt.key] = btn;
       });
-      if (gi < SORT_GROUPS.length - 1) {
-        var divider = document.createElement('div');
-        divider.className = 'sort-divider';
-        menu.appendChild(divider);
-      }
+      row.appendChild(label);
+      row.appendChild(choices);
+      menu.appendChild(row);
+    }
+    addRow('Order', [{ key: 'default', label: 'Default' }]);
+    SORT_GROUPS.forEach(function (group) {
+      if (hidden.indexOf(group.id) !== -1) return;
+      addRow(group.label, group.options);
     });
     wrapper.appendChild(trigger);
     wrapper.appendChild(menu);
     mount.appendChild(wrapper);
     var tmdbCache = {};
     var tmdbLoaded = false;
+    var requestId = 0;
     function setActive(key) {
       Object.keys(optionEls).forEach(function (k) {
-        optionEls[k].classList.toggle('-active', k === key);
+        var on = k === key;
+        optionEls[k].classList.toggle('-active', on);
+        optionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
       });
       trigger.classList.toggle('-active', key !== 'default');
     }
@@ -270,45 +294,47 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeMenu();
     });
+    function orderOf(card) {
+      return parseInt(card.dataset.order, 10);
+    }
     function compareBy(key) {
       return function (a, b) {
-        var av, bv;
+        var r = 0;
         switch (key) {
           case 'date_desc':
-            return parseInt(b.dataset.order, 10) - parseInt(a.dataset.order, 10);
           case 'date_asc':
-            return parseInt(a.dataset.order, 10) - parseInt(b.dataset.order, 10);
+            r = compareNullable(numOrNull(a.dataset.journal), numOrNull(b.dataset.journal), key === 'date_desc');
+            break;
           case 'name_asc':
-            return (a.dataset.title || '').localeCompare(b.dataset.title || '');
+            r = compareNames(a.dataset.title, b.dataset.title);
+            break;
           case 'name_desc':
-            return (b.dataset.title || '').localeCompare(a.dataset.title || '');
+            r = compareNames(b.dataset.title, a.dataset.title);
+            break;
           case 'mine_desc':
           case 'mine_asc':
-            av = numOrNull(a.dataset.myRating);
-            bv = numOrNull(b.dataset.myRating);
-            if (av === null && bv === null) return 0;
-            if (av === null) return 1;
-            if (bv === null) return -1;
-            return key === 'mine_desc' ? (bv - av) : (av - bv);
+            r = compareNullable(numOrNull(a.dataset.myRating), numOrNull(b.dataset.myRating), key === 'mine_desc');
+            break;
           case 'avg_desc':
           case 'avg_asc':
-            av = tmdbCache[a.dataset.imdb] ? tmdbCache[a.dataset.imdb].avg : null;
-            bv = tmdbCache[b.dataset.imdb] ? tmdbCache[b.dataset.imdb].avg : null;
-            if (av === null && bv === null) return 0;
-            if (av === null) return 1;
-            if (bv === null) return -1;
-            return key === 'avg_desc' ? (bv - av) : (av - bv);
+            r = compareNullable(
+              tmdbCache[a.dataset.imdb] ? tmdbCache[a.dataset.imdb].avg : null,
+              tmdbCache[b.dataset.imdb] ? tmdbCache[b.dataset.imdb].avg : null,
+              key === 'avg_desc'
+            );
+            break;
           case 'pop_desc':
           case 'pop_asc':
-            av = tmdbCache[a.dataset.imdb] ? tmdbCache[a.dataset.imdb].popularity : null;
-            bv = tmdbCache[b.dataset.imdb] ? tmdbCache[b.dataset.imdb].popularity : null;
-            if (av === null && bv === null) return 0;
-            if (av === null) return 1;
-            if (bv === null) return -1;
-            return key === 'pop_desc' ? (bv - av) : (av - bv);
+            r = compareNullable(
+              tmdbCache[a.dataset.imdb] ? tmdbCache[a.dataset.imdb].popularity : null,
+              tmdbCache[b.dataset.imdb] ? tmdbCache[b.dataset.imdb].popularity : null,
+              key === 'pop_desc'
+            );
+            break;
           default:
-            return parseInt(a.dataset.order, 10) - parseInt(b.dataset.order, 10);
+            return orderOf(a) - orderOf(b);
         }
+        return r !== 0 ? r : orderOf(a) - orderOf(b);
       };
     }
     function applySort(key) {
@@ -327,30 +353,33 @@
       trigger.classList.add('-loading');
       fetchAllTmdbInfo(ids).then(function (results) {
         tmdbCache = results;
-        tmdbLoaded = true;
+        tmdbLoaded = Object.keys(results).some(function (id) {
+          return results[id].avg !== null || results[id].popularity !== null;
+        });
         trigger.classList.remove('-loading');
         done();
       });
     }
-    menu.addEventListener('click', function (e) {
-      var target = e.target;
-      if (!target.classList || !target.classList.contains('sort-option')) return;
-      var key = target.dataset.key;
-      closeMenu();
+    function choose(key) {
+      var id = ++requestId;
       if (NEEDS_TMDB[key]) {
-        ensureTmdbLoaded(function () { applySort(key); });
+        ensureTmdbLoaded(function () {
+          if (id === requestId) applySort(key);
+        });
       } else {
         applySort(key);
       }
+    }
+    menu.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target.classList || !target.classList.contains('sort-option')) return;
+      closeMenu();
+      choose(target.dataset.key);
     });
     var saved = null;
     try { saved = localStorage.getItem(storageKey); } catch (e) {}
     if (saved && optionEls[saved]) {
-      if (NEEDS_TMDB[saved]) {
-        ensureTmdbLoaded(function () { applySort(saved); });
-      } else {
-        applySort(saved);
-      }
+      choose(saved);
     } else {
       setActive('default');
     }
