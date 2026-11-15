@@ -8,13 +8,14 @@
   var TMDB_CACHE_NAME = 'tvbox-tmdb-v1';
   var TMDB_CACHE_TTL_MS = 60 * 60 * 1000;
   var TMDB_MAX_ACTIVE = 10;
-  var TMDB_HEDGE_MS = 800;
+  var TMDB_HEDGE_MS = 300;
   var tmdbMemory = {};
   var tmdbPending = {};
   var tmdbQueue = [];
   var tmdbActive = 0;
   var tmdbCursor = Math.floor(Math.random() * TMDB_API_KEYS.length);
   var tmdbCooldown = {};
+  var tmdbLatency = {};
   function tmdbAbortError() {
     var e = new Error('Aborted');
     e.name = 'AbortError';
@@ -24,8 +25,13 @@
     var s = err && err.status;
     return !s || s === 401 || s === 403 || s === 429 || s >= 500;
   }
+  function tmdbRecord(idx, ms) {
+    var old = tmdbLatency[idx];
+    tmdbLatency[idx] = old ? old * 0.6 + ms * 0.4 : ms;
+  }
   function tmdbPickKey(tried) {
     var now = Date.now();
+    var best = -1;
     var fallback = -1;
     for (var i = 0; i < TMDB_API_KEYS.length; i++) {
       var idx = (tmdbCursor + i) % TMDB_API_KEYS.length;
@@ -34,14 +40,17 @@
         if (fallback < 0) fallback = idx;
         continue;
       }
-      tmdbCursor = idx + 1;
-      return idx;
+      if (best < 0 || (tmdbLatency[idx] || 0) < (tmdbLatency[best] || 0)) best = idx;
     }
-    return fallback;
+    if (best < 0) return fallback;
+    tmdbCursor = best + 1;
+    return best;
   }
   function tmdbRun(url, signal) {
     return new Promise(function (resolve, reject) {
       var tried = {};
+      var starts = {};
+      var done = {};
       var controllers = [];
       var inflight = 0;
       var settled = false;
@@ -51,6 +60,9 @@
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        Object.keys(starts).forEach(function (k) {
+          if (!done[k]) tmdbRecord(k, Date.now() - starts[k]);
+        });
         controllers.forEach(function (c) { c.abort(); });
         fn(value);
       }
@@ -62,6 +74,7 @@
           return;
         }
         tried[idx] = true;
+        starts[idx] = Date.now();
         inflight++;
         var controller = new AbortController();
         controllers.push(controller);
@@ -77,6 +90,8 @@
             return res.text();
           })
           .then(function (text) {
+            done[idx] = true;
+            tmdbRecord(idx, Date.now() - starts[idx]);
             finish(resolve, text);
           })
           .catch(function (err) {
@@ -174,12 +189,23 @@
     if (!entry) {
       var controller = new AbortController();
       entry = { refs: 0, controller: controller };
-      entry.promise = tmdbDiskRead(url).then(function (cached) {
-        if (cached !== null) return cached;
-        if (controller.signal.aborted) throw tmdbAbortError();
-        return tmdbSchedule(url, controller.signal).then(function (text) {
+      entry.promise = new Promise(function (resolve, reject) {
+        var won = false;
+        tmdbDiskRead(url).then(function (cached) {
+          if (cached === null || won) return;
+          won = true;
+          controller.abort();
+          resolve(cached);
+        });
+        tmdbSchedule(url, controller.signal).then(function (text) {
+          if (won) return;
+          won = true;
           tmdbDiskWrite(url, text);
-          return text;
+          resolve(text);
+        }, function (err) {
+          if (won) return;
+          won = true;
+          reject(err);
         });
       }).then(function (text) {
         tmdbMemory[url] = { text: text, ts: Date.now() };
