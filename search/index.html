@@ -168,8 +168,11 @@
       opacity: 0.6;
       padding: 1rem 0;
     }
+    html { overflow-y: scroll; }
+    .page-content { width: 100%; min-width: 0; }
     .search-tabs {
       display: flex;
+      justify-content: center;
       gap: 22px;
       margin-bottom: 18px;
       box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
@@ -223,6 +226,7 @@
       }
     }
     @media (max-width: 480px) {
+      .search-tabs { gap: 18px; }
       #results-container .poster {
         width: 64px;
         height: 96px;
