@@ -67,11 +67,23 @@
     }
     .last-watched-poster .rating {
       display: block;
-      margin: 6px 2px 0;
-      font-size: 13px;
-      letter-spacing: -1px;
-      color: #4d8eff;
+      margin: 5px 0 0;
+      font-size: 9px;
+      line-height: 1;
+      letter-spacing: 0;
+      color: #fff;
       text-align: center;
+    }
+    .last-watched-poster .rating .rating-link {
+      color: #fff;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .last-watched-poster .rating .rating-link:hover {
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+    @media (min-width: 900px) {
+      .last-watched-poster .rating { font-size: 10px; }
     }
     @media (min-width: 1024px) {
       .profile-favorites .section-heading,
