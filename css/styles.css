@@ -92,11 +92,11 @@
   .watchdate-popover{width:calc(100vw - 24px);padding:14px;gap:10px}}
 @media (min-width:1024px){
   .watchdate-popover{width:780px;max-width:calc(100vw - 48px);padding:28px;column-gap:28px;row-gap:16px;border-radius:12px}
-  #watchdate-toggle:checked ~ .watchdate-popover{display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-rows:auto auto 1fr auto auto;align-items:start}
+  #watchdate-toggle:checked ~ .watchdate-popover{display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-rows:auto auto auto auto 1fr;align-items:start}
   .watchdate-popover > .wd-header{grid-column:1 / -1;grid-row:1}
   .watchdate-popover > .wd-stub-row{grid-column:1;grid-row:2}
-  .watchdate-popover > .wd-actions{grid-column:1;grid-row:4}
-  .watchdate-popover > .wd-skip-btn{grid-column:1;grid-row:5}
+  .watchdate-popover > .wd-actions{grid-column:1;grid-row:3}
+  .watchdate-popover > .wd-skip-btn{grid-column:1;grid-row:4}
   .watchdate-popover > .wd-calendar{grid-column:2;grid-row:2 / 6;align-self:stretch;padding-left:28px;border-left:1px solid #1e2a3e}
   .wd-subtitle{font-size:15px}
   .wd-close{width:26px;height:26px}
