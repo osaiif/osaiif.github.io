@@ -396,8 +396,7 @@
   }
   function renderTitle() {
     el.titleName.textContent = year === null ? 'All years' : String(year);
-    var g = genreBySlug(state.genre);
-    document.title = (g ? g.name + ' ' : '') + 'TV Shows' + (year === null ? '' : ' from ' + year) + ' | tvbox';
+    document.title = (year === null ? 'All years' : String(year)) + ' ǀ tvbox';
   }
   function buildQuery(pageNumber) {
     var q = [
