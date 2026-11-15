@@ -1,4 +1,23 @@
 (function () {
+  var revealed = false;
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    document.body.classList.add('tv-ready');
+  }
+  function start() {
+    setTimeout(reveal, 1500);
+    window.requestAnimationFrame(function () {
+      var fonts = document.fonts && document.fonts.ready;
+      var next = function () { window.requestAnimationFrame(reveal); };
+      if (fonts && fonts.then) fonts.then(next, next);
+      else next();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+(function () {
   function setFooterYear() {
     var year = String(new Date().getFullYear());
     var paragraphs = document.querySelectorAll('.site-footer p');
