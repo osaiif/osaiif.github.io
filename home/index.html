@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preconnect" href="https://api.themoviedb.org">
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
   <style>
     .hero-cta,
@@ -135,69 +135,219 @@ showCopied();
         '2e7b2fe7002c21f45f08c0a03aa9df52',
         '51952b66efcd80289c3ba5f8f8044e6a'
       ];
-      function tmdbFetch(path, params, signal) {
+      var TMDB_CACHE_NAME = 'tvbox-tmdb-v1';
+      var TMDB_CACHE_TTL_MS = 60 * 60 * 1000;
+      var TMDB_MAX_ACTIVE = 10;
+      var TMDB_HEDGE_MS = 800;
+      var tmdbMemory = {};
+      var tmdbPending = {};
+      var tmdbQueue = [];
+      var tmdbActive = 0;
+      var tmdbCursor = Math.floor(Math.random() * TMDB_API_KEYS.length);
+      var tmdbCooldown = {};
+      function tmdbAbortError() {
+        var e = new Error('Aborted');
+        e.name = 'AbortError';
+        return e;
+      }
+      function tmdbRetryable(err) {
+        var s = err && err.status;
+        return !s || s === 401 || s === 403 || s === 429 || s >= 500;
+      }
+      function tmdbPickKey(tried) {
+        var now = Date.now();
+        var fallback = -1;
+        for (var i = 0; i < TMDB_API_KEYS.length; i++) {
+          var idx = (tmdbCursor + i) % TMDB_API_KEYS.length;
+          if (tried[idx]) continue;
+          if ((tmdbCooldown[idx] || 0) > now) {
+            if (fallback < 0) fallback = idx;
+            continue;
+          }
+          tmdbCursor = idx + 1;
+          return idx;
+        }
+        return fallback;
+      }
+      function tmdbRun(url, signal) {
         return new Promise(function (resolve, reject) {
+          var tried = {};
           var controllers = [];
-          var failures = 0;
+          var inflight = 0;
           var settled = false;
-          var bestError = null;
-          var sep = path.indexOf('?') > -1 ? '&' : '?';
-          var extra = params ? '&' + params : '';
-          function isAuthError(err) {
-            return !!err && (err.status === 401 || err.status === 403);
+          var lastError = null;
+          var timer = null;
+          function finish(fn, value) {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            controllers.forEach(function (c) { c.abort(); });
+            fn(value);
           }
-          function abortAll(exceptIndex) {
-            controllers.forEach(function (c, i) {
-              if (c && i !== exceptIndex) c.abort();
-            });
-          }
-          if (signal) {
-            if (signal.aborted) {
-              var abortErr = new Error('Aborted');
-              abortErr.name = 'AbortError';
-              reject(abortErr);
+          function launch() {
+            if (settled) return;
+            var idx = tmdbPickKey(tried);
+            if (idx < 0) {
+              if (!inflight) finish(reject, lastError || new Error('TMDB request failed'));
               return;
             }
-            signal.addEventListener('abort', function () {
-              if (settled) return;
-              settled = true;
-              abortAll(-1);
-              var e = new Error('Aborted');
-              e.name = 'AbortError';
-              reject(e);
-            });
-          }
-          function onFail(err) {
-            if (settled) return;
-            failures++;
-            if (!bestError || (isAuthError(bestError) && !isAuthError(err))) bestError = err;
-            if (failures === TMDB_API_KEYS.length) {
-              settled = true;
-              reject(bestError);
-            }
-          }
-          TMDB_API_KEYS.forEach(function (key, index) {
-            var controller = typeof AbortController === 'function' ? new AbortController() : null;
+            tried[idx] = true;
+            inflight++;
+            var controller = new AbortController();
             controllers.push(controller);
-            fetch(
-              TMDB_BASE + path + sep + 'api_key=' + key + extra,
-              controller ? { signal: controller.signal } : undefined
-            )
+            fetch(url + '&api_key=' + TMDB_API_KEYS[idx], { signal: controller.signal })
               .then(function (res) {
                 if (!res.ok) {
                   var err = new Error('TMDB request failed (' + res.status + ')');
                   err.status = res.status;
+                  if (res.status === 429) tmdbCooldown[idx] = Date.now() + (parseInt(res.headers.get('retry-after'), 10) || 2) * 1000;
+                  if (res.status === 401 || res.status === 403) tmdbCooldown[idx] = Date.now() + 10 * 60 * 1000;
                   throw err;
                 }
-                return res.json();
+                return res.text();
               })
-              .then(function (data) {
-                if (settled) return;
-                settled = true;
-                abortAll(index);
-                resolve(data);
+              .then(function (text) {
+                finish(resolve, text);
               })
-              .catch(onFail);
+              .catch(function (err) {
+                inflight--;
+                if (settled || (err && err.name === 'AbortError')) return;
+                if (!lastError || (lastError.status === 401 || lastError.status === 403)) lastError = err;
+                if (!tmdbRetryable(err)) {
+                  finish(reject, err);
+                  return;
+                }
+                launch();
+              });
+            clearTimeout(timer);
+            timer = setTimeout(launch, TMDB_HEDGE_MS);
+          }
+          if (signal) {
+            if (signal.aborted) {
+              reject(tmdbAbortError());
+              return;
+            }
+            signal.addEventListener('abort', function () {
+              finish(reject, tmdbAbortError());
+            });
+          }
+          launch();
+        });
+      }
+      function tmdbPump() {
+        while (tmdbActive < TMDB_MAX_ACTIVE && tmdbQueue.length) {
+          var item = tmdbQueue.shift();
+          if (item.signal.aborted) {
+            item.reject(tmdbAbortError());
+            continue;
+          }
+          tmdbActive++;
+          tmdbRun(item.url, item.signal).then(item.resolve, item.reject).then(function () {
+            tmdbActive--;
+            tmdbPump();
+          });
+        }
+      }
+      function tmdbSchedule(url, signal) {
+        return new Promise(function (resolve, reject) {
+          tmdbQueue.push({ url: url, signal: signal, resolve: resolve, reject: reject });
+          tmdbPump();
+        });
+      }
+      function tmdbDiskRead(url) {
+        if (!window.caches) return Promise.resolve(null);
+        return caches.open(TMDB_CACHE_NAME)
+          .then(function (cache) { return cache.match(url); })
+          .then(function (res) {
+            if (!res) return null;
+            var ts = parseInt(res.headers.get('x-ts'), 10);
+            if (!ts || Date.now() - ts > TMDB_CACHE_TTL_MS) return null;
+            return res.text();
+          })
+          .catch(function () { return null; });
+      }
+      function tmdbDiskWrite(url, text) {
+        if (!window.caches) return;
+        caches.open(TMDB_CACHE_NAME)
+          .then(function (cache) {
+            return cache.put(url, new Response(text, { headers: { 'x-ts': String(Date.now()) } }));
+          })
+          .catch(function () {});
+      }
+      function tmdbDiskPrune() {
+        try {
+          var last = parseInt(localStorage.getItem('tvbox:tmdb:pruned'), 10) || 0;
+          if (!window.caches || Date.now() - last < 24 * 60 * 60 * 1000) return;
+          localStorage.setItem('tvbox:tmdb:pruned', String(Date.now()));
+        } catch (e) {
+          return;
+        }
+        caches.open(TMDB_CACHE_NAME).then(function (cache) {
+          return cache.keys().then(function (reqs) {
+            return Promise.all(reqs.map(function (req) {
+              return cache.match(req).then(function (res) {
+                var ts = res ? parseInt(res.headers.get('x-ts'), 10) : 0;
+                if (!ts || Date.now() - ts > TMDB_CACHE_TTL_MS) return cache.delete(req);
+              });
+            }));
+          });
+        }).catch(function () {});
+      }
+      setTimeout(tmdbDiskPrune, 4000);
+      function tmdbFetch(path, params, signal) {
+        var sep = path.indexOf('?') > -1 ? '&' : '?';
+        var url = TMDB_BASE + path + sep + '_=1' + (params ? '&' + params : '');
+        if (signal && signal.aborted) return Promise.reject(tmdbAbortError());
+        var hit = tmdbMemory[url];
+        if (hit && Date.now() - hit.ts < TMDB_CACHE_TTL_MS) return Promise.resolve(JSON.parse(hit.text));
+        var entry = tmdbPending[url];
+        if (!entry) {
+          var controller = new AbortController();
+          entry = { refs: 0, controller: controller };
+          entry.promise = tmdbDiskRead(url).then(function (cached) {
+            if (cached !== null) return cached;
+            if (controller.signal.aborted) throw tmdbAbortError();
+            return tmdbSchedule(url, controller.signal).then(function (text) {
+              tmdbDiskWrite(url, text);
+              return text;
+            });
+          }).then(function (text) {
+            tmdbMemory[url] = { text: text, ts: Date.now() };
+            if (tmdbPending[url] === entry) delete tmdbPending[url];
+            return text;
+          }, function (err) {
+            if (tmdbPending[url] === entry) delete tmdbPending[url];
+            throw err;
+          });
+          tmdbPending[url] = entry;
+        }
+        entry.refs++;
+        return new Promise(function (resolve, reject) {
+          var done = false;
+          function release() {
+            if (done) return;
+            done = true;
+            entry.refs--;
+            if (entry.refs <= 0) {
+              if (tmdbPending[url] === entry) delete tmdbPending[url];
+              entry.controller.abort();
+            }
+          }
+          if (signal) {
+            signal.addEventListener('abort', function () {
+              if (done) return;
+              release();
+              reject(tmdbAbortError());
+            });
+          }
+          entry.promise.then(function (text) {
+            if (done) return;
+            done = true;
+            resolve(JSON.parse(text));
+          }, function (err) {
+            if (done) return;
+            done = true;
+            reject(err);
           });
         });
       }
