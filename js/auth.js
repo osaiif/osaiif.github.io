@@ -1,3 +1,22 @@
+(function () {
+  function setFooterYear() {
+    var year = String(new Date().getFullYear());
+    var paragraphs = document.querySelectorAll('.site-footer p');
+    Array.prototype.forEach.call(paragraphs, function (paragraph) {
+      var walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null);
+      var node = walker.nextNode();
+      while (node) {
+        if (/\b(?:19|20)\d{2}\b/.test(node.nodeValue)) {
+          node.nodeValue = node.nodeValue.replace(/\b(?:19|20)\d{2}\b/, year);
+          return;
+        }
+        node = walker.nextNode();
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setFooterYear);
+  else setFooterYear();
+})();
 const SIGNIN_HTML = `
   <form class="auth-form" id="signin-form" novalidate>
     <input type="text" class="auth-input" id="signin-username" name="username" placeholder="Username" autocomplete="username">
