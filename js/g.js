@@ -453,7 +453,10 @@
   }
   var el = {
     titleName: document.getElementById('cg-title-name'),
-    genreSelect: document.getElementById('f-genre'),
+    pickRow: document.getElementById('cg-title-row'),
+    pickTrigger: document.getElementById('cg-pick-trigger'),
+    pickMenu: document.getElementById('cg-pick-menu'),
+    pickChoices: document.getElementById('cg-pick-choices'),
     meta: document.getElementById('cg-meta'),
     bar: document.getElementById('cg-bar'),
     extra: document.getElementById('cg-extra'),
@@ -557,13 +560,29 @@
   function extraActive() {
     return !!(state.status || state.type || state.rating);
   }
-  function renderGenreSelect() {
-    var html = isActive() ? '' : '<option value="" selected disabled>Choose a genre</option>';
-    html += '<option value="all"' + (allGenres ? ' selected' : '') + '>All</option>';
-    html += GENRES.map(function (g) {
-      return '<option value="' + g.slug + '"' + (genre && g.id === genre.id ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
-    }).join('');
-    el.genreSelect.innerHTML = html;
+  function setMenuOpen(open) {
+    el.pickMenu.classList.toggle('-open', open);
+    el.pickTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      var active = el.pickChoices.querySelector('.-active');
+      if (active) el.pickMenu.scrollTop = Math.max(0, active.offsetTop - (el.pickMenu.clientHeight - active.offsetHeight) / 2);
+    }
+  }
+  function markActive(attr, key) {
+    Array.prototype.forEach.call(el.pickChoices.children, function (b) {
+      var on = key !== null && b.getAttribute(attr) === key;
+      b.classList.toggle('-active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+  function optionBtn(attr, value, label, cls) {
+    return '<button type="button" class="sort-option' + (cls ? ' ' + cls : '') + '" role="menuitemradio" aria-checked="false" ' + attr + '="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+  }
+  function renderGenreMenu() {
+    var html = optionBtn('data-genre', 'all', 'All', '');
+    html += GENRES.map(function (g) { return optionBtn('data-genre', g.slug, g.name, ''); }).join('');
+    el.pickChoices.innerHTML = html;
+    markActive('data-genre', genre ? genre.slug : (allGenres ? 'all' : null));
   }
   function renderDecadeSelect() {
     el.decade.innerHTML = DECADES.map(function (dec) {
@@ -649,10 +668,6 @@
     if (minVotes) q.push('vote_count.gte=' + minVotes);
     return q.join('&');
   }
-  function renderMeta(data) {
-    var total = data.total_results || 0;
-    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (total === 1 ? 'show' : 'shows');
-  }
   function updateFooter() {
     el.loader.hidden = !loading || page === 0;
     el.retry.hidden = !failed || page === 0;
@@ -682,7 +697,6 @@
         });
         setStatus('');
         if (next === 1) {
-          renderMeta(data);
           if (!results.length) {
             setStatus('No shows match these filters.');
             updateFooter();
@@ -738,7 +752,7 @@
     el.moreToggle.hidden = !show;
     el.sentinel.hidden = !show;
   }
-  renderGenreSelect();
+  renderGenreMenu();
   if (!isActive()) {
     el.titleName.textContent = 'Choose a genre';
     el.meta.textContent = rawSlug || rawId ? 'That genre does not exist. Pick one from the list.' : 'Pick a genre to browse its shows.';
@@ -750,17 +764,34 @@
     syncUrl();
     showBrowse(true);
   }
-  el.genreSelect.addEventListener('change', function () {
-    var slug = el.genreSelect.value;
+  el.pickTrigger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setMenuOpen(!el.pickMenu.classList.contains('-open'));
+  });
+  document.addEventListener('click', function (e) {
+    if (!el.pickRow.contains(e.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && el.pickMenu.classList.contains('-open')) {
+      setMenuOpen(false);
+      el.pickTrigger.focus();
+    }
+  });
+  el.pickChoices.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('.sort-option') : null;
+    if (!btn) return;
+    setMenuOpen(false);
+    var slug = btn.getAttribute('data-genre');
     var picked = null;
     GENRES.forEach(function (g) { if (g.slug === slug) picked = g; });
     if (!picked && slug !== 'all') return;
     if (!picked && allGenres) return;
+    if (picked && genre && picked.id === genre.id) return;
     var first = !isActive();
     genre = picked;
     allGenres = !picked;
+    renderGenreMenu();
     if (first) {
-      renderGenreSelect();
       renderFilters();
       showBrowse(true);
     }

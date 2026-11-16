@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preload" as="script" href="/js/g.js?v=6">
+  <link rel="preload" as="script" href="/js/g.js?v=7">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400..700&display=swap" rel="stylesheet">
   <style>
     .site-header { position: relative; height: 52px; background-color: #0b121e; }
@@ -20,16 +20,22 @@
     .page-content { padding-top: 0px; width: 100%; min-width: 0; }
     .cg-page { margin-top: 6px; }
     .cg-top { margin-bottom: 4px; }
-    .cg-title { margin: 0; font-size: 1.5rem; line-height: 1.2; color: #fff; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; min-width: 0; }
-    .cg-pick { position: relative; display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%; cursor: pointer; }
+    .cg-title-row { position: relative; display: flex; justify-content: center; min-width: 0; }
+    .cg-title { margin: 0; font-size: 1.25rem; line-height: 1.2; color: #fff; display: flex; justify-content: center; min-width: 0; max-width: 100%; }
+    .cg-pick-trigger { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; margin: 0; padding: 4px 8px; border: 0; background: none; color: #fff; font: inherit; line-height: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .cg-pick-trigger:focus-visible { outline: 2px solid #4a6a85; outline-offset: 2px; border-radius: 6px; }
     .cg-pick-text { color: #fff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cg-pick-chevron { flex: none; align-self: center; width: 14px; height: 14px; fill: none; stroke: #8490a4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s ease; }
-    .cg-pick-select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; appearance: none; -webkit-appearance: none; background: transparent; }
-    .cg-pick-select option { background-color: #0b121e; color: #eaeef5; }
-    .cg-pick:hover .cg-pick-chevron, .cg-pick:focus-within .cg-pick-chevron { stroke: #fff; }
+    .cg-pick-chevron { flex: none; width: 13px; height: 13px; fill: none; stroke: #8490a4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s ease, transform 0.15s ease; }
+    .cg-pick-trigger:hover .cg-pick-chevron, .cg-pick-trigger:focus-visible .cg-pick-chevron, .cg-pick-trigger[aria-expanded="true"] .cg-pick-chevron { stroke: #fff; }
+    .cg-pick-trigger[aria-expanded="true"] .cg-pick-chevron { transform: rotate(180deg); }
+    .cg-title-row .cg-pick-menu { left: 50%; right: auto; transform: translate(-50%, -4px); max-height: min(60vh, 340px); overflow-y: auto; overscroll-behavior: contain; visibility: hidden; transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s; }
+    .cg-title-row .cg-pick-menu.-open { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
+    .cg-title-row .cg-pick-menu .sort-row { justify-content: center; }
+    .cg-title-row .cg-pick-menu .sort-choices { flex-wrap: wrap; justify-content: center; }
+    .cg-year-option { font-family: var(--font-numbers); }
     .cg-title-label { color: #eaeef5; }
-    .cg-meta { margin: 8px 0 0; font-size: 12.5px; color: #8490a4; min-height: 1.4em; }
-    .cg-meta .numbers { color: #b3c2db; }
+    .cg-meta { margin: 4px 0 0; font-size: 12.5px; color: #8490a4; text-align: center; }
+    .cg-meta:empty { display: none; }
     .cg-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; align-items: center; }
     .cg-bar[hidden], .cg-extra[hidden] { display: none; }
     .cg-extra { margin-top: 8px; }
@@ -73,7 +79,7 @@
       .cg-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 20px 12px; }
     }
     @media (min-width: 700px) {
-      .cg-title { font-size: 1.7rem; }
+      .cg-title { font-size: 1.45rem; }
       .cg-card-title { font-size: 13px; }
     }
     @media (min-width: 1024px) {
@@ -128,7 +134,7 @@
   <div class="page-content">
     <div class="cg-page">
       <div class="cg-top">
-        <h1 class="cg-title"><span class="cg-pick"><span class="cg-pick-text" id="cg-title-name"></span><svg class="cg-pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="cg-pick-select" id="f-genre" aria-label="Genre"></select></span></h1>
+        <div class="cg-title-row sort-menu-wrapper" id="cg-title-row"><h1 class="cg-title"><button type="button" class="cg-pick-trigger" id="cg-pick-trigger" aria-label="Choose genre" aria-haspopup="true" aria-expanded="false"><span class="cg-pick-text" id="cg-title-name"></span><svg class="cg-pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1><div class="sort-menu cg-pick-menu" id="cg-pick-menu" role="menu"><div class="sort-row"><div class="sort-choices" id="cg-pick-choices"></div></div></div></div>
         <p class="cg-meta" id="cg-meta"></p>
       </div>
       <div class="cg-bar" id="cg-bar">
@@ -163,7 +169,7 @@
 </p>
 </div>
 </footer>
-  <script src="/js/g.js?v=6"></script>
+  <script src="/js/g.js?v=7"></script>
 <script src="/js/auth.js?v=1"></script>
 </body>
 </html>

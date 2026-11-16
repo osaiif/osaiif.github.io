@@ -433,7 +433,10 @@
   var MAX_YEAR = 2100;
   var el = {
     titleName: document.getElementById('cg-title-name'),
-    yearSelect: document.getElementById('f-year'),
+    pickRow: document.getElementById('cg-title-row'),
+    pickTrigger: document.getElementById('cg-pick-trigger'),
+    pickMenu: document.getElementById('cg-pick-menu'),
+    pickChoices: document.getElementById('cg-pick-choices'),
     extra: document.getElementById('cg-extra'),
     genre: document.getElementById('f-genre'),
     sort: document.getElementById('f-sort'),
@@ -529,18 +532,35 @@
   function extraActive() {
     return !!(state.status || state.type || state.rating);
   }
-  function yearOptionsHtml() {
-    var html = '<option value="all"' + (year === null ? ' selected' : '') + '>All</option>';
+  function setMenuOpen(open) {
+    el.pickMenu.classList.toggle('-open', open);
+    el.pickTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      var active = el.pickChoices.querySelector('.-active');
+      if (active) el.pickMenu.scrollTop = Math.max(0, active.offsetTop - (el.pickMenu.clientHeight - active.offsetHeight) / 2);
+    }
+  }
+  function markActive(attr, key) {
+    Array.prototype.forEach.call(el.pickChoices.children, function (b) {
+      var on = key !== null && b.getAttribute(attr) === key;
+      b.classList.toggle('-active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+  function optionBtn(attr, value, label, cls) {
+    return '<button type="button" class="sort-option' + (cls ? ' ' + cls : '') + '" role="menuitemradio" aria-checked="false" ' + attr + '="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+  }
+  function buildYearMenu() {
     var lowest = year === null ? MIN_YEAR : Math.min(MIN_YEAR, year);
     var highest = year === null ? NOW_YEAR : Math.max(NOW_YEAR, year);
-    for (var y = highest; y >= lowest; y--) {
-      html += '<option value="' + y + '"' + (y === year ? ' selected' : '') + '>' + y + '</option>';
-    }
-    return html;
+    var html = optionBtn('data-year', 'all', 'All', '');
+    for (var y = highest; y >= lowest; y--) html += optionBtn('data-year', String(y), String(y), 'cg-year-option');
+    el.pickChoices.innerHTML = html;
+  }
+  function markYearActive() {
+    markActive('data-year', year === null ? 'all' : String(year));
   }
   function renderFilters() {
-    el.yearSelect.innerHTML = yearOptionsHtml();
-    el.yearSelect.value = year === null ? 'all' : String(year);
     el.genre.innerHTML = '<option value="">All genres</option>' + GENRES.map(function (g) {
       return '<option value="' + g.slug + '"' + (g.slug === state.genre ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
@@ -571,6 +591,7 @@
   }
   function renderTitle() {
     el.titleName.textContent = year === null ? 'All years' : String(year);
+    markYearActive();
     document.title = (year === null ? 'All years' : String(year)) + ' ǀ tvbox';
   }
   function buildQuery(pageNumber) {
@@ -675,11 +696,29 @@
     syncUrl();
     startFresh();
   }
+  buildYearMenu();
   renderFilters();
   renderTitle();
   syncUrl();
-  el.yearSelect.addEventListener('change', function () {
-    var target = el.yearSelect.value === 'all' ? null : parseInt(el.yearSelect.value, 10);
+  el.pickTrigger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setMenuOpen(!el.pickMenu.classList.contains('-open'));
+  });
+  document.addEventListener('click', function (e) {
+    if (!el.pickRow.contains(e.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && el.pickMenu.classList.contains('-open')) {
+      setMenuOpen(false);
+      el.pickTrigger.focus();
+    }
+  });
+  el.pickChoices.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('.sort-option') : null;
+    if (!btn) return;
+    setMenuOpen(false);
+    var value = btn.getAttribute('data-year');
+    var target = value === 'all' ? null : parseInt(value, 10);
     if (target !== null && isNaN(target)) return;
     if (target === year) return;
     year = target;
