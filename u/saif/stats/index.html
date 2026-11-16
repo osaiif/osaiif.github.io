@@ -25,19 +25,29 @@
     .stx-title .numbers { color: #fff; font-weight: 500; }
     .stx-title-label { color: #eaeef5; }
     .stx-meta { margin: 8px 0 0; font-size: 12.5px; color: #8490a4; min-height: 1.4em; }
-    .stx-years { display: flex; flex-wrap: nowrap; gap: 20px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
-    .stx-years::-webkit-scrollbar { display: none; }
-    .stx-year { flex: 0 0 auto; padding: 2px 0 5px; border: 0; border-bottom: 1px solid transparent; background: none; color: #6f7c91; font-family: var(--font-numbers); font-size: 14px; cursor: pointer; transition: color 0.15s ease; }
-    .stx-year:hover { color: #b3c2db; }
-    .stx-year.-active { color: #fff; border-bottom-color: #fff; }
+    .stx-page { --stx-up: #29a6ff; --stx-down: #f0605d; }
+    .stx-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .stx-title-row .stx-title { flex: 1; min-width: 0; }
+    .year-trigger { width: auto; min-width: 28px; padding: 0 8px; font-family: var(--font-numbers); font-size: 13px; letter-spacing: 0.03em; line-height: 1; color: #b3c2db; white-space: nowrap; }
+    .year-trigger[aria-expanded="true"] { color: #fff; }
+    .year-menu .sort-choices { flex-wrap: wrap; justify-content: flex-end; }
+    .year-option { font-family: var(--font-numbers); }
+    .stx-figs { display: flex; flex-direction: column; gap: 12px; }
+    .stx-fig-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px 62px; align-items: center; gap: 12px; }
+    .stx-fig-label { font-size: 13px; color: #8490a4; }
+    .stx-fig-bar { height: 2px; background-color: rgba(255,255,255,0.08); }
+    .stx-fig-fill { height: 100%; background-color: rgba(255,255,255,0.7); }
+    .stx-fig-row.-up .stx-fig-fill { background-color: var(--stx-up); }
+    .stx-fig-row.-down .stx-fig-fill { background-color: var(--stx-down); }
+    .stx-fig-value { font-size: 13px; color: #eaeef5; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .stx-fig-delta { font-size: 12px; color: #8490a4; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .stx-fig-row.-up .stx-fig-delta { color: var(--stx-up); }
+    .stx-fig-row.-down .stx-fig-delta { color: var(--stx-down); }
     .stx-status { display: flex; align-items: center; justify-content: center; gap: 10px; color: #8490a4; font-size: 13px; padding: 60px 0; }
     .stx-status.-error { color: #fff; }
     .stx-status[hidden] { display: none; }
     .stx-empty { color: rgba(234,238,245,0.5); font-size: 13px; margin: 0; }
-    .stx-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 20px 0; margin-bottom: 36px; border-top: 1px solid #1e2a3e; border-bottom: 1px solid #1e2a3e; }
-    .stx-fig { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; min-width: 0; }
-    .stx-fig-value { font-size: clamp(1.25rem, 6vw, 1.6rem); line-height: 1.1; color: #fff; font-weight: 500; font-variant-numeric: tabular-nums; }
-    .stx-fig-label { font-size: 12px; color: #8490a4; }
+    .stx-summary { padding: 20px 0; margin-bottom: 36px; border-top: 1px solid #1e2a3e; border-bottom: 1px solid #1e2a3e; }
     .stx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
     .stx-section { min-width: 0; }
     .stx-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 1px solid #1e2a3e; }
@@ -86,8 +96,6 @@
       .stx-page { margin-top: 10px; }
       .stx-title { font-size: 2rem; }
       .stx-meta { font-size: 13px; }
-      .stx-fig-value { font-size: 2rem; }
-      .stx-fig-label { font-size: 13px; }
     }
     @media (hover: hover) and (pointer: fine) {
       a.stx-row-label:hover, .stx-section-title a:hover { color: #29a6ff; }
@@ -142,17 +150,16 @@
   <div class="page-content">
     <div class="stx-page">
       <div class="stx-top">
-        <h1 class="stx-title"><span class="numbers" id="stats-heading-year">–</span> <span class="stx-title-label">Stats</span></h1>
+        <div class="stx-title-row">
+          <h1 class="stx-title"><span class="numbers" id="stats-heading-year">–</span> <span class="stx-title-label">Stats</span></h1>
+          <div id="stats-year-menu-mount"></div>
+        </div>
         <p class="stx-meta" id="stx-meta">Loading Saif's watch history…</p>
-        <div class="stx-years" id="stats-year-tabs"></div>
       </div>
       <div id="stats-status" class="stx-status"></div>
       <div id="stats-content" hidden>
         <section class="stx-summary">
-          <div class="stx-fig"><span class="stx-fig-value numbers" id="stat-hours">0</span><span class="stx-fig-label">Hours</span></div>
-          <div class="stx-fig"><span class="stx-fig-value numbers" id="stat-episodes">0</span><span class="stx-fig-label">Episodes</span></div>
-          <div class="stx-fig"><span class="stx-fig-value numbers" id="stat-seasons">0</span><span class="stx-fig-label">Seasons</span></div>
-          <div class="stx-fig"><span class="stx-fig-value numbers" id="stat-shows">0</span><span class="stx-fig-label">Shows</span></div>
+          <div class="stx-figs" id="stat-figures"></div>
         </section>
         <div class="stx-grid">
           <section class="stx-section stx-wide" id="section-record">
@@ -312,13 +319,10 @@ showCopied();
       }
       var headingYear = document.getElementById('stats-heading-year');
       var metaLine = document.getElementById('stx-meta');
-      var tabsMount = document.getElementById('stats-year-tabs');
+      var menuMount = document.getElementById('stats-year-menu-mount');
+      var figuresMount = document.getElementById('stat-figures');
       var statusEl = document.getElementById('stats-status');
       var content = document.getElementById('stats-content');
-      var statHours = document.getElementById('stat-hours');
-      var statEpisodes = document.getElementById('stat-episodes');
-      var statSeasons = document.getElementById('stat-seasons');
-      var statShows = document.getElementById('stat-shows');
       var platformBars = document.getElementById('platform-bars');
       var platformInsight = document.getElementById('platform-insight');
       var highlightList = document.getElementById('highlight-list');
@@ -331,6 +335,94 @@ showCopied();
       var summaryCache = {};
       var currentYear = null;
       var recordActiveYear = null;
+      var yearTotals = null;
+      var allRecordsPromise = null;
+      var yearTrigger = null;
+      var yearOptionEls = {};
+      var FIGURE_METRICS = [
+        { key: 'shows', label: 'Shows' },
+        { key: 'seasons', label: 'Seasons' },
+        { key: 'hours', label: 'Hours' },
+        { key: 'episodes', label: 'Episodes' }
+      ];
+      function renderFigures(year, summary) {
+        if (!figuresMount) return;
+        var cur = {
+          shows: summary.showCount,
+          seasons: summary.seasons,
+          hours: summary.hours,
+          episodes: summary.episodes
+        };
+        var idx = YEARS.indexOf(String(year));
+        var prev = (yearTotals && idx > 0) ? yearTotals[YEARS[idx - 1]] : null;
+        figuresMount.innerHTML = FIGURE_METRICS.map(function (m) {
+          var value = cur[m.key];
+          var delta = '–';
+          var tone = '';
+          if (prev) {
+            var before = prev[m.key];
+            if (before > 0) {
+              var change = ((value - before) / before) * 100;
+              if (change > 0.05) {
+                tone = ' -up';
+                delta = '+' + fmt1(change) + '%';
+              } else if (change < -0.05) {
+                tone = ' -down';
+                delta = fmt1(change) + '%';
+              } else {
+                delta = '0%';
+              }
+            } else if (value > 0) {
+              tone = ' -up';
+              delta = 'new';
+            }
+          }
+          var max = value;
+          if (yearTotals) {
+            YEARS.forEach(function (y) {
+              if (yearTotals[y][m.key] > max) max = yearTotals[y][m.key];
+            });
+          }
+          var width = (yearTotals && max > 0) ? (value / max) * 100 : 0;
+          var shown = m.key === 'hours' ? fmt1(value) : String(Math.round(value));
+          return (
+            '<div class="stx-fig-row' + tone + '">' +
+              '<span class="stx-fig-label">' + m.label + '</span>' +
+              '<div class="stx-fig-bar"><div class="stx-fig-fill" style="width:' + width + '%"></div></div>' +
+              '<span class="stx-fig-value numbers">' + shown + '</span>' +
+              '<span class="stx-fig-delta numbers">' + delta + '</span>' +
+            '</div>'
+          );
+        }).join('');
+      }
+      function loadAllRecords() {
+        if (allRecordsPromise) return allRecordsPromise;
+        var allIds = [];
+        var seen = {};
+        YEARS.forEach(function (year) {
+          (STATS_YEARS[year] || []).forEach(function (s) {
+            if (!seen[s.imdb]) { seen[s.imdb] = true; allIds.push(s.imdb); }
+          });
+        });
+        if (!allIds.length) return null;
+        allRecordsPromise = TVStats.fetchAll(allIds, true);
+        return allRecordsPromise;
+      }
+      function loadYearTotals() {
+        var promise = loadAllRecords();
+        if (!promise) return;
+        promise.then(function (records) {
+          var totals = {};
+          YEARS.forEach(function (year) {
+            var s = TVStats.aggregate(STATS_YEARS[year] || [], records);
+            totals[year] = { shows: s.showCount, seasons: s.seasons, hours: s.hours, episodes: s.episodes };
+          });
+          yearTotals = totals;
+          if (currentYear && summaryCache[currentYear] && summaryCache[currentYear].showCount) {
+            renderFigures(currentYear, summaryCache[currentYear]);
+          }
+        }).catch(function () {});
+      }
       function renderBarList(mount, list, total, unit) {
         if (!list.length) {
           mount.innerHTML = '<p class="stx-empty">Not enough data yet.</p>';
@@ -430,10 +522,7 @@ showCopied();
         var metaParts = [Math.round(summary.showCount) + (summary.showCount === 1 ? ' show' : ' shows')];
         if (summary.ratedShowCount) metaParts.push('avg rating ' + fmt1(summary.avgRating) + ' / 10');
         metaLine.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
-        statHours.textContent = fmt1(summary.hours);
-        statEpisodes.textContent = Math.round(summary.episodes);
-        statSeasons.textContent = Math.round(summary.seasons);
-        statShows.textContent = Math.round(summary.showCount);
+        renderFigures(currentYear, summary);
         var platformList = TVStats.toRanked(summary.platforms, 6);
         renderBarList(platformBars, platformList, summary.hours, 'h');
         if (platformList.length) {
@@ -473,19 +562,15 @@ showCopied();
         });
       }
       function setActiveTab(year) {
-        var tabs = tabsMount.querySelectorAll('.stx-year');
-        tabs.forEach(function (tab) {
-          tab.classList.toggle('-active', tab.dataset.year === String(year));
+        var current = String(year);
+        if (yearTrigger) yearTrigger.textContent = current;
+        Object.keys(yearOptionEls).forEach(function (k) {
+          var on = k === current;
+          yearOptionEls[k].classList.toggle('-active', on);
+          yearOptionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
         });
         headingYear.textContent = year;
         markRecordYear(year);
-        var activeTab = tabsMount.querySelector('.stx-year.-active');
-        if (activeTab) {
-          var tr = tabsMount.getBoundingClientRect();
-          var ar = activeTab.getBoundingClientRect();
-          var target = tabsMount.scrollLeft + (ar.left - tr.left) - (tr.width - ar.width) / 2;
-          tabsMount.scrollLeft = Math.max(0, target);
-        }
       }
       function renderYear(year) {
         currentYear = year;
@@ -512,15 +597,9 @@ showCopied();
         var mount = document.getElementById('record-chart-mount');
         var insight = document.getElementById('record-insight');
         if (!mount) return;
-        var allIds = [];
-        var seen = {};
-        YEARS.forEach(function (year) {
-          (STATS_YEARS[year] || []).forEach(function (s) {
-            if (!seen[s.imdb]) { seen[s.imdb] = true; allIds.push(s.imdb); }
-          });
-        });
-        if (!allIds.length) return;
-        TVStats.fetchAll(allIds, true).then(function (records) {
+        var recordsPromise = loadAllRecords();
+        if (!recordsPromise) return;
+        recordsPromise.then(function (records) {
           var points = YEARS.slice().sort(function (a, b) { return a - b; }).map(function (year) {
             var summary = TVStats.aggregate(STATS_YEARS[year] || [], records);
             return { year: year, hours: summary.hours };
@@ -568,18 +647,71 @@ showCopied();
           mount.innerHTML = '<p class="stx-empty">Could not load the record right now.</p>';
         });
       }
-      YEARS.forEach(function (year) {
-        var tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'stx-year numbers';
-        tab.textContent = year;
-        tab.dataset.year = year;
-        tab.addEventListener('click', function () {
-          renderYear(year);
+      function buildYearMenu() {
+        if (!menuMount || !YEARS.length) return;
+        var wrapper = document.createElement('div');
+        wrapper.className = 'sort-menu-wrapper';
+        yearTrigger = document.createElement('button');
+        yearTrigger.type = 'button';
+        yearTrigger.className = 'sort-trigger year-trigger numbers';
+        yearTrigger.setAttribute('aria-label', 'Choose stats year');
+        yearTrigger.setAttribute('aria-haspopup', 'true');
+        yearTrigger.setAttribute('aria-expanded', 'false');
+        var menu = document.createElement('div');
+        menu.className = 'sort-menu year-menu';
+        menu.setAttribute('role', 'menu');
+        var row = document.createElement('div');
+        row.className = 'sort-row';
+        var choices = document.createElement('div');
+        choices.className = 'sort-choices';
+        YEARS.forEach(function (year) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'sort-option year-option';
+          btn.setAttribute('role', 'menuitemradio');
+          btn.setAttribute('aria-checked', 'false');
+          btn.dataset.year = year;
+          btn.textContent = year;
+          choices.appendChild(btn);
+          yearOptionEls[year] = btn;
         });
-        tabsMount.appendChild(tab);
-      });
+        row.appendChild(choices);
+        menu.appendChild(row);
+        wrapper.appendChild(yearTrigger);
+        wrapper.appendChild(menu);
+        menuMount.appendChild(wrapper);
+        function openMenu() {
+          menu.classList.add('-open');
+          yearTrigger.setAttribute('aria-expanded', 'true');
+        }
+        function closeMenu() {
+          menu.classList.remove('-open');
+          yearTrigger.setAttribute('aria-expanded', 'false');
+        }
+        yearTrigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (menu.classList.contains('-open')) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+        document.addEventListener('click', function (e) {
+          if (!wrapper.contains(e.target)) closeMenu();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeMenu();
+        });
+        menu.addEventListener('click', function (e) {
+          var target = e.target;
+          if (!target.classList || !target.classList.contains('year-option')) return;
+          closeMenu();
+          if (target.dataset.year !== String(currentYear)) renderYear(target.dataset.year);
+        });
+      }
+      buildYearMenu();
       loadRecord();
+      loadYearTotals();
       if (DEFAULT_YEAR) {
         renderYear(DEFAULT_YEAR);
       } else {
