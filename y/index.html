@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preload" as="script" href="/js/y.js?v=6">
+  <link rel="preload" as="script" href="/js/y.js?v=7">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400..700&display=swap" rel="stylesheet">
   <style>
     .site-header { position: relative; height: 52px; background-color: #0b121e; }
@@ -28,8 +28,6 @@
     .cg-pick-select option { background-color: #0b121e; color: #eaeef5; }
     .cg-pick:hover .cg-pick-chevron, .cg-pick:focus-within .cg-pick-chevron { stroke: #fff; }
     .cg-title-label { color: #eaeef5; }
-    .cg-meta { margin: 8px 0 0; font-size: 12.5px; color: #8490a4; min-height: 1.4em; }
-    .cg-meta .numbers { color: #b3c2db; }
     .cg-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; align-items: center; }
     .cg-bar[hidden], .cg-extra[hidden] { display: none; }
     .cg-extra { margin-top: 8px; }
@@ -129,7 +127,6 @@
     <div class="cg-page">
       <div class="cg-top">
         <h1 class="cg-title"><span class="cg-pick"><span class="cg-pick-text numbers" id="cg-title-name"></span><svg class="cg-pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="cg-pick-select" id="f-year" aria-label="Year"></select></span></h1>
-        <p class="cg-meta" id="cg-meta"></p>
       </div>
       <div class="cg-bar" id="cg-bar">
         <span class="cg-field" data-label="Genre" data-default=""><span class="cg-field-text">Genre</span><svg class="cg-field-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="cg-field-select" id="f-genre" aria-label="Genre"></select></span>
@@ -162,7 +159,7 @@
 </p>
 </div>
 </footer>
-  <script src="/js/y.js?v=6"></script>
+  <script src="/js/y.js?v=7"></script>
 <script src="/js/auth.js?v=1"></script>
 </body>
 </html>

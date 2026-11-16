@@ -434,7 +434,6 @@
   var el = {
     titleName: document.getElementById('cg-title-name'),
     yearSelect: document.getElementById('f-year'),
-    meta: document.getElementById('cg-meta'),
     extra: document.getElementById('cg-extra'),
     genre: document.getElementById('f-genre'),
     sort: document.getElementById('f-sort'),
@@ -601,11 +600,6 @@
     if (minVotes) q.push('vote_count.gte=' + minVotes);
     return q.join('&');
   }
-  function renderMeta(data) {
-    var total = data.total_results || 0;
-    var g = genreBySlug(state.genre);
-    el.meta.innerHTML = '<span class="numbers">' + formatCount(total) + '</span> ' + (g ? escapeHtml(g.name) + ' ' : '') + (total === 1 ? 'show' : 'shows') + (year === null ? '' : ' first aired in <span class="numbers">' + year + '</span>');
-  }
   function updateFooter() {
     el.loader.hidden = !loading || page === 0;
     el.retry.hidden = !failed || page === 0;
@@ -635,7 +629,6 @@
         });
         setStatus('');
         if (next === 1) {
-          renderMeta(data);
           if (!results.length) {
             setStatus('No shows match these filters.');
             updateFooter();
@@ -672,7 +665,6 @@
     failed = false;
     seen = {};
     el.grid.innerHTML = '';
-    el.meta.textContent = '';
     updateFooter();
     setStatus(SPINNER_HTML);
     fetchPage();

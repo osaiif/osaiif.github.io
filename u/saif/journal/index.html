@@ -18,38 +18,26 @@
       overflow-y: scroll;
       scrollbar-gutter: stable;
     }
-    .year-pills {
-      scrollbar-width: none;
-    }
-    .year-pills::-webkit-scrollbar { display: none; }
-    .year-pills {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      margin-bottom: 20px;
-    }
-    .year-pill {
-      flex: 0 0 auto;
-      padding: 4px 12px;
-      border: 1px solid #1f2b3b;
-      border-radius: 999px;
-      background-color: rgba(255, 255, 255, 0.02);
-      color: #9cb2c2;
+    .year-trigger {
+      width: auto;
+      min-width: 28px;
+      padding: 0 8px;
       font-family: var(--font-numbers);
       font-size: 13px;
       letter-spacing: 0.03em;
-      cursor: pointer;
-      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+      line-height: 1;
+      color: #b3c2db;
+      white-space: nowrap;
     }
-    .year-pill:hover {
-      border-color: #30485a;
+    .year-trigger[aria-expanded="true"] {
+      color: #fff;
     }
-    .year-pill.-active {
-      background-color: #1d222a;
-      border-color: #30485a;
-      color: #e6eef7;
+    .year-menu .sort-choices {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .year-option {
+      font-family: var(--font-numbers);
     }
     .journal-empty {
       color: rgba(247, 236, 230, 0.5);
@@ -125,8 +113,10 @@
   </header>
   <div class="page-content">
     <section>
-      <h2 class="section-heading no-divider">saif's Journal</h2>
-      <div class="year-pills" id="year-pills"></div>
+      <div class="section-heading-row">
+        <h2 class="section-heading no-divider">saif's Journal</h2>
+        <div id="year-menu-mount"></div>
+      </div>
       <div class="poster-grid" id="journal-grid"></div>
     </section>
   </div>
@@ -225,7 +215,7 @@ showCopied();
       var DEFAULT_YEAR = (requestedYear && years.indexOf(requestedYear) !== -1)
         ? requestedYear
         : (years.length ? years[years.length - 1] : null);
-      var pillsMount = document.getElementById('year-pills');
+      var menuMount = document.getElementById('year-menu-mount');
       var grid = document.getElementById('journal-grid');
       var EAGER_ROW_SIZE = 4;
       var cache = {};
@@ -265,26 +255,86 @@ showCopied();
         grid.appendChild(frag);
       }
       var currentYear = null;
+      var yearTrigger = null;
+      var yearOptionEls = {};
       function setActiveYear(year) {
         if (String(year) === currentYear) return;
         currentYear = String(year);
-        var pills = pillsMount.querySelectorAll('.year-pill');
-        pills.forEach(function (pill) {
-          pill.classList.toggle('-active', pill.dataset.year === currentYear);
+        if (yearTrigger) yearTrigger.textContent = currentYear;
+        Object.keys(yearOptionEls).forEach(function (k) {
+          var on = k === currentYear;
+          yearOptionEls[k].classList.toggle('-active', on);
+          yearOptionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
         });
         renderGrid(year);
       }
-      years.forEach(function (year) {
-        var pill = document.createElement('button');
-        pill.type = 'button';
-        pill.className = 'year-pill numbers';
-        pill.textContent = year;
-        pill.dataset.year = year;
-        pill.addEventListener('click', function () {
-          setActiveYear(year);
+      function buildYearMenu() {
+        if (!menuMount || !years.length) return;
+        var wrapper = document.createElement('div');
+        wrapper.className = 'sort-menu-wrapper';
+        yearTrigger = document.createElement('button');
+        yearTrigger.type = 'button';
+        yearTrigger.className = 'sort-trigger year-trigger numbers';
+        yearTrigger.setAttribute('aria-label', 'Choose journal year');
+        yearTrigger.setAttribute('aria-haspopup', 'true');
+        yearTrigger.setAttribute('aria-expanded', 'false');
+        var menu = document.createElement('div');
+        menu.className = 'sort-menu year-menu';
+        menu.setAttribute('role', 'menu');
+        var row = document.createElement('div');
+        row.className = 'sort-row';
+        var label = document.createElement('span');
+        label.className = 'sort-label';
+        label.textContent = 'Year';
+        var choices = document.createElement('div');
+        choices.className = 'sort-choices';
+        years.forEach(function (year) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'sort-option year-option';
+          btn.setAttribute('role', 'menuitemradio');
+          btn.setAttribute('aria-checked', 'false');
+          btn.dataset.year = year;
+          btn.textContent = year;
+          choices.appendChild(btn);
+          yearOptionEls[year] = btn;
         });
-        pillsMount.appendChild(pill);
-      });
+        row.appendChild(label);
+        row.appendChild(choices);
+        menu.appendChild(row);
+        wrapper.appendChild(yearTrigger);
+        wrapper.appendChild(menu);
+        menuMount.appendChild(wrapper);
+        function openMenu() {
+          menu.classList.add('-open');
+          yearTrigger.setAttribute('aria-expanded', 'true');
+        }
+        function closeMenu() {
+          menu.classList.remove('-open');
+          yearTrigger.setAttribute('aria-expanded', 'false');
+        }
+        yearTrigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (menu.classList.contains('-open')) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+        document.addEventListener('click', function (e) {
+          if (!wrapper.contains(e.target)) closeMenu();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeMenu();
+        });
+        menu.addEventListener('click', function (e) {
+          var target = e.target;
+          if (!target.classList || !target.classList.contains('year-option')) return;
+          closeMenu();
+          setActiveYear(target.dataset.year);
+        });
+      }
+      buildYearMenu();
       setActiveYear(DEFAULT_YEAR);
     })();
   </script>
