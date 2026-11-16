@@ -19,7 +19,6 @@
     .site-header { position: relative; height: 52px; background-color: #0b121e; }
     @media (min-width: 1024px) { .site-header { height: 76px; } }
     .page-content { padding-top: 0px; width: 100%; min-width: 0; }
-    .stx-page { margin-top: 6px; }
     .stx-top { margin-bottom: 24px; }
     .stx-title { margin: 0; font-size: 1.5rem; line-height: 1.15; color: #fff; display: flex; align-items: baseline; gap: 9px; }
     .stx-title .numbers { color: #fff; font-weight: 500; }
@@ -47,7 +46,7 @@
     .stx-status.-error { color: #fff; }
     .stx-status[hidden] { display: none; }
     .stx-empty { color: rgba(234,238,245,0.5); font-size: 13px; margin: 0; }
-    .stx-summary { padding: 20px 0; margin-bottom: 36px; border-top: 1px solid #1e2a3e; border-bottom: 1px solid #1e2a3e; }
+    .stx-summary { padding: 4px 0 20px; margin-bottom: 36px; border-bottom: 1px solid #1e2a3e; }
     .stx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
     .stx-section { min-width: 0; }
     .stx-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 1px solid #1e2a3e; }
@@ -56,6 +55,9 @@
     .stx-section-note { flex: none; font-size: 12px; color: #8490a4; text-align: right; }
     .stx-section-note strong { color: #b3c2db; font-weight: 500; }
     .stx-section-note strong.-up { color: #46c37b; }
+    .stx-arrow { display: inline-block; width: 11px; height: 11px; margin-left: 2px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    #section-record .stx-section-title { flex: none; white-space: nowrap; }
+    #section-record .stx-section-note { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .stx-section-note strong.-down { color: #f0605d; }
     .stx-list { display: flex; flex-direction: column; gap: 14px; }
     .stx-row { display: flex; flex-direction: column; gap: 6px; }
@@ -93,7 +95,6 @@
       .stx-wide { grid-column: 1 / -1; }
     }
     @media (min-width: 1024px) {
-      .stx-page { margin-top: 10px; }
       .stx-title { font-size: 2rem; }
       .stx-meta { font-size: 13px; }
     }
@@ -149,12 +150,9 @@
   </header>
   <div class="page-content">
     <div class="stx-page">
-      <div class="stx-top">
-        <div class="stx-title-row">
-          <h1 class="stx-title"><span class="numbers" id="stats-heading-year">–</span> <span class="stx-title-label">Stats</span></h1>
-          <div id="stats-year-menu-mount"></div>
-        </div>
-        <p class="stx-meta" id="stx-meta">Loading Saif's watch history…</p>
+      <div class="section-heading-row">
+        <h1 class="section-heading no-divider">Stats</h1>
+        <div id="stats-year-menu-mount"></div>
       </div>
       <div id="stats-status" class="stx-status"></div>
       <div id="stats-content" hidden>
@@ -317,8 +315,6 @@ showCopied();
         var parts = title.trim().split(/\s+/).slice(0, 2);
         return parts.map(function (p) { return p.charAt(0).toUpperCase(); }).join('');
       }
-      var headingYear = document.getElementById('stats-heading-year');
-      var metaLine = document.getElementById('stx-meta');
       var menuMount = document.getElementById('stats-year-menu-mount');
       var figuresMount = document.getElementById('stat-figures');
       var statusEl = document.getElementById('stats-status');
@@ -337,6 +333,7 @@ showCopied();
       var recordActiveYear = null;
       var yearTotals = null;
       var allRecordsPromise = null;
+      var recordPoints = null;
       var yearTrigger = null;
       var yearOptionEls = {};
       var FIGURE_METRICS = [
@@ -516,12 +513,8 @@ showCopied();
           statusEl.hidden = false;
           statusEl.classList.remove('-error');
           statusEl.innerHTML = '<p class="stx-empty">No shows logged for this year yet.</p>';
-          metaLine.textContent = '';
           return;
         }
-        var metaParts = [Math.round(summary.showCount) + (summary.showCount === 1 ? ' show' : ' shows')];
-        if (summary.ratedShowCount) metaParts.push('avg rating ' + fmt1(summary.avgRating) + ' / 10');
-        metaLine.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
         renderFigures(currentYear, summary);
         var platformList = TVStats.toRanked(summary.platforms, 6);
         renderBarList(platformBars, platformList, summary.hours, 'h');
@@ -554,6 +547,27 @@ showCopied();
           directorInsight.textContent = '';
         }
       }
+      var ARROW_UP = '<svg class="stx-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+      var ARROW_DOWN = '<svg class="stx-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+      function updateRecordInsight() {
+        var insight = document.getElementById('record-insight');
+        if (!insight) return;
+        insight.innerHTML = '';
+        if (!recordPoints || currentYear === null) return;
+        var idx = -1;
+        for (var i = 0; i < recordPoints.length; i++) {
+          if (String(recordPoints[i].year) === String(currentYear)) idx = i;
+        }
+        if (idx < 1) return;
+        var cur = recordPoints[idx];
+        var before = recordPoints[idx - 1];
+        if (!(before.hours > 0)) return;
+        var change = ((cur.hours - before.hours) / before.hours) * 100;
+        var tone = change > 0.05 ? 'up' : (change < -0.05 ? 'down' : '');
+        var pct = tone ? (change > 0 ? '+' : '') + fmt1(change) + '%' : '0%';
+        var arrow = tone === 'up' ? ARROW_UP : (tone === 'down' ? ARROW_DOWN : '');
+        insight.innerHTML = '<strong' + (tone ? ' class="-' + tone + '"' : '') + '>' + pct + ' ' + arrow + '</strong> compared to ' + before.year;
+      }
       function markRecordYear(year) {
         recordActiveYear = year;
         var rows = document.querySelectorAll('.stx-record-row');
@@ -569,7 +583,7 @@ showCopied();
           yearOptionEls[k].classList.toggle('-active', on);
           yearOptionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
         });
-        headingYear.textContent = year;
+        updateRecordInsight();
         markRecordYear(year);
       }
       function renderYear(year) {
@@ -580,7 +594,6 @@ showCopied();
           return;
         }
         showLoading();
-        metaLine.textContent = '';
         var showList = STATS_YEARS[year] || [];
         var ids = showList.map(function (s) { return s.imdb; });
         TVStats.fetchAll(ids, true).then(function (records) {
@@ -595,7 +608,6 @@ showCopied();
       }
       function loadRecord() {
         var mount = document.getElementById('record-chart-mount');
-        var insight = document.getElementById('record-insight');
         if (!mount) return;
         var recordsPromise = loadAllRecords();
         if (!recordsPromise) return;
@@ -633,16 +645,8 @@ showCopied();
               '</div>'
             );
           }).join('') + '</div>';
-          if (insight) {
-            var last = points[points.length - 1];
-            var before = points[points.length - 2];
-            if (before.hours > 0) {
-              var overallChange = ((last.hours - before.hours) / before.hours) * 100;
-              var word = overallChange > 1 ? 'up' : (overallChange < -1 ? 'down' : 'flat');
-              var tone = word === 'up' ? ' class="-up"' : (word === 'down' ? ' class="-down"' : '');
-              insight.innerHTML = '<strong' + tone + '>' + (overallChange > 0 ? '+' : '') + fmt1(overallChange) + '%</strong> ' + word + ' compared to ' + before.year;
-            }
-          }
+          recordPoints = points;
+          updateRecordInsight();
         }).catch(function () {
           mount.innerHTML = '<p class="stx-empty">Could not load the record right now.</p>';
         });
