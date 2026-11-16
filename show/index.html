@@ -76,6 +76,13 @@
     #show-genres .genre-sep {
       margin: 0 8px;
     }
+    #show-genres .genre-item {
+      display: inline-block;
+      white-space: nowrap;
+    }
+    #show-genres .genre-row {
+      display: block;
+    }
     @media (min-width: 1024px) {
       #show-meta, #show-genres, #show-genres .genre-tag {
         font-size: 14px;
@@ -688,6 +695,105 @@ showCopied();
       } else {
         setStatus('No show selected. Head back to <a href="/search/">search</a> and pick one.', true);
       }
+      var genreList = [];
+      var genreLayoutWidth = 0;
+      var genreResizeTimer = null;
+      var GENRE_SEP_HTML = '<span class="genre-sep">·</span>';
+      function genreItemHtml(g) {
+        return '<span class="genre-item"><a class="genre-tag" href="/g/?s=' + slugifyGenre(g.name) + '">' + escapeHtml(g.name) + '</a></span>';
+      }
+      function setGenres(list) {
+        genreList = list;
+        document.getElementById('show-genres').innerHTML = list.map(genreItemHtml).join(GENRE_SEP_HTML);
+      }
+      function balanceGenreRows(w, sw, limit) {
+        var n = w.length;
+        function rowWidth(i, j) {
+          var t = 0;
+          for (var k = i; k < j; k++) t += w[k];
+          return t + (j - i - 1) * sw;
+        }
+        var rows = 1;
+        var cur = 0;
+        var count = 0;
+        for (var k = 0; k < n; k++) {
+          var add = (count ? sw : 0) + w[k];
+          if (count && cur + add > limit) {
+            rows++;
+            cur = w[k];
+            count = 1;
+          } else {
+            cur += add;
+            count++;
+          }
+        }
+        if (rows < 2) return null;
+        var dp = [];
+        for (var r = 0; r <= rows; r++) {
+          dp.push([]);
+          for (var j = 0; j <= n; j++) dp[r].push(null);
+        }
+        dp[0][0] = { cost: 0, prev: -1 };
+        for (r = 1; r <= rows; r++) {
+          for (j = r; j <= n; j++) {
+            for (var i = r - 1; i < j; i++) {
+              if (!dp[r - 1][i]) continue;
+              var width = rowWidth(i, j);
+              if (width > limit && j - i > 1) continue;
+              var cost = dp[r - 1][i].cost + width * width;
+              if (!dp[r][j] || cost < dp[r][j].cost) dp[r][j] = { cost: cost, prev: i };
+            }
+          }
+        }
+        if (!dp[rows][n]) return null;
+        var bounds = [];
+        var end = n;
+        for (r = rows; r >= 1; r--) {
+          var start = dp[r][end].prev;
+          bounds.unshift([start, end]);
+          end = start;
+        }
+        return bounds;
+      }
+      function layoutGenres() {
+        var el = document.getElementById('show-genres');
+        var n = genreList.length;
+        if (n < 2) return;
+        var W = el.clientWidth;
+        if (!W) return;
+        el.innerHTML = genreList.map(genreItemHtml).join(GENRE_SEP_HTML);
+        genreLayoutWidth = W;
+        var itemEls = el.querySelectorAll('.genre-item');
+        var sepEl = el.querySelector('.genre-sep');
+        if (itemEls.length !== n || !sepEl) return;
+        var w = [];
+        for (var i = 0; i < n; i++) w.push(itemEls[i].getBoundingClientRect().width);
+        var cs = window.getComputedStyle(sepEl);
+        var sw = sepEl.getBoundingClientRect().width +
+          (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0);
+        var bounds = balanceGenreRows(w, sw, W - 1);
+        if (!bounds) return;
+        el.innerHTML = bounds.map(function (b) {
+          return '<div class="genre-row">' +
+            genreList.slice(b[0], b[1]).map(genreItemHtml).join(GENRE_SEP_HTML) +
+            '</div>';
+        }).join('');
+      }
+      function relayoutGenres() {
+        if (genreList.length < 2) return;
+        var el = document.getElementById('show-genres');
+        if (!el.clientWidth) return;
+        setGenres(genreList);
+        layoutGenres();
+      }
+      window.addEventListener('resize', function () {
+        clearTimeout(genreResizeTimer);
+        genreResizeTimer = setTimeout(function () {
+          var el = document.getElementById('show-genres');
+          if (genreList.length < 2 || !el.clientWidth || el.clientWidth === genreLayoutWidth) return;
+          relayoutGenres();
+        }, 120);
+      });
       function renderShow(show) {
             setStatus('');
             var backdropUrl = show.backdrop_path
@@ -746,13 +852,7 @@ showCopied();
               metaParts.push('<span>' + show.number_of_seasons + ' season' + (show.number_of_seasons === 1 ? '' : 's') + '</span>');
             }
             document.getElementById('show-meta').innerHTML = metaParts.join('<span class="show-meta-dot">·</span>');
-            var genresEl = document.getElementById('show-genres');
-            var genres = show.genres || [];
-            if (genres.length) {
-              genresEl.innerHTML = genres.map(function (g) {
-                return '<a class="genre-tag" href="/g/?s=' + slugifyGenre(g.name) + '">' + escapeHtml(g.name) + '</a>';
-              }).join('<span class="genre-sep">·</span>');
-            }
+            setGenres(show.genres || []);
             document.getElementById('show-rating-value').textContent =
               show.vote_average ? show.vote_average.toFixed(1) : '–';
             document.getElementById('show-seasons-value').textContent =
@@ -763,6 +863,10 @@ showCopied();
             var hasNothing = !show.overview && !show.number_of_seasons && !show.number_of_episodes;
             hero.classList.toggle('-no-actions', hasNothing);
             hero.hidden = false;
+            layoutGenres();
+            if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(relayoutGenres);
+            }
             document.dispatchEvent(new CustomEvent('tvbox:show-loaded'));
             setupTrailer(show);
       }
