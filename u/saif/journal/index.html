@@ -283,9 +283,6 @@ showCopied();
         menu.setAttribute('role', 'menu');
         var row = document.createElement('div');
         row.className = 'sort-row';
-        var label = document.createElement('span');
-        label.className = 'sort-label';
-        label.textContent = 'Year';
         var choices = document.createElement('div');
         choices.className = 'sort-choices';
         years.forEach(function (year) {
@@ -299,7 +296,6 @@ showCopied();
           choices.appendChild(btn);
           yearOptionEls[year] = btn;
         });
-        row.appendChild(label);
         row.appendChild(choices);
         menu.appendChild(row);
         wrapper.appendChild(yearTrigger);
