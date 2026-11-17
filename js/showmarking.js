@@ -656,16 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       html += '<span class="season-upcoming">Upcoming</span>';
     }
-    if (season.episodes > 0) {
-      const isOpen = !!openSeasons[season.number];
-      html += '<button type="button" class="season-toggle" data-season-toggle="' + season.number +
-        '" aria-expanded="' + (isOpen ? 'true' : 'false') +
-        '" aria-controls="season-eps-' + season.number +
-        '" aria-label="' + (isOpen ? 'Hide' : 'Show') + ' episodes of ' + escapeText(name) + '">' +
-        '<svg class="season-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">' +
-        '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '</svg></button>';
-    }
     html += '</article>';
     return html;
   }
