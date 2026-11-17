@@ -537,7 +537,7 @@
     el.pickTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) {
       var active = el.pickChoices.querySelector('.-active');
-      if (active) el.pickMenu.scrollLeft = Math.max(0, active.offsetLeft - (el.pickMenu.clientWidth - active.offsetWidth) / 2);
+      if (active) el.pickMenu.scrollTop = Math.max(0, active.offsetTop - (el.pickMenu.clientHeight - active.offsetHeight) / 2);
     }
   }
   function markActive(attr, key) {
@@ -556,7 +556,6 @@
     var html = optionBtn('data-year', 'all', 'All', '');
     for (var y = highest; y >= lowest; y--) html += optionBtn('data-year', String(y), String(y), 'cg-year-option');
     el.pickChoices.innerHTML = html;
-    el.pickChoices.style.setProperty('--cols', Math.ceil(el.pickChoices.children.length / 3));
   }
   function markYearActive() {
     markActive('data-year', year === null ? 'all' : String(year));

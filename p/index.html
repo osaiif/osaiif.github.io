@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>...</title>
   <link rel="stylesheet" href="/css/styles.css?v=8">
+  <link rel="stylesheet" href="/css/searchbar.css">
+  <script src="/js/searchbar.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
@@ -34,7 +36,6 @@
         font-weight: 600;
       }
     }
-
     .person-bio.-clamp {
       display: -webkit-box;
       -webkit-box-orient: vertical;
@@ -234,7 +235,6 @@
   </div>
   <script src="/js/urlslug.js?v=1"></script>
   <script>
-
 (function () {
       var TMDB_API_KEYS = [
         '6cb6e1dc603bc65ffb6198489d5bc5b7',
@@ -487,15 +487,8 @@
       var PROFILE_BASE = 'https://image.tmdb.org/t/p/w342';
       var POSTER_BASE = 'https://image.tmdb.org/t/p/w154';
       var WORK_LIMIT = 20;
-      // Credits that TMDB is missing but IMDb lists. Keyed by TMDB person id.
-      // Only "imdb" (the title id, e.g. tt1234567) and "section" are required; the page looks the
-      // title up on TMDB for its poster/year/link and falls back to the fields given here
-      // (name, year, type) when TMDB doesn't know the title at all.
-      //   section: 'acting' | 'crew'      role: character name (acting) or job (crew)
-      //   type: 'movie' | 'tv'            year: 2021
       var EXTRA_CREDITS = {
         '5563583': [
-          // { section: 'acting', imdb: 'tt0000000', name: 'Title', year: 2021, type: 'movie', role: 'Character' },
         ]
       };
       var ROLE_LABELS = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Editing: 'Editor' };
@@ -957,7 +950,6 @@
         setStatus('No person selected. Head back to <a href="/search/">search</a> and pick someone.', true);
       }
 })();
-
   </script>
   <script>
     (function () {

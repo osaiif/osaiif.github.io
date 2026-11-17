@@ -8,11 +8,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Genres | tvbox</title>
   <link rel="stylesheet" href="/css/styles.css?v=8">
+  <link rel="stylesheet" href="/css/searchbar.css">
+  <script src="/js/searchbar.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preload" as="script" href="/js/g.js?v=8">
+  <link rel="preload" as="script" href="/js/g.js?v=9">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400..700&display=swap" rel="stylesheet">
   <style>
     .site-header { position: relative; height: 52px; background-color: #0b121e; }
@@ -28,10 +30,10 @@
     .cg-pick-chevron { flex: none; width: 13px; height: 13px; fill: none; stroke: #8490a4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s ease, transform 0.15s ease; }
     .cg-pick-trigger:hover .cg-pick-chevron, .cg-pick-trigger:focus-visible .cg-pick-chevron, .cg-pick-trigger[aria-expanded="true"] .cg-pick-chevron { stroke: #fff; }
     .cg-pick-trigger[aria-expanded="true"] .cg-pick-chevron { transform: rotate(180deg); }
-    .cg-title-row .cg-pick-menu { left: 50%; right: auto; transform: translate(-50%, -4px); width: max-content; min-width: 0; max-width: calc(100vw - 24px); max-height: none; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; visibility: hidden; transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s; }
+    .cg-title-row .cg-pick-menu { left: 50%; right: auto; transform: translate(-50%, -4px); width: max-content; min-width: 120px; max-width: calc(100vw - 24px); max-height: min(60vh, 340px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; visibility: hidden; transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s; }
     .cg-title-row .cg-pick-menu.-open { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
-    .cg-title-row .cg-pick-menu .sort-row { justify-content: flex-start; padding: 6px 8px; }
-    .cg-title-row .cg-pick-menu .sort-choices { display: grid; grid-template-columns: repeat(var(--cols, 1), max-content); grid-auto-rows: auto; gap: 2px 4px; justify-content: start; flex: none; }
+    .cg-title-row .cg-pick-menu .sort-row { justify-content: stretch; padding: 4px; }
+    .cg-title-row .cg-pick-menu .sort-choices { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 100%; }
     .cg-title-row .cg-pick-menu .sort-option { text-align: center; }
     .cg-year-option { font-family: var(--font-numbers); }
     .cg-title-label { color: #eaeef5; }
@@ -170,7 +172,7 @@
 </p>
 </div>
 </footer>
-  <script src="/js/g.js?v=8"></script>
+  <script src="/js/g.js?v=9"></script>
 <script src="/js/auth.js?v=1"></script>
 </body>
 </html>

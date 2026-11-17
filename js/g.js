@@ -565,7 +565,7 @@
     el.pickTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) {
       var active = el.pickChoices.querySelector('.-active');
-      if (active) el.pickMenu.scrollLeft = Math.max(0, active.offsetLeft - (el.pickMenu.clientWidth - active.offsetWidth) / 2);
+      if (active) el.pickMenu.scrollTop = Math.max(0, active.offsetTop - (el.pickMenu.clientHeight - active.offsetHeight) / 2);
     }
   }
   function markActive(attr, key) {
@@ -582,7 +582,6 @@
     var html = optionBtn('data-genre', 'all', 'All', '');
     html += GENRES.map(function (g) { return optionBtn('data-genre', g.slug, g.name, ''); }).join('');
     el.pickChoices.innerHTML = html;
-    el.pickChoices.style.setProperty('--cols', Math.ceil(el.pickChoices.children.length / 3));
     markActive('data-genre', genre ? genre.slug : (allGenres ? 'all' : null));
   }
   function renderDecadeSelect() {

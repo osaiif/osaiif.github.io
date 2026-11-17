@@ -14,6 +14,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp" media="(min-width: 641px)" fetchpriority="high">
 <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20vert.webp" media="(max-width: 640px)" fetchpriority="high">
+<style>
+.header-container .group.floating-search.-centered {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: 158px;
+  margin-left: 0;
+  margin-right: 0;
+}
+</style>
 </head>
 <body class="about-page">
 <div class="about-layout">
@@ -46,7 +56,7 @@
       <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
       <div class="auth-modal-box"></div>
     </div>
-    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+    <form class="group floating-search -centered" id="home-search-form" action="/search/" method="get">
       <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
         <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
       </svg>
