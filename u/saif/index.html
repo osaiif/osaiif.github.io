@@ -22,6 +22,65 @@
   <link rel="preload" as="script" href="/js/shows.js?v=1">
   <link rel="preload" as="script" href="/js/bio.js?v=3">
   <style>
+    .group.floating-search.-collapsible {
+      width: 31.5px;
+      max-width: 31.5px;
+      height: 31.5px;
+      justify-content: center;
+      transition: width 0.25s ease, max-width 0.25s ease;
+    }
+    .group.floating-search.-collapsible.-open {
+      width: calc(100% - 158.5px);
+      max-width: none;
+    }
+    .group.floating-search.-collapsible .input {
+      padding: 0;
+      color: transparent;
+      caret-color: transparent;
+      cursor: pointer;
+    }
+    .group.floating-search.-collapsible .input::placeholder {
+      color: transparent;
+    }
+    .group.floating-search.-collapsible.-open .input {
+      padding-left: 2.2rem;
+      padding-right: 0.8rem;
+      color: #eaeef5;
+      caret-color: auto;
+      cursor: text;
+    }
+    .group.floating-search.-collapsible.-open .input::placeholder {
+      color: rgba(234, 238, 245, 0.6);
+    }
+    .group.floating-search.-collapsible .search-icon {
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin-left: -8px;
+      transition: fill 0.15s ease;
+    }
+    .group.floating-search.-collapsible.-open .search-icon {
+      left: 0.8rem;
+      width: 0.85rem;
+      height: 0.85rem;
+      margin-left: 0;
+    }
+    .group.floating-search.-collapsible:not(.-open):hover .search-icon {
+      fill: #29a6ff;
+    }
+    @media (max-width: 600px) {
+      .group.floating-search.-collapsible.-open .input {
+        padding-left: 1.9rem;
+      }
+      .group.floating-search.-collapsible.-open .search-icon {
+        left: 0.7rem;
+      }
+    }
+    @media (min-width: 1024px) {
+      .backdrop-container > .group.floating-search.-collapsible.-open {
+        width: calc(100% - (2 * var(--hx)) - 158.5px);
+      }
+    }
     .ratings-chart { --chart-h: 48px; }
     @media (max-width: 420px) {
       .ratings-chart { --chart-h: 40px; }
@@ -407,7 +466,7 @@
       <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
       <div class="auth-modal-box"></div>
     </div>
-    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+    <form class="group floating-search -collapsible" id="home-search-form" action="/search/" method="get">
       <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
         <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
       </svg>
@@ -759,6 +818,22 @@ showCopied();
         if (e.key === 'Enter' || e.keyCode === 13) {
           e.preventDefault();
           goToResults();
+        }
+      });
+      function openSearch() {
+        form.classList.add('-open');
+      }
+      function closeSearch() {
+        if (!input.value.trim()) form.classList.remove('-open');
+      }
+      input.addEventListener('focus', openSearch);
+      input.addEventListener('click', openSearch);
+      input.addEventListener('blur', closeSearch);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          input.value = '';
+          input.blur();
+          form.classList.remove('-open');
         }
       });
       window.addEventListener('pageshow', function () {
