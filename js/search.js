@@ -638,6 +638,10 @@
     var q = card.getAttribute('data-q') || '';
     card.removeAttribute('data-lazy');
     var badge = card.querySelector('.creator-badge');
+    var creatorRow = card.querySelector('.creator');
+    function dropCreator() {
+      if (creatorRow && creatorRow.parentNode) creatorRow.parentNode.removeChild(creatorRow);
+    }
     var titleEl = card.querySelector('.title');
     var shown = titleEl ? titleEl.textContent : '';
     var path = '/' + type + '/' + id;
@@ -651,8 +655,12 @@
           } else {
             names = ((details && details.created_by) || []).map(function (c) { return c.name; });
           }
-          badge.classList.remove('-loading');
-          badge.textContent = names.length ? names.slice(0, 3).join(', ') : 'Unknown';
+          if (names.length) {
+            badge.classList.remove('-loading');
+            badge.textContent = names.slice(0, 3).join(', ');
+          } else {
+            dropCreator();
+          }
         }
         var base = uniqueNames(detailNames(type, details), shown);
         var isHit = makeMatcher(q);
@@ -675,9 +683,7 @@
           });
       })
       .catch(function () {
-        if (!badge) return;
-        badge.classList.remove('-loading');
-        badge.textContent = 'Unknown';
+        if (badge && badge.classList.contains('-loading')) dropCreator();
       });
   }
   function watchDetails(root) {
