@@ -365,13 +365,7 @@
     return out;
   }
   function detailNames(type, details) {
-    var out = [];
-    if (!details) return out;
-    if (type === 'person') return (details.also_known_as || []).slice();
-    var alt = details.alternative_titles || {};
-    out.push(type === 'movie' ? details.original_title : details.original_name);
-    (alt.titles || alt.results || []).forEach(function (a) { out.push(a && a.title); });
-    return out;
+    return details && type === 'person' ? (details.also_known_as || []).slice() : [];
   }
   function showAka(card, names, q) {
     if (!names.length) return;
@@ -632,58 +626,42 @@
     label.textContent = text;
     return label;
   }
+  function removeCreator(card) {
+    var creator = card.querySelector('.creator');
+    if (creator && creator.parentNode) creator.parentNode.removeChild(creator);
+    card.classList.add('no-creator');
+  }
   function loadDetails(card) {
     var type = card.getAttribute('data-lazy');
     var id = card.getAttribute('data-id');
     var q = card.getAttribute('data-q') || '';
     card.removeAttribute('data-lazy');
     var badge = card.querySelector('.creator-badge');
-    var creatorRow = card.querySelector('.creator');
-    function dropCreator() {
-      if (creatorRow && creatorRow.parentNode) creatorRow.parentNode.removeChild(creatorRow);
-    }
     var titleEl = card.querySelector('.title');
     var shown = titleEl ? titleEl.textContent : '';
     var path = '/' + type + '/' + id;
-    var params = type === 'movie' ? 'append_to_response=credits,alternative_titles' : (type === 'tv' ? 'append_to_response=alternative_titles' : '');
+    var params = type === 'movie' ? 'append_to_response=credits' : '';
     tmdbFetch(path, params)
       .then(function (details) {
-        if (badge) {
-          var names;
-          if (type === 'movie') {
-            names = ((details && details.credits && details.credits.crew) || []).filter(function (c) { return c.job === 'Director'; }).map(function (c) { return c.name; });
-          } else {
-            names = ((details && details.created_by) || []).map(function (c) { return c.name; });
-          }
-          if (names.length) {
-            badge.classList.remove('-loading');
-            badge.textContent = names.slice(0, 3).join(', ');
-          } else {
-            dropCreator();
-          }
-        }
-        var base = uniqueNames(detailNames(type, details), shown);
-        var isHit = makeMatcher(q);
-        var matched = isHit(shown) || base.some(isHit);
-        if (type === 'person' || !q || matched) {
-          showAka(card, base, q);
+        if (type === 'person') {
+          showAka(card, uniqueNames(detailNames(type, details), shown), q);
           return;
         }
-        return tmdbFetch(path + '/translations')
-          .then(function (t) {
-            var extra = [];
-            ((t && t.translations) || []).forEach(function (tr) {
-              var d = (tr && tr.data) || {};
-              extra.push(d.title || d.name);
-            });
-            showAka(card, uniqueNames(base.concat(extra), shown), q);
-          })
-          .catch(function () {
-            showAka(card, base, q);
-          });
+        var names;
+        if (type === 'movie') {
+          names = ((details && details.credits && details.credits.crew) || []).filter(function (c) { return c.job === 'Director'; }).map(function (c) { return c.name; });
+        } else {
+          names = ((details && details.created_by) || []).map(function (c) { return c.name; });
+        }
+        if (badge && names.length) {
+          badge.classList.remove('-loading');
+          badge.textContent = names.slice(0, 3).join(', ');
+        } else {
+          removeCreator(card);
+        }
       })
       .catch(function () {
-        if (badge && badge.classList.contains('-loading')) dropCreator();
+        if (type !== 'person') removeCreator(card);
       });
   }
   function watchDetails(root) {
