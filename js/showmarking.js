@@ -695,7 +695,6 @@ document.addEventListener('DOMContentLoaded', () => {
     html += '<h4 class="ep-title">' + escapeText(title) + '</h4></div>';
     const bits = [];
     const d = ep.air_date ? fromISODate(String(ep.air_date).slice(0, 10)) : null;
-    if (d) bits.push('<span class="numbers">' + formatDate(d) + '</span>');
     const rt = formatRuntime(ep.runtime);
     if (rt) bits.push('<span class="numbers">' + rt + '</span>');
     if (ep.vote_average > 0 && ep.vote_count > 0) {
@@ -704,7 +703,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bits.length) {
       html += '<div class="ep-meta">' + bits.join('<span class="ep-meta-dot">\u00b7</span>') + '</div>';
     }
-    html += '</div>' + (href ? '</a>' : '</div>');
+    html += '</div>';
+    if (d) html += '<span class="ep-date numbers">' + formatDate(d) + '</span>';
+    html += (href ? '</a>' : '</div>');
     return html;
   }
   function episodesHtml(list, seasonNumber) {
