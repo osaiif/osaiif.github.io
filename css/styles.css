@@ -227,16 +227,11 @@ body.profile-page .backdropmask{background:linear-gradient(to bottom,rgba(11,18,
 .season-stars{position:relative;display:inline-block;font-size:13px;line-height:1;letter-spacing:0;white-space:nowrap}
 .season-stars-bg{color:#30405a}
 .season-stars-fg{position:absolute;top:0;left:0;overflow:hidden;color:#ffffff;white-space:nowrap}
-.season-log-btn{flex:none;font-family:var(--font-text);font-size:12px;font-weight:600;color:#8490a4;background:transparent;border:1px solid #1e2a3e;border-radius:8px;padding:7px 14px;cursor:pointer;transition:color 0.15s ease,border-color 0.15s ease}
-.season-log-btn.-logged{color:#b3c2db;border-color:#30405a}
-@media (hover:hover) and (pointer:fine){.season-log-btn:hover{color:#ffffff;border-color:#ffffff}}
-.season-upcoming{flex:none;color:#505a6b;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;white-space:nowrap}
 @media (max-width:420px){
   .season-row{gap:12px;padding:8px}
   .season-poster{width:48px;height:72px}
   .season-poster-num{font-size:1.1rem}
   .season-name{font-size:14px}
-  .season-log-btn{padding:6px 12px}
 }
 @media (min-width:1024px){
   .season-row{gap:18px;padding:12px}
@@ -245,15 +240,8 @@ body.profile-page .backdropmask{background:linear-gradient(to bottom,rgba(11,18,
   .season-meta{font-size:13px}
   .season-log{font-size:12.5px}
   .season-stars{font-size:14px}
-  .season-log-btn{font-size:13px;padding:9px 18px}
-  .season-upcoming{font-size:12px}
 }
 .season-item{display:flex;flex-direction:column;min-width:0}
-.season-toggle{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:1px solid #1e2a3e;border-radius:8px;background:transparent;color:#8490a4;cursor:pointer;transition:color 0.15s ease,border-color 0.15s ease}
-.season-toggle-icon{display:block;width:16px;height:16px;transition:transform 0.2s ease}
-.season-toggle[aria-expanded="true"]{color:#ffffff;border-color:#30405a}
-.season-toggle[aria-expanded="true"] .season-toggle-icon{transform:rotate(180deg)}
-@media (hover:hover) and (pointer:fine){.season-toggle:hover{color:#ffffff;border-color:#ffffff}}
 .season-item.-open > .season-row{border-color:#30405a}
 .season-eps{margin-top:6px;border:1px solid #1e2a3e;border-radius:12px;background-color:rgba(255,255,255,0.015);overflow:hidden}
 .season-eps[hidden]{display:none}
@@ -275,7 +263,6 @@ body.profile-page .backdropmask{background:linear-gradient(to bottom,rgba(11,18,
 @media (prefers-reduced-motion:no-preference){.season-eps:not([hidden]){animation:season-eps-in 0.2s ease both}}
 @keyframes season-eps-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media (max-width:420px){
-  .season-toggle{width:30px;height:30px}
   .ep-item{gap:8px;padding:7px}
   .ep-thumb{width:84px}
 }
@@ -284,7 +271,6 @@ body.profile-page .backdropmask{background:linear-gradient(to bottom,rgba(11,18,
   .ep-title{font-size:13.5px}
 }
 @media (min-width:1024px){
-  .season-toggle{width:36px;height:36px}
   .ep-item{gap:14px;padding:10px 12px}
   .ep-thumb{width:144px}
   .ep-num{font-size:13px}
@@ -305,8 +291,6 @@ a.ep-item:focus-visible{outline:none;background-color:rgba(255,255,255,0.05)}
 @media (min-width:1024px){.backdrop-container,.hero-carousel{--hx:max(32px,calc((100% - 940px) / 2))}.backdrop-container>.floating-tvbox,.hero-carousel>.floating-tvbox{left:calc(var(--hx) + 20px)}.backdrop-container>.floating-home.-beside-tvbox{left:calc(var(--hx) + 59.5px)}.backdrop-container>.floating-auth.-right,.hero-carousel>.floating-auth.-right{right:calc(var(--hx) + 20px)}.backdrop-container>.group.floating-search,.hero-carousel>.group.floating-search:not(.-centered){right:calc(var(--hx) + 59.5px)}.backdrop-container>.floating-auth.-right ~ .auth-dropdown,.hero-carousel>.floating-auth.-right ~ .auth-dropdown{right:calc(var(--hx) + 20px)}}
 @media (min-width:1440px){.backdrop-container,.hero-carousel{--hx:max(32px,calc((100% - 1000px) / 2))}}
 @media (max-width:899px){body.profile-page .profile-summary{gap:clamp(12px,3.6vw,20px);padding-top:clamp(20px,5vw,32px)}body.profile-page .avatar-img{width:clamp(72px,22vw,112px);height:clamp(72px,22vw,112px);border-width:clamp(3px,1vw,4px)}body.profile-page .person-display-name{font-size:clamp(1.4rem,6.4vw,2rem)}body.profile-page .profile-header .bio{font-size:clamp(12px,3.4vw,13.5px)}body.profile-page .profile-stats{gap:clamp(16px,6vw,24px)}body.profile-page .profile-statistic .value{font-size:clamp(1.05rem,5vw,1.2rem)}body.profile-page .profile-statistic .definition{font-size:clamp(10px,2.9vw,11px)}body.profile-page .stats-box{height:clamp(42px,12.4vw,48px);margin-top:clamp(14px,5vw,20px)}body.profile-page .stats-box .year{font-size:clamp(1.15rem,5.2vw,1.3rem)}body.profile-page .stats-box .label{font-size:clamp(11px,3.2vw,12.6px)}}
-
-/* page reveal: keep content hidden until layout has settled (see js/auth.js) */
 @keyframes tv-failsafe{to{opacity:1}}
 .page-content,.site-footer{transition:opacity 0.2s ease}
 body:not(.tv-ready) .page-content,body:not(.tv-ready) .site-footer{opacity:0;animation:tv-failsafe 0s linear 6s forwards}

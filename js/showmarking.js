@@ -555,13 +555,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
     return isNaN(d.getTime()) ? null : d;
   }
-  function seasonAirDate(season) {
-    return fromISODate(season.airDate ? String(season.airDate).slice(0, 10) : '');
-  }
-  function isSeasonAired(season) {
-    const d = seasonAirDate(season);
-    return !!d && d <= todayMidnight();
-  }
   function escapeText(str) {
     const div = document.createElement('div');
     div.textContent = str == null ? '' : String(str);
@@ -604,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
   function seasonRowHtml(season) {
-    const aired = isSeasonAired(season);
     const log   = seasonLogs[season.number] || null;
     const name  = seasonDisplayName(season);
     const year  = season.airDate && /^\d{4}/.test(season.airDate) ? season.airDate.slice(0, 4) : null;
@@ -627,7 +619,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     html += '</div>';
     const metaParts = [];
-    if (year) metaParts.push('<span class="numbers">' + year + '</span>');
     if (season.episodes > 0) {
       metaParts.push('<span>' + season.episodes + ' episode' + (season.episodes === 1 ? '' : 's') + '</span>');
     }
@@ -648,14 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     html += '</div>';
-    if (aired) {
-      html += '<button type="button" class="season-log-btn' + (log ? ' -logged' : '') +
-        '" data-season="' + season.number + '" aria-label="' +
-        (log ? 'Edit log for ' + escapeText(name) : 'Mark ' + escapeText(name) + ' as watched') + '">' +
-        (log ? 'Edit' : 'Mark as watched') + '</button>';
-    } else {
-      html += '<span class="season-upcoming">Upcoming</span>';
-    }
+    if (year) html += '<span class="ep-date numbers">' + year + '</span>';
     html += '</article>';
     return html;
   }
@@ -750,14 +734,6 @@ document.addEventListener('DOMContentLoaded', () => {
     openSeasons[n] = open;
     item.classList.toggle('-open', open);
     panel.hidden = !open;
-    const btn = item.querySelector('.season-toggle');
-    const season = findSeason(n);
-    if (btn) {
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (season) {
-        btn.setAttribute('aria-label', (open ? 'Hide' : 'Show') + ' episodes of ' + seasonDisplayName(season));
-      }
-    }
     if (open) loadEpisodes(n, panel);
   }
   function renderSeasons() {
@@ -810,35 +786,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     showAuthPrompt();
   }
-  function openSeasonMarkAs(n) {
-    if (!markasToggle || !findSeason(n)) return;
-    setMarkAsContext(n);
-    markasToggle.checked = true;
-    const log = seasonLogs[n];
-    if (applyStarsRating) applyStarsRating(log && log.rating ? log.rating : 0);
-  }
   if (seasonListEl) {
     seasonListEl.addEventListener('click', (e) => {
-      const toggleBtn = e.target.closest('.season-toggle');
-      if (toggleBtn) {
-        toggleSeasonEpisodes(parseInt(toggleBtn.getAttribute('data-season-toggle'), 10));
-        return;
-      }
       const retryBtn = e.target.closest('.ep-retry');
       if (retryBtn) {
         loadEpisodes(
           parseInt(retryBtn.getAttribute('data-season-retry'), 10),
           retryBtn.closest('.season-eps')
         );
-        return;
-      }
-      const btn = e.target.closest('.season-log-btn');
-      if (btn) {
-        if (btn.classList.contains('-logged')) {
-          openSeasonMarkAs(parseInt(btn.getAttribute('data-season'), 10));
-        } else {
-          showAuthPrompt();
-        }
         return;
       }
       const row = e.target.closest('.season-row.-expandable');
