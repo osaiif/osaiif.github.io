@@ -60,8 +60,8 @@
     .stx-section-note strong { color: #b3c2db; font-weight: 500; }
     .stx-section-note strong.-up { color: #32ab68; }
     .stx-arrow { display: inline-block; width: 11px; height: 11px; margin-left: 2px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-    #section-record .stx-section-title { flex: none; white-space: nowrap; }
-    #section-record .stx-section-note { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stx-page .section-heading-row .section-heading { flex: none; white-space: nowrap; }
+    #record-insight { flex: 1 1 auto; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .stx-section-note strong.-down { color: #f0605d; }
     .stx-list { display: flex; flex-direction: column; gap: 14px; }
     .stx-row { display: flex; flex-direction: column; gap: 6px; }
@@ -72,17 +72,6 @@
     .stx-row-value b { margin-right: 6px; color: #eaeef5; font-weight: 400; }
     .stx-bar { height: 2px; background-color: rgba(255,255,255,0.08); }
     .stx-bar-fill { height: 100%; background-color: rgba(255,255,255,0.7); }
-    .stx-record { display: flex; flex-direction: column; gap: 12px; }
-    .stx-record-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) 58px 50px; align-items: center; gap: 12px; }
-    .stx-record-year { font-size: 13px; color: #8490a4; font-variant-numeric: tabular-nums; }
-    .stx-record-row.-current .stx-record-year { color: #fff; }
-    .stx-record-bar { height: 2px; background-color: rgba(255,255,255,0.08); }
-    .stx-record-fill { height: 100%; background-color: rgba(255,255,255,0.3); }
-    .stx-record-row.-current .stx-record-fill { background-color: #fff; }
-    .stx-record-value { font-size: 13px; color: #eaeef5; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .stx-record-delta { font-size: 12px; color: #8490a4; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .stx-record-delta.-up { color: #32ab68; }
-    .stx-record-delta.-down { color: #f0605d; }
     .stx-hl { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #151e2e; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
     .stx-hl:first-child { padding-top: 0; border-top: 0; }
     .stx-hl:last-child { padding-bottom: 0; }
@@ -155,7 +144,8 @@
   <div class="page-content">
     <div class="stx-page">
       <div class="section-heading-row">
-        <h1 class="section-heading no-divider">Stats</h1>
+        <h1 class="section-heading no-divider">saif's Stats</h1>
+        <span class="stx-section-note" id="record-insight"></span>
         <div id="stats-year-menu-mount"></div>
       </div>
       <div id="stats-status" class="stx-status"></div>
@@ -164,13 +154,6 @@
           <div class="stx-figs" id="stat-figures"></div>
         </section>
         <div class="stx-grid">
-          <section class="stx-section stx-wide" id="section-record">
-            <div class="stx-section-head">
-              <h2 class="stx-section-title"><a href="/u/saif/">Saif's</a> watch record</h2>
-              <span class="stx-section-note" id="record-insight"></span>
-            </div>
-            <div id="record-chart-mount"></div>
-          </section>
           <section class="stx-section" id="section-highlights">
             <div class="stx-section-head">
               <h2 class="stx-section-title">Highlights</h2>
@@ -334,7 +317,6 @@ showCopied();
       var DEFAULT_YEAR = YEARS[YEARS.length - 1] || null;
       var summaryCache = {};
       var currentYear = null;
-      var recordActiveYear = null;
       var yearTotals = null;
       var allRecordsPromise = null;
       var recordPoints = null;
@@ -572,13 +554,6 @@ showCopied();
         var arrow = tone === 'up' ? ARROW_UP : (tone === 'down' ? ARROW_DOWN : '');
         insight.innerHTML = '<strong' + (tone ? ' class="-' + tone + '"' : '') + '>' + pct + ' ' + arrow + '</strong> compared to ' + before.year;
       }
-      function markRecordYear(year) {
-        recordActiveYear = year;
-        var rows = document.querySelectorAll('.stx-record-row');
-        Array.prototype.forEach.call(rows, function (row) {
-          row.classList.toggle('-current', row.getAttribute('data-year') === String(year));
-        });
-      }
       function setActiveTab(year) {
         var current = String(year);
         if (yearTrigger) yearTrigger.textContent = current;
@@ -588,7 +563,6 @@ showCopied();
           yearOptionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
         });
         updateRecordInsight();
-        markRecordYear(year);
       }
       function renderYear(year) {
         currentYear = year;
@@ -611,49 +585,15 @@ showCopied();
         });
       }
       function loadRecord() {
-        var mount = document.getElementById('record-chart-mount');
-        if (!mount) return;
         var recordsPromise = loadAllRecords();
         if (!recordsPromise) return;
         recordsPromise.then(function (records) {
-          var points = YEARS.slice().sort(function (a, b) { return a - b; }).map(function (year) {
+          recordPoints = YEARS.slice().sort(function (a, b) { return a - b; }).map(function (year) {
             var summary = TVStats.aggregate(STATS_YEARS[year] || [], records);
             return { year: year, hours: summary.hours };
           });
-          if (points.length < 2) {
-            mount.innerHTML = '<p class="stx-empty">Not enough years logged yet to show a record.</p>';
-            return;
-          }
-          var maxHours = Math.max.apply(null, points.map(function (p) { return p.hours; })) || 1;
-          mount.innerHTML = '<div class="stx-record">' + points.map(function (p, i) {
-            var delta = '–';
-            var deltaClass = '';
-            if (i > 0) {
-              var prev = points[i - 1].hours;
-              if (prev > 0) {
-                var change = ((p.hours - prev) / prev) * 100;
-                delta = (change > 0 ? '+' : '') + fmt1(change) + '%';
-                if (change > 0.05) deltaClass = ' -up';
-                else if (change < -0.05) deltaClass = ' -down';
-              } else if (p.hours > 0) {
-                delta = 'new';
-              }
-            }
-            var isCurrent = String(p.year) === String(recordActiveYear);
-            return (
-              '<div class="stx-record-row' + (isCurrent ? ' -current' : '') + '" data-year="' + p.year + '">' +
-                '<span class="stx-record-year numbers">' + p.year + '</span>' +
-                '<div class="stx-record-bar"><div class="stx-record-fill" style="width:' + (p.hours / maxHours) * 100 + '%"></div></div>' +
-                '<span class="stx-record-value numbers">' + fmt1(p.hours) + 'h</span>' +
-                '<span class="stx-record-delta numbers' + deltaClass + '">' + delta + '</span>' +
-              '</div>'
-            );
-          }).join('') + '</div>';
-          recordPoints = points;
           updateRecordInsight();
-        }).catch(function () {
-          mount.innerHTML = '<p class="stx-empty">Could not load the record right now.</p>';
-        });
+        }).catch(function () {});
       }
       function buildYearMenu() {
         if (!menuMount || !YEARS.length) return;

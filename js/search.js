@@ -253,7 +253,7 @@
     href: '/u/saif/',
     photo: 'https://raw.githubusercontent.com/osaiif/r/main/r.webp'
   };
-  var TABS = [['all', 'All'], ['tv', 'TV Shows'], ['movie', 'Movies'], ['anime', 'Anime'], ['person', 'People']];
+  var TABS = [['all', 'All'], ['tv', 'Shows'], ['movie', 'Movies'], ['anime', 'Anime'], ['person', 'People']];
   var MAX_PAGES = 500;
   var NOW_YEAR = new Date().getFullYear();
   var MIN_YEAR = 1900;

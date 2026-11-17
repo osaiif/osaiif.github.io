@@ -651,8 +651,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (aired) {
       html += '<button type="button" class="season-log-btn' + (log ? ' -logged' : '') +
         '" data-season="' + season.number + '" aria-label="' +
-        (log ? 'Edit log for ' : 'Log ') + escapeText(name) + '">' +
-        (log ? 'Edit' : 'Log') + '</button>';
+        (log ? 'Edit log for ' + escapeText(name) : 'Mark ' + escapeText(name) + ' as watched') + '">' +
+        (log ? 'Edit' : 'Mark as watched') + '</button>';
     } else {
       html += '<span class="season-upcoming">Upcoming</span>';
     }
@@ -833,7 +833,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const btn = e.target.closest('.season-log-btn');
       if (btn) {
-        openSeasonMarkAs(parseInt(btn.getAttribute('data-season'), 10));
+        if (btn.classList.contains('-logged')) {
+          openSeasonMarkAs(parseInt(btn.getAttribute('data-season'), 10));
+        } else {
+          showAuthPrompt();
+        }
         return;
       }
       const row = e.target.closest('.season-row.-expandable');
