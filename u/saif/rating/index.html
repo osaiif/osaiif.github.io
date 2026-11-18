@@ -7,6 +7,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Saif's shows</title>
+  <script>
+  (function () {
+    var v = parseFloat(new URLSearchParams(window.location.search).get('stars'));
+    if (isNaN(v)) return;
+    window.tvboxOrigSearch = window.location.search;
+    try { history.replaceState(null, '', '/u/saif/rating/' + v + window.location.hash); } catch (e) {}
+  })();
+  </script>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/searchbar.css">
   <script src="/js/searchbar.js" defer></script>
@@ -31,6 +39,14 @@
     }
     .no-results::before { content: none; }
     .rating-heading-star { color: #a2acbe; }
+    .star-trigger { width: auto; min-width: 28px; padding: 0 10px 0 0; justify-content: flex-start; font: inherit; line-height: 1; color: #a2acbe; white-space: nowrap; }
+    .star-trigger .rating-heading-star { color: inherit; }
+    .star-trigger[aria-expanded="true"] { color: #fff; }
+    .star-menu { left: 0; right: auto; min-width: 72px; max-width: none; width: max-content; max-height: min(60vh, 320px); overflow-y: auto; overscroll-behavior: contain; }
+    .star-menu .sort-row { justify-content: stretch; padding: 4px; }
+    .star-menu .sort-choices { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 100%; }
+    .star-option { text-align: center; }
+    .star-option.-active { color: #fff; }
   </style>
 </head>
 <body>
@@ -147,7 +163,7 @@ showCopied();
     (function () {
       var heading = document.getElementById('rating-heading');
       var grid = document.getElementById('rating-grid');
-      var params = new URLSearchParams(window.location.search);
+      var params = new URLSearchParams(window.tvboxOrigSearch !== undefined ? window.tvboxOrigSearch : window.location.search);
       var stars = parseFloat(params.get('stars'));
       if (isNaN(stars)) {
         heading.textContent = 'No rating selected';
@@ -155,8 +171,65 @@ showCopied();
         return;
       }
       var matches = SHOWS.filter(function (s) { return s.rating === stars; });
-      heading.innerHTML = '<span class="rating-heading-star">' + starGlyph(stars) + '</span>';
-      heading.setAttribute('aria-label', starGlyph(stars) + ' rated shows');
+      (function buildStarMenu() {
+        var overlay = document.getElementById('page-loading-overlay');
+        var wrapper = document.createElement('div');
+        wrapper.className = 'sort-menu-wrapper';
+        var trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'sort-trigger star-trigger';
+        trigger.setAttribute('aria-label', 'Choose rating, currently ' + starGlyph(stars));
+        trigger.setAttribute('aria-haspopup', 'true');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.innerHTML = '<span class="rating-heading-star">' + starGlyph(stars) + '</span>';
+        var menu = document.createElement('div');
+        menu.className = 'sort-menu star-menu';
+        menu.setAttribute('role', 'menu');
+        var row = document.createElement('div');
+        row.className = 'sort-row';
+        var choices = document.createElement('div');
+        choices.className = 'sort-choices';
+        for (var v = 0.5; v <= 5; v += 0.5) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'sort-option star-option' + (v === stars ? ' -active' : '');
+          btn.setAttribute('role', 'menuitemradio');
+          btn.setAttribute('aria-checked', v === stars ? 'true' : 'false');
+          btn.dataset.stars = String(v);
+          btn.textContent = starGlyph(v);
+          choices.appendChild(btn);
+        }
+        row.appendChild(choices);
+        menu.appendChild(row);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(menu);
+        heading.textContent = '';
+        heading.appendChild(wrapper);
+        function closeMenu() {
+          menu.classList.remove('-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+        trigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = menu.classList.toggle('-open');
+          trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function (e) {
+          if (!wrapper.contains(e.target)) closeMenu();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeMenu();
+        });
+        menu.addEventListener('click', function (e) {
+          var target = e.target.closest ? e.target.closest('.star-option') : null;
+          if (!target) return;
+          closeMenu();
+          var next = parseFloat(target.dataset.stars);
+          if (next === stars) return;
+          if (overlay) overlay.classList.add('-visible');
+          window.location.href = '/u/saif/rating/?stars=' + next;
+        });
+      })();
       if (!matches.length) {
         grid.innerHTML = '<p class="no-results">No shows rated ' + starGlyph(stars) + ' yet.</p>';
         return;

@@ -7,6 +7,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>...</title>
+  <script>
+  (function () {
+    var p = new URLSearchParams(window.location.search);
+    var imdb = p.get('imdb');
+    var id = p.get('id');
+    var s = (p.get('s') || '').trim();
+    var key = imdb ? 'i:' + imdb : (id ? 'd:' + id : '');
+    if (!key && !s) return;
+    window.tvboxOrigSearch = window.location.search;
+    var slug = s;
+    if (!slug) {
+      try { slug = localStorage.getItem('tvbox:showslug:' + key) || ''; } catch (e) {}
+    }
+    try { history.replaceState(null, '', '/show/' + encodeURIComponent(slug) + window.location.hash); } catch (e) {}
+  })();
+  </script>
   <link rel="stylesheet" href="/css/styles.css?v=13">
   <link rel="stylesheet" href="/css/searchbar.css">
   <script src="/js/searchbar.js" defer></script>
@@ -743,6 +759,9 @@ showCopied();
         statusEl.hidden = false;
         statusEl.innerHTML = html;
         statusEl.classList.toggle('-error', !!isError);
+        if (isError && window.tvboxOrigSearch) {
+          try { history.replaceState(null, '', '/show/' + window.tvboxOrigSearch + window.location.hash); } catch (e) {}
+        }
       }
       function slugifyGenre(name) {
         var s = String(name || '');
@@ -760,7 +779,7 @@ showCopied();
       function statusLabel(status) {
         return status || null;
       }
-      var params = new URLSearchParams(window.location.search);
+      var params = new URLSearchParams(window.tvboxOrigSearch !== undefined ? window.tvboxOrigSearch : window.location.search);
       var showId = params.get('id');
       var imdbId = params.get('imdb');
       var slugParam = (params.get('s') || '').trim();
@@ -930,6 +949,11 @@ showCopied();
             if (window.tvboxSlug) {
               window.tvboxSlug.slugFor('tv', show, tmdbGet).then(function (slug) {
                 if (!slug) return;
+                try {
+                  localStorage.setItem('tvbox:showslug:d:' + show.id, slug);
+                  var imdbKey = show.external_ids && show.external_ids.imdb_id;
+                  if (imdbKey) localStorage.setItem('tvbox:showslug:i:' + imdbKey, slug);
+                } catch (e) {}
                 try { history.replaceState(null, '', '/show/' + slug + window.location.hash); } catch (e) {}
               });
             }

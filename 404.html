@@ -6,6 +6,11 @@
   <title>tvbox - not found</title>
   <script>
   (function () {
+    var r = location.pathname.match(/^\/u\/saif\/rating\/(\d(?:\.\d)?)\/?$/);
+    if (r) {
+      location.replace('/u/saif/rating/?stars=' + r[1] + location.hash);
+      return;
+    }
     var m = location.pathname.match(/^\/(p|g|y|m|show|ep)\/([^\/]+)\/?$/);
     if (!m) return;
     var key = m[1] === 'y' ? 'y' : 's';

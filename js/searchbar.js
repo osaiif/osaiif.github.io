@@ -16,19 +16,30 @@
       else sessionStorage.removeItem(KEY);
     } catch (e) {}
   }
+  var closeTimer = null;
   function fit() {
     var home = document.querySelector('.floating-home');
     var rect = form.getBoundingClientRect();
     var left = home ? home.getBoundingClientRect().right + 8 : 0;
-    form.style.width = Math.max(31.5, rect.right - left) + 'px';
+    var width = Math.max(31.5, rect.right - left) + 'px';
+    form.style.width = width;
+    form.style.maxWidth = width;
   }
   function openSearch() {
+    clearTimeout(closeTimer);
     if (!form.classList.contains('-open')) form.classList.add('-open');
     fit();
   }
   function closeSearch() {
+    if (!form.classList.contains('-open')) return;
     form.classList.remove('-open');
-    form.style.width = '';
+    form.style.width = '31.5px';
+    form.style.maxWidth = '31.5px';
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(function () {
+      form.style.width = '';
+      form.style.maxWidth = '';
+    }, 300);
   }
   if (input.value) {
     writeSaved(input.value);
