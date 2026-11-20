@@ -12,8 +12,6 @@
   <script src="/js/searchbar.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://content.guardianapis.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
   <style>
@@ -28,17 +26,29 @@
     .page-content {
       padding-top: 0px;
     }
-    .news-list {
-      margin-bottom: 26px;
-    }
     .news-item {
-      display: block;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
       padding: 14px 0;
       border-bottom: 1px solid #1e2a3e;
       text-decoration: none;
     }
     .news-item:last-child {
       border-bottom: none;
+    }
+    .news-thumb {
+      flex: 0 0 150px;
+      width: 150px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 6px;
+      background-color: #191f29;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .news-body {
+      min-width: 0;
+      flex: 1;
     }
     .news-title {
       margin: 0 0 4px;
@@ -56,11 +66,25 @@
       font-size: 13px;
       line-height: 1.5;
       color: #8490a4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .news-meta {
       margin: 0;
       font-size: 11px;
       color: #8490a4;
+    }
+    @media (max-width: 600px) {
+      .news-thumb {
+        flex-basis: 104px;
+        width: 104px;
+        height: 62px;
+      }
+      .news-summary {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -110,26 +134,14 @@
   </header>
   <div class="page-content">
     <section>
-      <h2 class="section-heading">Film &amp; TV News</h2>
-      <div class="news-list" id="news-list"></div>
-    </section>
-    <section class="discover-row -visible">
-      <h2 class="section-heading">In Theaters</h2>
-      <div class="carousel-wrap">
-        <div class="carousel-track" id="theaters-track"></div>
-      </div>
-    </section>
-    <section class="discover-row -visible">
-      <h2 class="section-heading">Coming Soon</h2>
-      <div class="carousel-wrap">
-        <div class="carousel-track" id="upcoming-track"></div>
-      </div>
+      <h2 class="section-heading">News</h2>
+      <div id="news-list"></div>
     </section>
   </div>
 <footer class="site-footer">
 <div class="footer-container">
 <p style="display: inline-flex; align-items: center; gap: 0.35rem;">
-© 2023 <a href="/about/"><strong>tvbox</strong></a> | Data from <a href="https://www.themoviedb.org/">TMDB</a> | News from <a href="https://www.theguardian.com/" target="_blank" rel="noopener">The Guardian</a>
+© 2023 <a href="/about/"><strong>tvbox</strong></a> | News from <a href="https://www.theguardian.com/" target="_blank" rel="noopener">The Guardian</a>
 </p>
 </div>
 </footer>
@@ -170,121 +182,27 @@
   <script src="/js/news.js?v=1"></script>
   <script>
     (function () {
-      var TMDB_BASE = 'https://api.themoviedb.org/3';
-      var TMDB_API_KEYS = [
-        '6cb6e1dc603bc65ffb6198489d5bc5b7',
-        '2e7b2fe7002c21f45f08c0a03aa9df52',
-        '51952b66efcd80289c3ba5f8f8044e6a'
-      ];
-      var POSTER_BASE = 'https://image.tmdb.org/t/p/w342';
-      var KEY_START = Math.floor(Math.random() * TMDB_API_KEYS.length);
       var news = window.tvboxNews;
-      function tmdb(path, attempt) {
-        attempt = attempt || 0;
-        var key = TMDB_API_KEYS[(KEY_START + attempt) % TMDB_API_KEYS.length];
-        return fetch(TMDB_BASE + path + (path.indexOf('?') === -1 ? '?' : '&') + 'api_key=' + key)
-          .then(function (res) {
-            if (!res.ok) throw new Error('TMDB request failed (' + res.status + ')');
-            return res.json();
-          })
-          .catch(function (err) {
-            if (attempt + 1 >= TMDB_API_KEYS.length) throw err;
-            return tmdb(path, attempt + 1);
-          });
-      }
-      function showNewsMessage(text) {
-        var list = document.getElementById('news-list');
+      var list = document.getElementById('news-list');
+      function showMessage(text) {
         list.innerHTML = '';
         list.appendChild(news.textEl('p', 'no-results', text));
       }
       news.load()
         .then(function (items) {
+          items = items.slice(0, 12);
           if (!items.length) {
-            showNewsMessage('No news right now.');
+            showMessage('No news right now.');
             return;
           }
-          var list = document.getElementById('news-list');
-          list.innerHTML = '';
           items.forEach(function (item) {
             list.appendChild(news.buildItem(item, item.webUrl, true));
           });
         })
         .catch(function (err) {
           console.error('News failed to load:', err);
-          showNewsMessage('News is unavailable right now.');
+          showMessage('News is unavailable right now.');
         });
-      function addNav(track) {
-        var wrap = track.parentNode;
-        var prevBtn = document.createElement('button');
-        prevBtn.type = 'button';
-        prevBtn.className = 'carousel-nav -prev';
-        prevBtn.setAttribute('aria-label', 'Scroll left');
-        prevBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
-        prevBtn.addEventListener('click', function () {
-          track.scrollBy({ left: -track.clientWidth * 0.8, behavior: 'smooth' });
-        });
-        var nextBtn = document.createElement('button');
-        nextBtn.type = 'button';
-        nextBtn.className = 'carousel-nav -next';
-        nextBtn.setAttribute('aria-label', 'Scroll right');
-        nextBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>';
-        nextBtn.addEventListener('click', function () {
-          track.scrollBy({ left: track.clientWidth * 0.8, behavior: 'smooth' });
-        });
-        wrap.appendChild(prevBtn);
-        wrap.appendChild(nextBtn);
-        function updateNav() {
-          var max = track.scrollWidth - track.clientWidth;
-          prevBtn.style.visibility = track.scrollLeft <= 4 ? 'hidden' : '';
-          nextBtn.style.visibility = track.scrollLeft >= max - 4 ? 'hidden' : '';
-        }
-        track.addEventListener('scroll', updateNav, { passive: true });
-        window.addEventListener('resize', updateNav);
-        updateNav();
-      }
-      function buildRow(trackId, path) {
-        var track = document.getElementById(trackId);
-        tmdb(path)
-          .then(function (data) {
-            var movies = (data.results || []).filter(function (m) {
-              return m && m.title && m.poster_path;
-            }).slice(0, 18);
-            if (!movies.length) {
-              track.closest('section').remove();
-              return;
-            }
-            movies.forEach(function (m) {
-              var card = document.createElement('a');
-              card.className = 'carousel-card';
-              card.href = '/m/?id=' + m.id;
-              var poster = document.createElement('div');
-              poster.className = 'carousel-poster';
-              var img = document.createElement('img');
-              img.src = POSTER_BASE + m.poster_path;
-              img.alt = m.title;
-              img.width = 132;
-              img.height = 198;
-              img.loading = 'lazy';
-              img.decoding = 'async';
-              poster.appendChild(img);
-              var body = document.createElement('div');
-              body.className = 'carousel-card-body';
-              body.appendChild(news.textEl('p', 'carousel-card-title', m.title));
-              var date = news.formatDate(m.release_date, 'UTC');
-              if (date) body.appendChild(news.textEl('div', 'carousel-card-meta', date));
-              card.appendChild(poster);
-              card.appendChild(body);
-              track.appendChild(card);
-            });
-            addNav(track);
-          })
-          .catch(function (err) {
-            console.error(path + ' failed to load:', err);
-            track.closest('section').remove();
-          });
-      }
-      buildRow('theaters-track', '/movie/now_playing');
-      buildRow('upcoming-track', '/movie/upcoming');
     })();
   </script>
 <script src="/js/auth.js?v=1"></script>
