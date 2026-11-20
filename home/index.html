@@ -23,6 +23,37 @@
       width: 100%;
       min-width: 0;
     }
+    .news-item {
+      display: block;
+      padding: 14px 0;
+      border-bottom: 1px solid #1e2a3e;
+      text-decoration: none;
+    }
+    .news-item:last-child {
+      border-bottom: none;
+    }
+    .news-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #dde2eb;
+      transition: color 0.15s ease;
+    }
+    .news-item:hover .news-title {
+      color: #fff;
+    }
+    .news-summary {
+      margin: 0 0 6px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #8490a4;
+    }
+    .news-meta {
+      margin: 0;
+      font-size: 11px;
+      color: #8490a4;
+    }
   </style>
 </head>
 <body>
@@ -80,6 +111,10 @@
     </div>
   </div>
   <div class="page-content">
+    <section class="discover-row -visible" id="home-news" hidden>
+      <h2 class="section-heading"><a href="/news/" class="section-heading-link">Film &amp; TV News</a></h2>
+      <div id="home-news-list"></div>
+    </section>
     <div id="rows-mount"></div>
   </div>
 <footer class="site-footer">
@@ -127,6 +162,29 @@ showCopied();
 });
 })();
 </script>
+  <script src="/js/news.js?v=1"></script>
+  <script>
+    (function () {
+      var section = document.getElementById('home-news');
+      var list = document.getElementById('home-news-list');
+      window.tvboxNews.load()
+        .then(function (items) {
+          items = items.slice(0, 4);
+          if (!items.length) {
+            section.remove();
+            return;
+          }
+          items.forEach(function (item) {
+            list.appendChild(window.tvboxNews.buildItem(item, '/news/', false));
+          });
+          section.hidden = false;
+        })
+        .catch(function (err) {
+          console.error('News failed to load:', err);
+          section.remove();
+        });
+    })();
+  </script>
   <script>
     (function () {
       var TMDB_BASE = 'https://api.themoviedb.org/3';

@@ -167,6 +167,7 @@
       });
     })();
   </script>
+  <script src="/js/news.js?v=1"></script>
   <script>
     (function () {
       var TMDB_BASE = 'https://api.themoviedb.org/3';
@@ -175,10 +176,9 @@
         '2e7b2fe7002c21f45f08c0a03aa9df52',
         '51952b66efcd80289c3ba5f8f8044e6a'
       ];
-      var GUARDIAN_KEY = '8ebcb3a0-fa93-4174-b9b6-1966b300fe4f';
-      var GUARDIAN_URL = 'https://content.guardianapis.com/search?section=film%7Ctv-and-radio&order-by=newest&page-size=12&show-fields=trailText&api-key=' + GUARDIAN_KEY;
       var POSTER_BASE = 'https://image.tmdb.org/t/p/w342';
       var KEY_START = Math.floor(Math.random() * TMDB_API_KEYS.length);
+      var news = window.tvboxNews;
       function tmdb(path, attempt) {
         attempt = attempt || 0;
         var key = TMDB_API_KEYS[(KEY_START + attempt) % TMDB_API_KEYS.length];
@@ -192,56 +192,22 @@
             return tmdb(path, attempt + 1);
           });
       }
-      function formatDate(value, timeZone) {
-        var d = new Date(value);
-        if (isNaN(d.getTime())) return '';
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: timeZone });
-      }
-      function plainText(html) {
-        return new DOMParser().parseFromString(html || '', 'text/html').body.textContent.trim();
-      }
-      function textEl(tag, className, text) {
-        var el = document.createElement(tag);
-        el.className = className;
-        el.textContent = text;
-        return el;
-      }
-      function renderNews(items) {
-        var list = document.getElementById('news-list');
-        list.innerHTML = '';
-        items.forEach(function (item) {
-          var a = document.createElement('a');
-          a.className = 'news-item';
-          a.href = item.webUrl;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.appendChild(textEl('p', 'news-title', item.webTitle));
-          var summary = plainText(item.fields && item.fields.trailText);
-          if (summary) a.appendChild(textEl('p', 'news-summary', summary));
-          var meta = [item.sectionName, formatDate(item.webPublicationDate)].filter(Boolean).join(' · ');
-          if (meta) a.appendChild(textEl('p', 'news-meta', meta));
-          list.appendChild(a);
-        });
-      }
       function showNewsMessage(text) {
         var list = document.getElementById('news-list');
         list.innerHTML = '';
-        list.appendChild(textEl('p', 'no-results', text));
+        list.appendChild(news.textEl('p', 'no-results', text));
       }
-      fetch(GUARDIAN_URL)
-        .then(function (res) {
-          if (!res.ok) throw new Error('Guardian request failed (' + res.status + ')');
-          return res.json();
-        })
-        .then(function (data) {
-          var items = ((data.response && data.response.results) || []).filter(function (item) {
-            return item && item.webTitle && /^https:\/\//.test(item.webUrl || '');
-          });
+      news.load()
+        .then(function (items) {
           if (!items.length) {
             showNewsMessage('No news right now.');
             return;
           }
-          renderNews(items);
+          var list = document.getElementById('news-list');
+          list.innerHTML = '';
+          items.forEach(function (item) {
+            list.appendChild(news.buildItem(item, item.webUrl, true));
+          });
         })
         .catch(function (err) {
           console.error('News failed to load:', err);
@@ -303,9 +269,9 @@
               poster.appendChild(img);
               var body = document.createElement('div');
               body.className = 'carousel-card-body';
-              body.appendChild(textEl('p', 'carousel-card-title', m.title));
-              var date = formatDate(m.release_date, 'UTC');
-              if (date) body.appendChild(textEl('div', 'carousel-card-meta', date));
+              body.appendChild(news.textEl('p', 'carousel-card-title', m.title));
+              var date = news.formatDate(m.release_date, 'UTC');
+              if (date) body.appendChild(news.textEl('div', 'carousel-card-meta', date));
               card.appendChild(poster);
               card.appendChild(body);
               track.appendChild(card);
