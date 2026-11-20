@@ -783,7 +783,7 @@ showCopied();
       var slugParam = (params.get('s') || '').trim();
       function loadShow(id) {
         setStatus(SPINNER_HTML);
-        tmdbGet('/tv/' + encodeURIComponent(id), 'append_to_response=external_ids,videos')
+        tmdbGet('/tv/' + encodeURIComponent(id), 'append_to_response=external_ids,videos,images&include_image_language=en,null')
           .then(renderShow)
           .catch(function (err) {
             setStatus('Something went wrong: ' + err.message, true);
@@ -914,8 +914,21 @@ showCopied();
           relayoutGenres();
         }, 120);
       });
+      function bestPosterPath(show) {
+        var list = (show.images && show.images.posters) || [];
+        var best = null;
+        for (var i = 0; i < list.length; i++) {
+          var p = list[i];
+          if (!p || typeof p.file_path !== 'string' || !/^\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(p.file_path)) continue;
+          var votes = p.vote_count || 0;
+          var avg = p.vote_average || 0;
+          if (!best || votes > best.votes || (votes === best.votes && avg > best.avg)) best = { path: p.file_path, votes: votes, avg: avg };
+        }
+        return best && best.votes > 0 ? best.path : show.poster_path;
+      }
       function renderShow(show) {
             setStatus('');
+            show.poster_path = bestPosterPath(show);
             var backdropUrl = show.backdrop_path
               ? BACKDROP_BASE + show.backdrop_path
               : (show.poster_path ? BACKDROP_BASE + show.poster_path : null);

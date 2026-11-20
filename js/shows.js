@@ -82,8 +82,9 @@ return [
   if (!list || !list.length) return;
   var API_KEY = '6cb6e1dc603bc65ffb6198489d5bc5b7';
   var API_URL = 'https://api.themoviedb.org/3/find/';
+  var API_BASE = 'https://api.themoviedb.org/3/';
   var IMG_BASE = 'https://image.tmdb.org/t/p/w342';
-  var CACHE_PREFIX = 'tvbox:poster:';
+  var CACHE_PREFIX = 'tvbox:poster2:';
   var CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   var MAX_ACTIVE = 6;
   var MAX_RETRIES = 2;
@@ -117,13 +118,28 @@ return [
       localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ p: path, t: Date.now() }));
     } catch (e) {}
   }
-  function pickPath(data) {
-    var all = [].concat((data && data.tv_results) || [], (data && data.movie_results) || []);
-    for (var i = 0; i < all.length; i++) {
-      var p = all[i] && all[i].poster_path;
-      if (typeof p === 'string' && PATH_RE.test(p)) return p;
+  function pickMatch(data) {
+    var groups = [['tv', (data && data.tv_results) || []], ['movie', (data && data.movie_results) || []]];
+    for (var g = 0; g < groups.length; g++) {
+      var items = groups[g][1];
+      for (var i = 0; i < items.length; i++) {
+        var p = items[i] && items[i].poster_path;
+        if (typeof p === 'string' && PATH_RE.test(p) && items[i].id) return { type: groups[g][0], id: items[i].id, path: p };
+      }
     }
-    return '';
+    return null;
+  }
+  function bestPoster(data, fallback) {
+    var posters = (data && data.posters) || [];
+    var best = null;
+    for (var i = 0; i < posters.length; i++) {
+      var p = posters[i];
+      if (!p || typeof p.file_path !== 'string' || !PATH_RE.test(p.file_path)) continue;
+      var votes = p.vote_count || 0;
+      var avg = p.vote_average || 0;
+      if (!best || votes > best.votes || (votes === best.votes && avg > best.avg)) best = { path: p.file_path, votes: votes, avg: avg };
+    }
+    return best && best.votes > 0 ? best.path : fallback;
   }
   function apply(id) {
     var marker = "id='ph-" + id + "'";
@@ -134,10 +150,10 @@ return [
   function scheduleSweep() {
     if (!sweepTimer) sweepTimer = setTimeout(sweep, 30);
   }
-  function finish(id, path) {
+  function finish(id, path, skipCache) {
     active--;
     if (path) {
-      writeCache(id, path);
+      if (!skipCache) writeCache(id, path);
       posters[id] = IMG_BASE + path;
       apply(id);
       scheduleSweep();
@@ -155,7 +171,21 @@ return [
         return res.json();
       })
       .then(function (data) {
-        finish(id, pickPath(data));
+        var match = pickMatch(data);
+        if (!match) {
+          finish(id, '');
+          return;
+        }
+        fetch(API_BASE + match.type + '/' + match.id + '/images?include_image_language=en,null&api_key=' + API_KEY)
+          .then(function (res) {
+            if (!res.ok) throw new Error('status');
+            return res.json();
+          })
+          .then(function (images) {
+            finish(id, bestPoster(images, match.path));
+          }, function () {
+            finish(id, match.path, true);
+          });
       }, function (err) {
         var status = err && err.status;
         if (attempt < MAX_RETRIES && (!status || status === 429 || status >= 500)) {
