@@ -147,17 +147,28 @@ return [
       if (s && typeof s.src === 'string' && s.src.indexOf(marker) !== -1) s.src = posters[id];
     });
   }
+  function swap(from, to) {
+    list.forEach(function (s) {
+      if (s && s.src === from) s.src = to;
+    });
+    var imgs = document.getElementsByTagName('img');
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i].getAttribute('src') === from) imgs[i].setAttribute('src', to);
+    }
+  }
   function scheduleSweep() {
     if (!sweepTimer) sweepTimer = setTimeout(sweep, 30);
   }
-  function finish(id, path, skipCache) {
+  function store(id, path) {
+    if (!path) return;
+    writeCache(id, path);
+    posters[id] = IMG_BASE + path;
+    apply(id);
+    scheduleSweep();
+  }
+  function finish(id, path) {
     active--;
-    if (path) {
-      if (!skipCache) writeCache(id, path);
-      posters[id] = IMG_BASE + path;
-      apply(id);
-      scheduleSweep();
-    }
+    store(id, path);
     pump();
   }
   function lookup(id, attempt) {
@@ -176,16 +187,22 @@ return [
           finish(id, '');
           return;
         }
+        var early = IMG_BASE + match.path;
+        posters[id] = early;
+        apply(id);
+        scheduleSweep();
+        active--;
+        pump();
         fetch(API_BASE + match.type + '/' + match.id + '/images?include_image_language=en,null&api_key=' + API_KEY)
           .then(function (res) {
             if (!res.ok) throw new Error('status');
             return res.json();
           })
           .then(function (images) {
-            finish(id, bestPoster(images, match.path));
-          }, function () {
-            finish(id, match.path, true);
-          });
+            var best = bestPoster(images, match.path);
+            if (IMG_BASE + best !== early) swap(early, IMG_BASE + best);
+            store(id, best);
+          }, function () {});
       }, function (err) {
         var status = err && err.status;
         if (attempt < MAX_RETRIES && (!status || status === 429 || status >= 500)) {

@@ -292,6 +292,7 @@
       ]
     }
   ];
+  var DEFAULT_SORT = 'date_desc';
   var NEEDS_TMDB = {
     avg_desc: true,
     avg_asc: true,
@@ -429,7 +430,6 @@
       row.appendChild(choices);
       menu.appendChild(row);
     }
-    addRow('Order', [{ key: 'default', label: 'Default' }]);
     SORT_GROUPS.forEach(function (group) {
       if (hidden.indexOf(group.id) !== -1) return;
       addRow(group.label, group.options);
@@ -446,7 +446,7 @@
         optionEls[k].classList.toggle('-active', on);
         optionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
       });
-      trigger.classList.toggle('-active', key !== 'default');
+      trigger.classList.toggle('-active', key !== DEFAULT_SORT);
     }
     function openMenu() {
       menu.classList.add('-open');
@@ -556,8 +556,8 @@
     try { saved = localStorage.getItem(storageKey); } catch (e) {}
     if (saved && optionEls[saved]) {
       choose(saved);
-    } else {
-      setActive('default');
+    } else if (optionEls[DEFAULT_SORT]) {
+      choose(DEFAULT_SORT);
     }
   }
   global.TVSort = { init: init };
