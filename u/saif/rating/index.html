@@ -39,6 +39,7 @@
       padding-top:2px;
     }
     .no-results::before { content: none; }
+    .no-results .bio-link { display: inline; margin-top: 0; }
     .rating-heading-star { color: #a2acbe; }
     .star-trigger { width: auto; min-width: 28px; padding: 0 10px 0 0; justify-content: flex-start; font: inherit; line-height: 1; color: #a2acbe; white-space: nowrap; }
     .star-trigger .rating-heading-star { color: inherit; }
@@ -232,7 +233,7 @@ showCopied();
         });
       })();
       if (!matches.length) {
-        grid.innerHTML = '<p class="no-results">No shows rated ' + starGlyph(stars) + ' yet.</p>';
+        grid.innerHTML = '<p class="no-results"><a href="/u/saif/" class="bio-link">Saif</a> has no ' + starGlyph(stars) + ' shows yet.</p>';
         return;
       }
       var EAGER_ROW_SIZE = 4;
