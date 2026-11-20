@@ -31,7 +31,8 @@
     .stx-title-row .stx-title { flex: 1; min-width: 0; }
     .year-trigger { width: auto; min-width: 28px; padding: 0 8px; font-family: var(--font-numbers); font-size: 13px; letter-spacing: 0.03em; line-height: 1; color: #b3c2db; white-space: nowrap; }
     .year-trigger[aria-expanded="true"] { color: #fff; }
-    .year-menu { min-width: 72px; max-width: none; width: max-content; max-height: min(60vh, 320px); overflow-y: auto; overscroll-behavior: contain; }
+    .stx-page .section-heading-row { justify-content: center; }
+    .year-menu { left: 50%; right: auto; margin-left: -36px; min-width: 72px; max-width: none; width: 72px; max-height: min(60vh, 320px); overflow-y: auto; overscroll-behavior: contain; }
     .year-menu .sort-row { justify-content: stretch; padding: 4px; }
     .year-menu .sort-choices { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 100%; }
     .year-option { font-family: var(--font-numbers); text-align: center; }
@@ -58,10 +59,6 @@
     .stx-section-title a { color: #fff; text-decoration: none; transition: color 0.15s ease; }
     .stx-section-note { flex: none; font-size: 12px; color: #8490a4; text-align: right; }
     .stx-section-note strong { color: #b3c2db; font-weight: 500; }
-    .stx-section-note strong.-up { color: #32ab68; }
-    .stx-arrow { display: inline-block; width: 11px; height: 11px; margin-left: 2px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-    #record-insight { flex: 1 1 auto; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stx-section-note strong.-down { color: #f0605d; }
     .stx-list { display: flex; flex-direction: column; gap: 14px; }
     .stx-row { display: flex; flex-direction: column; gap: 6px; }
     .stx-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
@@ -143,7 +140,6 @@
   <div class="page-content">
     <div class="stx-page">
       <div class="section-heading-row">
-        <span class="stx-section-note" id="record-insight"></span>
         <div id="stats-year-menu-mount"></div>
       </div>
       <div id="stats-status" class="stx-status"></div>
@@ -158,6 +154,13 @@
             </div>
             <div id="highlight-list"></div>
           </section>
+          <section class="stx-section" id="section-directors">
+            <div class="stx-section-head">
+              <h2 class="stx-section-title">Directors</h2>
+              <span class="stx-section-note" id="director-insight"></span>
+            </div>
+            <div class="stx-list" id="director-bars"></div>
+          </section>
           <section class="stx-section" id="section-genres">
             <div class="stx-section-head">
               <h2 class="stx-section-title">Genres</h2>
@@ -171,13 +174,6 @@
               <span class="stx-section-note" id="platform-insight"></span>
             </div>
             <div class="stx-list" id="platform-bars"></div>
-          </section>
-          <section class="stx-section" id="section-directors">
-            <div class="stx-section-head">
-              <h2 class="stx-section-title">Directors</h2>
-              <span class="stx-section-note" id="director-insight"></span>
-            </div>
-            <div class="stx-list" id="director-bars"></div>
           </section>
         </div>
       </div>
@@ -317,7 +313,6 @@ showCopied();
       var currentYear = null;
       var yearTotals = null;
       var allRecordsPromise = null;
-      var recordPoints = null;
       var yearTrigger = null;
       var yearOptionEls = {};
       var FIGURE_METRICS = [
@@ -432,9 +427,6 @@ showCopied();
           .sort(function (a, b) { return b.hours - a.hours; });
         var bySeasons = details.filter(function (d) { return d.seasons > 0; })
           .sort(function (a, b) { return b.seasons - a.seasons; });
-        var withYear = details.filter(function (d) { return !!d.firstYear; });
-        var byOldest = withYear.slice().sort(function (a, b) { return a.firstYear - b.firstYear; });
-        var byNewest = withYear.slice().sort(function (a, b) { return b.firstYear - a.firstYear; });
         var items = [];
         if (byRating.length) {
           items.push({ label: 'Top Rated', show: byRating[0], value: byRating[0].rating.toFixed(1), unit: 'out of 10' });
@@ -444,12 +436,6 @@ showCopied();
         }
         if (bySeasons.length) {
           items.push({ label: 'Longest Running', show: bySeasons[0], value: bySeasons[0].seasons, unit: bySeasons[0].seasons === 1 ? 'season' : 'seasons' });
-        }
-        if (byOldest.length) {
-          items.push({ label: 'Deepest Cut', show: byOldest[0], value: byOldest[0].firstYear, unit: 'premiere' });
-        }
-        if (byNewest.length && byNewest[0].imdb !== byOldest[0].imdb) {
-          items.push({ label: 'Freshest Pick', show: byNewest[0], value: byNewest[0].firstYear, unit: 'premiere' });
         }
         return items.slice(0, 5);
       }
@@ -531,27 +517,6 @@ showCopied();
           directorInsight.textContent = '';
         }
       }
-      var ARROW_UP = '<svg class="stx-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
-      var ARROW_DOWN = '<svg class="stx-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
-      function updateRecordInsight() {
-        var insight = document.getElementById('record-insight');
-        if (!insight) return;
-        insight.innerHTML = '';
-        if (!recordPoints || currentYear === null) return;
-        var idx = -1;
-        for (var i = 0; i < recordPoints.length; i++) {
-          if (String(recordPoints[i].year) === String(currentYear)) idx = i;
-        }
-        if (idx < 1) return;
-        var cur = recordPoints[idx];
-        var before = recordPoints[idx - 1];
-        if (!(before.hours > 0)) return;
-        var change = ((cur.hours - before.hours) / before.hours) * 100;
-        var tone = change > 0.05 ? 'up' : (change < -0.05 ? 'down' : '');
-        var pct = tone ? (change > 0 ? '+' : '') + fmt1(change) + '%' : '0%';
-        var arrow = tone === 'up' ? ARROW_UP : (tone === 'down' ? ARROW_DOWN : '');
-        insight.innerHTML = '<strong' + (tone ? ' class="-' + tone + '"' : '') + '>' + pct + ' ' + arrow + '</strong> compared to ' + before.year;
-      }
       function setActiveTab(year) {
         var current = String(year);
         if (yearTrigger) yearTrigger.textContent = current;
@@ -560,7 +525,6 @@ showCopied();
           yearOptionEls[k].classList.toggle('-active', on);
           yearOptionEls[k].setAttribute('aria-checked', on ? 'true' : 'false');
         });
-        updateRecordInsight();
       }
       function renderYear(year) {
         currentYear = year;
@@ -581,17 +545,6 @@ showCopied();
           if (currentYear !== year) return;
           showError('Something went wrong pulling stats for ' + year + '. Try again in a moment.');
         });
-      }
-      function loadRecord() {
-        var recordsPromise = loadAllRecords();
-        if (!recordsPromise) return;
-        recordsPromise.then(function (records) {
-          recordPoints = YEARS.slice().sort(function (a, b) { return a - b; }).map(function (year) {
-            var summary = TVStats.aggregate(STATS_YEARS[year] || [], records);
-            return { year: year, hours: summary.hours };
-          });
-          updateRecordInsight();
-        }).catch(function () {});
       }
       function buildYearMenu() {
         if (!menuMount || !YEARS.length) return;
@@ -656,7 +609,6 @@ showCopied();
         });
       }
       buildYearMenu();
-      loadRecord();
       loadYearTotals();
       if (DEFAULT_YEAR) {
         renderYear(DEFAULT_YEAR);
