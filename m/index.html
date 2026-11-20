@@ -956,7 +956,7 @@ showCopied();
         document.getElementById('show-genres').innerHTML = genres.map(function (g) {
           return '<span class="genre-tag">' + escapeHtml(g.name) + '</span>';
         }).join('<span class="genre-sep">·</span>');
-        document.getElementById('show-rating-value').textContent = movie.vote_average ? movie.vote_average.toFixed(1) : '–';
+        document.getElementById('show-rating-value').textContent = movie.vote_average ? (movie.vote_average / 2).toFixed(1) : '–';
         document.getElementById('movie-runtime-value').textContent = runtime || '–';
         var tagline = document.getElementById('movie-tagline');
         tagline.textContent = movie.tagline || '';

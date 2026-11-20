@@ -295,7 +295,7 @@
     ['1', 'News'],
     ['6', 'Video']
   ];
-  var RATINGS = [['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']];
+  var RATINGS = [['6', '3+'], ['7', '3.5+'], ['8', '4+'], ['9', '4.5+']];
   var POPULAR_COUNTRIES = [
     ['US', 'United States of America'], ['GB', 'United Kingdom'], ['CA', 'Canada'], ['AU', 'Australia'],
     ['JP', 'Japan'], ['KR', 'South Korea'], ['CN', 'China'], ['IN', 'India'], ['FR', 'France'],
@@ -403,7 +403,7 @@
   }
   function cardHtml(show) {
     var year = show.first_air_date ? show.first_air_date.slice(0, 4) : '';
-    var rating = show.vote_count > 0 && show.vote_average > 0 ? show.vote_average.toFixed(1) : '';
+    var rating = show.vote_count > 0 && show.vote_average > 0 ? (show.vote_average / 2).toFixed(1) : '';
     var poster = show.poster_path
       ? '<img src="' + IMG_BASE + show.poster_path + '" alt="" loading="lazy" decoding="async">'
       : '<span class="cg-initials">' + escapeHtml(initials(show.name)) + '</span>';

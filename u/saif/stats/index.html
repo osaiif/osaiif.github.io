@@ -429,7 +429,7 @@ showCopied();
           .sort(function (a, b) { return b.seasons - a.seasons; });
         var items = [];
         if (byRating.length) {
-          items.push({ label: 'Top Rated', show: byRating[0], value: byRating[0].rating.toFixed(1), unit: 'out of 10' });
+          items.push({ label: 'Top Rated', show: byRating[0], value: (byRating[0].rating / 2).toFixed(1), unit: 'out of 5' });
         }
         if (byHours.length) {
           items.push({ label: 'Most Watched', show: byHours[0], value: fmt1(byHours[0].hours), unit: 'hours logged' });

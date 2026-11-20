@@ -993,7 +993,7 @@ showCopied();
             document.getElementById('show-meta').innerHTML = metaParts.join('<span class="show-meta-dot">·</span>');
             setGenres(show.genres || []);
             document.getElementById('show-rating-value').textContent =
-              show.vote_average ? show.vote_average.toFixed(1) : '–';
+              show.vote_average ? (show.vote_average / 2).toFixed(1) : '–';
             document.getElementById('show-seasons-value').textContent =
               show.number_of_seasons != null ? show.number_of_seasons : '–';
             document.getElementById('show-episodes-value').textContent =

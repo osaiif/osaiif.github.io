@@ -716,7 +716,7 @@
         var runtime = formatRuntime(ep.runtime);
         if (runtime) parts.push('<span class="numbers">' + runtime + '</span>');
         if (ep.vote_average > 0 && ep.vote_count > 0) {
-          parts.push('<span class="numbers">\u2605 ' + Number(ep.vote_average).toFixed(1) + '</span>');
+          parts.push('<span class="numbers">\u2605 ' + (Number(ep.vote_average) / 2).toFixed(1) + '</span>');
         }
         document.getElementById('ep-meta').innerHTML = metaHtml(parts);
         var overview = document.getElementById('ep-overview');

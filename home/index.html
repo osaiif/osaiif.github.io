@@ -448,7 +448,7 @@ showCopied();
           var year = yearFromDate(show.first_air_date);
           if (year) metaParts.push('<span class="numbers">' + year + '</span>');
           if (show.vote_average) {
-            metaParts.push('<span class="hero-rating">' + STAR_SVG + show.vote_average.toFixed(1) + '</span>');
+            metaParts.push('<span class="hero-rating">' + STAR_SVG + (show.vote_average / 2).toFixed(1) + '</span>');
           }
           heroMeta.innerHTML = metaParts.join('<span class="hero-meta-dot">·</span>');
           heroOverview.textContent = show.overview || '';
@@ -548,7 +548,7 @@ showCopied();
             '<div class="carousel-card-body">' +
               '<p class="carousel-card-title">' + escapeHtml(show.name) + '</p>' +
               '<div class="carousel-card-meta">' +
-                (show.vote_average ? STAR_SVG + '<span>' + show.vote_average.toFixed(1) + '</span>' : '') +
+                (show.vote_average ? STAR_SVG + '<span>' + (show.vote_average / 2).toFixed(1) + '</span>' : '') +
                 (year ? '<span>' + (show.vote_average ? '· ' : '') + year + '</span>' : '') +
               '</div>' +
             '</div>';

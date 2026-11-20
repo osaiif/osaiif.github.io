@@ -289,7 +289,7 @@
     genreDef('Sci-Fi & Fantasy', [10765], [878, 14]), genreDef('Thriller', [], [53]),
     genreDef('War & Politics', [10768], [10752]), genreDef('Western', [37], [37])
   ];
-  var RATINGS = [['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']];
+  var RATINGS = [['6', '3+'], ['7', '3.5+'], ['8', '4+'], ['9', '4.5+']];
   var POPULAR_COUNTRIES = [
     ['US', 'United States of America'], ['GB', 'United Kingdom'], ['CA', 'Canada'], ['AU', 'Australia'],
     ['JP', 'Japan'], ['KR', 'South Korea'], ['CN', 'China'], ['IN', 'India'], ['FR', 'France'],
@@ -394,7 +394,7 @@
   }
   function formatRating(voteAverage, voteCount) {
     if (!voteAverage || !voteCount) return '';
-    return voteAverage.toFixed(1);
+    return (voteAverage / 2).toFixed(1);
   }
   function validTab(value) {
     for (var i = 0; i < TABS.length; i++) if (TABS[i][0] === value) return true;

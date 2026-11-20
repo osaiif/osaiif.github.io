@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rt = formatRuntime(ep.runtime);
     if (rt) bits.push('<span class="numbers">' + rt + '</span>');
     if (ep.vote_average > 0 && ep.vote_count > 0) {
-      bits.push('<span class="ep-rating numbers">\u2605 ' + Number(ep.vote_average).toFixed(1) + '</span>');
+      bits.push('<span class="ep-rating numbers">\u2605 ' + (Number(ep.vote_average) / 2).toFixed(1) + '</span>');
     }
     if (bits.length) {
       html += '<div class="ep-meta">' + bits.join('<span class="ep-meta-dot">\u00b7</span>') + '</div>';
