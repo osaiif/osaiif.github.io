@@ -180,15 +180,6 @@
       if (s && typeof s.src === 'string' && s.src.indexOf(marker) !== -1) s.src = posters[id];
     });
   }
-  function swap(from, to) {
-    list.forEach(function (s) {
-      if (s && s.src === from) s.src = to;
-    });
-    var imgs = document.getElementsByTagName('img');
-    for (var i = 0; i < imgs.length; i++) {
-      if (imgs[i].getAttribute('src') === from) imgs[i].setAttribute('src', to);
-    }
-  }
   function patchTitle(id, name) {
     var cards = document.querySelectorAll('[data-imdb="' + id + '"]');
     for (var i = 0; i < cards.length; i++) {
@@ -257,22 +248,20 @@
           finish(id, '');
           return;
         }
-        var early = IMG_BASE + match.path;
-        posters[id] = early;
-        apply(id);
-        scheduleSweep();
-        active--;
-        pump();
         fetch(API_BASE + match.type + '/' + match.id + '/images?include_image_language=en,null&api_key=' + API_KEY)
           .then(function (res) {
             if (!res.ok) throw new Error('status');
             return res.json();
           })
           .then(function (images) {
-            var best = bestPoster(images, match.path);
-            if (IMG_BASE + best !== early) swap(early, IMG_BASE + best);
-            store(id, best);
-          }, function () {});
+            finish(id, bestPoster(images, match.path));
+          }, function () {
+            active--;
+            posters[id] = IMG_BASE + match.path;
+            apply(id);
+            scheduleSweep();
+            pump();
+          });
       }, function (err) {
         var status = err && err.status;
         if (attempt < MAX_RETRIES && (!status || status === 429 || status >= 500)) {

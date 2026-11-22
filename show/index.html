@@ -23,7 +23,7 @@
     try { history.replaceState(null, '', '/show/' + encodeURIComponent(slug) + window.location.hash); } catch (e) {}
   })();
   </script>
-  <link rel="stylesheet" href="/css/styles.css?v=14">
+  <link rel="stylesheet" href="/css/styles.css?v=15">
   <link rel="stylesheet" href="/css/searchbar.css">
   <script src="/js/searchbar.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -328,6 +328,7 @@
                 <span class="wd-subtitle"><span class="wd-show-name" id="wd-show-name">this show</span><span class="wd-show-year" id="wd-show-year"></span></span>
               </div>
             </div>
+            <div class="wd-seasons" id="wd-seasons"></div>
             <div class="wd-stub-row">
               <button type="button" class="wd-stub -active" id="wd-field-start" data-field="start">
                 <span class="wd-stub-label">Started</span>
@@ -1083,6 +1084,6 @@ showCopied();
     })();
   </script>
 <script src="/js/auth.js?v=1"></script>
-<script src="/js/showmarking.js?v=8"></script>
+<script src="/js/showmarking.js?v=9"></script>
 </body>
 </html>

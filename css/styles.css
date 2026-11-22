@@ -38,7 +38,7 @@
 @media (hover:hover) and (pointer:fine){.wd-stub:not(.-active):hover .wd-stub-value{color:#fff}}
 .wd-stub-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8490a4}
 .wd-stub.-active .wd-stub-label{color:#fff}
-.wd-stub-value{font-family:var(--font-numbers);font-size:13px;font-weight:600;color:#b3c2db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.15s ease}
+.wd-stub-value{font-family:var(--font-numbers);font-size:13px;color:#b3c2db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.15s ease}
 .wd-stub.-active .wd-stub-value{color:#fff}
 .wd-duration{flex:none;width:52px;text-align:center;font-family:var(--font-numbers);font-size:9.5px;font-weight:600;color:#8490a4;white-space:nowrap}
 .wd-duration[hidden]{display:block;visibility:hidden}
@@ -53,7 +53,7 @@
 .wd-cal-nav svg{width:12px;height:12px;display:block}
 .wd-cal-nav[disabled]{opacity:0.22;pointer-events:none}
 @media (hover:hover) and (pointer:fine){.wd-cal-nav:hover{color:#fff}}
-.wd-cal-label{all:unset;box-sizing:border-box;font-family:var(--font-numbers);font-size:13px;font-weight:600;color:#b3c2db;padding:4px 10px;border-radius:6px;cursor:pointer;transition:color 0.15s ease}
+.wd-cal-label{all:unset;box-sizing:border-box;font-family:var(--font-numbers);font-size:13px;color:#b3c2db;padding:4px 10px;border-radius:6px;cursor:pointer;transition:color 0.15s ease}
 @media (hover:hover) and (pointer:fine){.wd-cal-label:hover{color:#fff}}
 .wd-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:1px}
 .wd-weekdays span{display:block;text-align:center;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#6f7c91;padding:3px 0}
@@ -63,7 +63,7 @@
 .wd-day.-disabled{color:#26314a;cursor:not-allowed;pointer-events:none}
 .wd-day.-today{color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.22)}
 .wd-day.-inrange{background-color:rgba(255,255,255,0.05);border-radius:0;color:#fff}
-.wd-day.-selected{background:rgba(255,255,255,0.14);color:#fff;font-weight:600;box-shadow:none}
+.wd-day.-selected{background:rgba(255,255,255,0.14);color:#fff;box-shadow:none}
 .wd-day.-range-start{border-radius:6px 0 0 6px}
 .wd-day.-range-end{border-radius:0 6px 6px 0}
 @media (hover:hover) and (pointer:fine){.wd-day:not(.-disabled):not(.-empty):not(.-selected):hover{color:#fff}}
@@ -78,7 +78,7 @@
 .wd-jump-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;padding-right:2px;-ms-overflow-style:none;scrollbar-width:thin}
 .wd-jump-row{all:unset;box-sizing:border-box;display:block;width:100%;text-align:center;scroll-snap-align:center;font-family:var(--font-numbers);font-size:12.5px;color:#b3c2db;padding:9px 4px;border-radius:6px;cursor:pointer;transition:background-color 0.15s ease,color 0.15s ease}
 .wd-jump-row.-disabled{color:#26314a;cursor:not-allowed;pointer-events:none}
-.wd-jump-row.-active{background:rgba(255,255,255,0.1);color:#fff;font-weight:600}
+.wd-jump-row.-active{background:rgba(255,255,255,0.1);color:#fff}
 @media (hover:hover) and (pointer:fine){.wd-jump-row:not(.-disabled):not(.-active):hover{color:#fff}}
 .wd-actions{display:flex;gap:8px;padding-top:11px;border-top:1px solid #1a2333}
 .wd-btn{all:unset;box-sizing:border-box;flex:1;text-align:center;font-family:var(--font-text);font-size:12.5px;font-weight:600;padding:9px;border-radius:6px;cursor:pointer;transition:background-color 0.15s ease,border-color 0.15s ease,color 0.15s ease}
@@ -88,6 +88,13 @@
 @media (hover:hover) and (pointer:fine){.wd-btn.-primary:hover{background-color:rgba(255,255,255,0.16)}}
 .wd-skip-btn{all:unset;box-sizing:border-box;display:block;width:100%;text-align:center;font-family:var(--font-text);font-size:11.5px;font-weight:600;color:#8490a4;background-color:transparent;border:0;border-radius:6px;padding:8px;cursor:pointer;transition:color 0.15s ease}
 @media (hover:hover) and (pointer:fine){.wd-skip-btn:hover{color:#fff}}
+.wd-btn[disabled]{opacity:0.4;pointer-events:none}
+.wd-seasons{display:none}
+.watchdate-popover.-pick .wd-seasons{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.watchdate-popover.-pick .wd-stub-row,.watchdate-popover.-pick .wd-calendar,.watchdate-popover.-pick .wd-skip-btn{display:none}
+.wd-season{all:unset;box-sizing:border-box;text-align:center;padding:10px 6px;border-radius:6px;font-family:var(--font-text);font-size:12.5px;font-weight:500;color:#b3c2db;background-color:rgba(255,255,255,0.05);cursor:pointer;transition:background-color 0.15s ease,color 0.15s ease}
+.wd-season.-on{background-color:#32ab68;color:#fff}
+@media (hover:hover) and (pointer:fine){.wd-season:not(.-on):hover{color:#fff}.wd-season.-on:hover{background-color:#2c9a5d}}
 @media (max-width:380px){
   .watchdate-popover{width:calc(100vw - 24px);padding:14px;gap:10px}}
 @media (min-width:1024px){
@@ -110,7 +117,11 @@
   .wd-weekdays span{font-size:9.5px;padding:5px 0}
   .wd-day{font-size:14px;border-radius:8px}
   .wd-btn{font-size:13.5px;padding:11px}
-  .wd-skip-btn{font-size:12.5px;padding:10px}}
+  .wd-skip-btn{font-size:12.5px;padding:10px}
+  .watchdate-popover.-pick{width:440px}
+  #watchdate-toggle:checked ~ .watchdate-popover.-pick{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto}
+  .watchdate-popover.-pick > .wd-seasons{grid-column:1;grid-row:2}
+  .watchdate-popover.-pick > .wd-actions{grid-column:1;grid-row:3}}
 .profile-favorites .section-heading { padding-bottom: 0.1rem; margin-bottom: 0.3rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 @media (max-width: 1023px) {
   .profile-stats { margin: 16px 0 16px; }

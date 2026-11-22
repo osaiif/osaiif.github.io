@@ -248,7 +248,7 @@
       });
     });
   }
-  var CACHE_PREFIX = 'tvbox:tmdb2:';
+  var CACHE_PREFIX = 'tvbox:tmdb3:';
   var CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   var SORT_GROUPS = [
     {
@@ -294,6 +294,8 @@
   ];
   var DEFAULT_SORT = 'date_desc';
   var NEEDS_TMDB = {
+    date_desc: true,
+    date_asc: true,
     avg_desc: true,
     avg_asc: true,
     pop_desc: true,
@@ -319,6 +321,7 @@
       localStorage.setItem(CACHE_PREFIX + imdbId, JSON.stringify({
         avg: info.avg,
         popularity: info.popularity,
+        date: info.date,
         ts: Date.now()
       }));
     } catch (e) {
@@ -333,13 +336,14 @@
         var match = data && data.tv_results && data.tv_results[0];
         var info = {
           avg: (match && typeof match.vote_average === 'number') ? match.vote_average : null,
-          popularity: (match && typeof match.popularity === 'number') ? match.popularity : null
+          popularity: (match && typeof match.popularity === 'number') ? match.popularity : null,
+          date: (match && typeof match.first_air_date === 'string' && match.first_air_date) ? match.first_air_date : null
         };
         if (data) writeCache(imdbId, info);
         return info;
       })
       .catch(function () {
-        return { avg: null, popularity: null };
+        return { avg: null, popularity: null, date: null };
       });
   }
   function fetchAllTmdbInfo(imdbIds) {
@@ -473,13 +477,21 @@
     function orderOf(card) {
       return parseInt(card.dataset.order, 10);
     }
+    function dateOf(card) {
+      var info = tmdbCache[card.dataset.imdb];
+      var n = info && typeof info.date === 'string' ? parseInt(info.date.replace(/-/g, ''), 10) : NaN;
+      return isNaN(n) ? null : n;
+    }
+    function revealGrid() {
+      grid.style.visibility = '';
+    }
     function compareBy(key) {
       return function (a, b) {
         var r = 0;
         switch (key) {
           case 'date_desc':
           case 'date_asc':
-            r = compareNullable(numOrNull(a.dataset.journal), numOrNull(b.dataset.journal), key === 'date_desc');
+            r = compareNullable(dateOf(a), dateOf(b), key === 'date_desc');
             break;
           case 'name_asc':
             r = compareNames(a.dataset.title, b.dataset.title);
@@ -519,6 +531,7 @@
       sorted.forEach(function (el) { frag.appendChild(el); });
       grid.appendChild(frag);
       setActive(key);
+      revealGrid();
       try { localStorage.setItem(storageKey, key); } catch (e) {}
     }
     function ensureTmdbLoaded(done) {
@@ -526,11 +539,23 @@
       var ids = cards
         .map(function (c) { return c.dataset.imdb; })
         .filter(function (id) { return !!id; });
+      var local = {};
+      var complete = ids.every(function (id) {
+        var c = readCache(id);
+        if (c) local[id] = c;
+        return !!c;
+      });
+      if (complete) {
+        tmdbCache = local;
+        tmdbLoaded = true;
+        done();
+        return;
+      }
       trigger.classList.add('-loading');
       fetchAllTmdbInfo(ids).then(function (results) {
         tmdbCache = results;
         tmdbLoaded = Object.keys(results).some(function (id) {
-          return results[id].avg !== null || results[id].popularity !== null;
+          return results[id].avg !== null || results[id].popularity !== null || results[id].date !== null;
         });
         trigger.classList.remove('-loading');
         done();
@@ -554,10 +579,13 @@
     });
     var saved = null;
     try { saved = localStorage.getItem(storageKey); } catch (e) {}
-    if (saved && optionEls[saved]) {
-      choose(saved);
-    } else if (optionEls[DEFAULT_SORT]) {
-      choose(DEFAULT_SORT);
+    var initialKey = (saved && optionEls[saved]) ? saved : (optionEls[DEFAULT_SORT] ? DEFAULT_SORT : null);
+    if (initialKey) {
+      if (NEEDS_TMDB[initialKey] && !cards.every(function (c) { return !c.dataset.imdb || readCache(c.dataset.imdb); })) {
+        grid.style.visibility = 'hidden';
+        setTimeout(revealGrid, 3000);
+      }
+      choose(initialKey);
     }
   }
   global.TVSort = { init: init };

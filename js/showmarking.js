@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const wdJumpToggle   = document.getElementById('wd-jump-toggle');
   const wdJumpMonthsEl = document.getElementById('wd-jump-months');
   const wdJumpYearsEl  = document.getElementById('wd-jump-years');
+  const wdSeasonsEl    = document.getElementById('wd-seasons');
   if (!watchdateToggle || !wdPopover || !wdCalendarEl) {
     return;
   }
@@ -231,6 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let wdSeason        = null;
   let wdFloorOverride = null;
   let wdLastWasSeason = false;
+  let wdStep = 'dates';
+  let wdPicked = {};
+  let wdTargets = [];
   function wdFloorDate() {
     if (wdFloorOverride) return wdFloorOverride;
     const meta = window.tvboxShowMeta;
@@ -467,9 +471,63 @@ document.addEventListener('DOMContentLoaded', () => {
       renderWdCalendar();
     });
   }
+  function wdPickedNumbers() {
+    return seasonsData.map((s) => s.number).filter((n) => wdPicked[n]);
+  }
+  function renderWdSeasons() {
+    wdSeasonsEl.innerHTML = seasonsData.map((s) =>
+      '<button type="button" class="wd-season' + (wdPicked[s.number] ? ' -on' : '') +
+      '" data-season-pick="' + s.number + '" title="' + escapeText(seasonDisplayName(s)) +
+      '" aria-pressed="' + (wdPicked[s.number] ? 'true' : 'false') + '">Season ' + s.number + '</button>'
+    ).join('');
+  }
+  function setWdStep(step) {
+    wdStep = step;
+    wdPopover.classList.toggle('-pick', step === 'pick');
+    if (wdSaveBtn) {
+      wdSaveBtn.textContent = step === 'pick' ? 'Next' : 'Save';
+      wdSaveBtn.disabled = step === 'pick' && !wdPickedNumbers().length;
+    }
+  }
+  function wdGoToDates() {
+    const nums = wdPickedNumbers();
+    if (!nums.length) return;
+    wdTargets = nums;
+    let floor = null;
+    nums.forEach((n) => {
+      const s = findSeason(n);
+      const d = s && s.airDate ? fromISODate(String(s.airDate).slice(0, 10)) : null;
+      if (d && (!floor || d < floor)) floor = d;
+    });
+    wdFloorOverride = floor && floor <= WD_TODAY ? floor : null;
+    wdRange.start = null;
+    wdRange.end = null;
+    wdActiveField = 'start';
+    wdView = new Date(WD_TODAY);
+    setWdStep('dates');
+    updateWdStubs();
+    renderWdCalendar();
+  }
+  if (wdSeasonsEl) {
+    wdSeasonsEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-season-pick]');
+      if (!btn) return;
+      const n = parseInt(btn.getAttribute('data-season-pick'), 10);
+      if (wdPicked[n]) {
+        delete wdPicked[n];
+      } else {
+        wdPicked[n] = true;
+      }
+      btn.classList.toggle('-on', !!wdPicked[n]);
+      btn.setAttribute('aria-pressed', wdPicked[n] ? 'true' : 'false');
+      if (wdSaveBtn) wdSaveBtn.disabled = !wdPickedNumbers().length;
+    });
+  }
   function openWatchedPopover(seasonNumber) {
     const season = seasonNumber == null ? null : findSeason(seasonNumber);
+    const pick = !season && seasonsData.length > 0 && !!wdSeasonsEl;
     wdSeason = season ? season.number : null;
+    wdTargets = season ? [season.number] : [];
     const titleEl = document.getElementById('show-title');
     const showName =
       (titleEl && titleEl.textContent) ||
@@ -493,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
       wdLastWasSeason = true;
     } else {
       wdFloorOverride = null;
-      if (wdLastWasSeason) {
+      if (wdLastWasSeason || pick) {
         wdRange.start = null;
         wdRange.end = null;
         wdActiveField = 'start';
@@ -503,6 +561,12 @@ document.addEventListener('DOMContentLoaded', () => {
     wdView = wdRange.start
       ? new Date(wdRange.start.getFullYear(), wdRange.start.getMonth(), 1)
       : new Date(WD_TODAY);
+    if (pick) {
+      wdPicked = {};
+      seasonsData.forEach((s) => { wdPicked[s.number] = true; });
+      renderWdSeasons();
+    }
+    setWdStep(pick ? 'pick' : 'dates');
     updateWdStubs();
     renderWdCalendar();
     watchdateToggle.checked = true;
@@ -517,13 +581,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (wdQuickBtn) {
     wdQuickBtn.addEventListener('click', () => {
-      const season = wdSeason;
+      const targets = wdTargets.slice();
       wdRange.start = null;
       wdRange.end = null;
       updateWdStubs();
       closeWatchedPopover();
-      if (season != null) {
-        commitSeasonLog(season, { status: 'watched', start: null, end: null });
+      if (targets.length) {
+        targets.forEach((n) => commitSeasonLog(n, { status: 'watched', start: null, end: null }));
       } else {
         showAuthPrompt();
       }
@@ -531,12 +595,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (wdSaveBtn) {
     wdSaveBtn.addEventListener('click', () => {
-      const season = wdSeason;
+      if (wdStep === 'pick') {
+        wdGoToDates();
+        return;
+      }
+      const targets = wdTargets.slice();
       const start = toISODate(wdRange.start);
       const end   = toISODate(wdRange.end);
       closeWatchedPopover();
-      if (season != null) {
-        commitSeasonLog(season, { status: 'watched', start: start, end: end });
+      if (targets.length) {
+        targets.forEach((n) => commitSeasonLog(n, { status: 'watched', start: start, end: end }));
       } else {
         showAuthPrompt();
       }
