@@ -19,7 +19,7 @@
   function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
   grid.innerHTML = list.map(function (f) {
     return '<div class="card"><a href="/show/?imdb=' + esc(f.imdb) + '">' +
-      '<img src="' + BASE + encodeURIComponent(f.img) + '" alt="' + esc(f.title) +
+      '<img src="' + (/^https:\/\//.test(f.img) ? esc(f.img) : BASE + encodeURIComponent(f.img)) + '" alt="' + esc(f.title) +
       '" width="150" height="225" fetchpriority="high" decoding="async"></a></div>';
   }).join('');
 })();

@@ -48,6 +48,11 @@ a{color:var(--accent)}
 details{margin-top:12px}
 code{background:#0e1216;padding:1px 5px;border-radius:4px}
 .sticky{position:sticky;bottom:0;z-index:5}
+.posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:8px}
+.posters button{padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;line-height:0;background:#0e1216}
+.posters button.on{border-color:var(--accent)}
+.posters img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.thumb{width:46px;height:69px;object-fit:cover;border-radius:4px;flex:none;background:#0e1216}
 </style>
 </head>
 <body>
@@ -312,14 +317,14 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   }
   function favsSkeleton() {
     return '<div class="row"><h2 style="flex:1 1 auto;margin:0">Favorites</h2><button data-act="reload">Reload</button></div>' +
-      '<div class="warn" style="margin-bottom:10px">Each image file must already exist in the r repo with exactly the name you type. <a href="https://github.com/' + OWNER_REPO + '/upload/main" target="_blank" rel="noopener">Upload images</a></div>' +
-      '<div class="panel" style="margin-bottom:12px"><h2>Add a favorite</h2><div class="row"><input id="fTitle" placeholder="Title"><input id="fImdb" placeholder="tt1234567"><input id="fImg" placeholder="image.webp"><button class="primary" data-act="addFav">Add</button></div></div>' +
+      '<div class="warn" style="margin-bottom:10px">Leave the image empty to use the poster of the IMDb id, or press Choose poster to pick one. A typed file name must already exist in the r repo. <a href="https://github.com/' + OWNER_REPO + '/upload/main" target="_blank" rel="noopener">Upload images</a></div>' +
+      '<div class="panel" style="margin-bottom:12px"><h2>Add a favorite</h2><div class="row"><input id="fTitle" placeholder="Title"><input id="fImdb" placeholder="tt1234567"><input id="fImg" placeholder="Image (optional)"><button data-act="pick" data-ctx="new">Choose poster</button><button class="primary" data-act="addFav">Add</button></div><div data-pk="new"></div></div>' +
       '<div id="cards"></div>';
   }
   function drawFavs() {
     $('cards').innerHTML = state.favs.map(function (f, i) {
-      return '<div class="card" data-i="' + i + '"><div class="row"><input data-f="title" value="' + esc(f.title) + '" aria-label="Title"><input data-f="imdb" value="' + esc(f.imdb) + '" aria-label="IMDb id"><input data-f="img" value="' + esc(f.img) + '" aria-label="Image file"></div>' +
-        '<div class="row"><button data-act="up"' + (i === 0 ? ' disabled' : '') + '>Move up</button><button data-act="down"' + (i === state.favs.length - 1 ? ' disabled' : '') + '>Move down</button><button data-act="del">Delete</button></div></div>';
+      return '<div class="card" data-i="' + i + '"><div class="row">' + (f.img ? '<img class="thumb" src="' + esc(favSrc(f.img)) + '" alt="">' : '<div class="thumb"></div>') + '<input data-f="title" value="' + esc(f.title) + '" aria-label="Title"><input data-f="imdb" value="' + esc(f.imdb) + '" aria-label="IMDb id"><input data-f="img" value="' + esc(f.img) + '" placeholder="Empty = poster from IMDb id" aria-label="Image"></div>' +
+        '<div class="row"><button data-act="pick" data-ctx="' + i + '">Choose poster</button><button data-act="up"' + (i === 0 ? ' disabled' : '') + '>Move up</button><button data-act="down"' + (i === state.favs.length - 1 ? ' disabled' : '') + '>Move down</button><button data-act="del">Delete</button></div><div data-pk="' + i + '"></div></div>';
     }).join('') || '<div class="muted">No favorites.</div>';
   }
   function bioSkeleton() {
@@ -335,7 +340,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       return;
     }
     if (tab === 'shows') { ed.innerHTML = showsSkeleton(); drawChips(); drawCards(); }
-    else if (tab === 'favs') { ed.innerHTML = favsSkeleton(); drawFavs(); }
+    else if (tab === 'favs') { ed.innerHTML = favsSkeleton(); drawFavs(); fillFavImgs(); }
     else { ed.innerHTML = bioSkeleton(); }
   }
   function validImdb(v) { return /^tt\d+$/.test(v); }
@@ -377,7 +382,8 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       var n = title || ('Row ' + (i + 1));
       if (!title) errs.push('Row ' + (i + 1) + ': title is empty.');
       if (!validImdb(imdb)) errs.push(n + ': IMDb id must look like tt1234567.');
-      if (!/^[A-Za-z0-9_.-]+\.(webp|png|jpg|jpeg)$/.test(img)) errs.push(n + ': image must be a file name like show.webp (no folders or spaces).');
+      if (!img) errs.push(n + ': image is empty. Choose a poster or type a file name.');
+      else if (!/^[A-Za-z0-9_.-]+\.(webp|png|jpg|jpeg)$/.test(img) && !/^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(img)) errs.push(n + ': image must be a file name like show.webp or a TMDB poster link.');
       return '  { title: ' + JSON.stringify(title) + ', imdb: ' + JSON.stringify(imdb) + ', img: ' + JSON.stringify(img) + ' }';
     });
     return { errs: errs, text: 'window.FAVORITES = [\n' + lines.join(',\n') + '\n];\n' };
@@ -482,17 +488,105 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       .catch(function (e) { toast(e.message); })
       .then(function () { if (row.style.opacity !== '.5') for (var i = 0; i < all.length; i++) all[i].disabled = false; });
   }
+  var posterCache = {};
+  var imgTried = {};
+  var pickSeq = 0;
+  var addBusy = false;
+  var PICK_LANGS = [['en,null', 'English and no text'], ['null', 'No text only'], ['all', 'All languages']];
+  var ALL_LANGS = 'en,null,fr,ar,es,de,it,pt,ru,tr,ja,ko,zh,hi,nl,pl,sv,he,fa,id';
+  function tmdbJson(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  }
+  function findTmdb(imdb) {
+    if (!posterCache[imdb]) {
+      posterCache[imdb] = tmdbJson('https://api.themoviedb.org/3/find/' + encodeURIComponent(imdb) + '?external_source=imdb_id&api_key=' + TMDB_KEY).then(function (d) {
+        var tv = (d.tv_results || [])[0];
+        var f = tv || (d.movie_results || [])[0];
+        if (!f) throw new Error('TMDB has no title for ' + imdb);
+        return { type: tv ? 'tv' : 'movie', id: f.id, poster: f.poster_path || '' };
+      });
+      posterCache[imdb].catch(function () { delete posterCache[imdb]; });
+    }
+    return posterCache[imdb];
+  }
+  function posterUrl(path, size) { return 'https://image.tmdb.org/t/p/' + size + path; }
+  function favSrc(img) {
+    return /^https:\/\//.test(img) ? img : 'https://raw.githubusercontent.com/' + OWNER_REPO + '/main/' + encodeURIComponent(img);
+  }
+  function needsImg(f) { return !f.img.trim() && validImdb(f.imdb.trim()); }
+  function fillFavImgs() {
+    var jobs = [];
+    state.favs.forEach(function (f) {
+      var id = f.imdb.trim();
+      if (!needsImg(f) || imgTried[id]) return;
+      imgTried[id] = 1;
+      jobs.push(findTmdb(id).then(function (m) {
+        if (!m.poster) throw new Error('No poster');
+        if (!f.img.trim()) { f.img = posterUrl(m.poster, 'w342'); return true; }
+        return false;
+      }).catch(function () { toast('No poster found for ' + (f.title || id)); return false; }));
+    });
+    if (!jobs.length) return Promise.resolve();
+    return Promise.all(jobs).then(function (r) {
+      if (r.some(Boolean)) state.dirty.favs = true;
+      if (tab === 'favs' && state.loaded.favs) drawFavs();
+      refresh();
+    });
+  }
+  function pickBox(ctx) { return document.querySelector('[data-pk="' + ctx + '"]'); }
+  function pickImdb(ctx) { return (ctx === 'new' ? $('fImdb').value : (state.favs[Number(ctx)] || { imdb: '' }).imdb).trim(); }
+  function pickCurrent(ctx) { return (ctx === 'new' ? $('fImg').value : (state.favs[Number(ctx)] || { img: '' }).img).trim(); }
+  function closePick(ctx) { var b = pickBox(ctx); if (b) b.innerHTML = ''; }
+  function openPick(ctx, lang) {
+    var imdb = pickImdb(ctx);
+    if (!validImdb(imdb)) { toast('Enter a valid IMDb id first'); return; }
+    lang = lang || 'en,null';
+    var all = document.querySelectorAll('[data-pk]');
+    for (var k = 0; k < all.length; k++) all[k].innerHTML = '';
+    var box = pickBox(ctx);
+    if (!box) return;
+    var seq = ++pickSeq;
+    var head = '<div class="row" style="margin-top:8px"><label style="flex:0 1 220px">Poster language<select data-pl="' + ctx + '">' + PICK_LANGS.map(function (l) {
+      return '<option value="' + l[0] + '"' + (l[0] === lang ? ' selected' : '') + '>' + l[1] + '</option>';
+    }).join('') + '</select></label><button data-act="pickclose">Close</button></div>';
+    box.innerHTML = head + '<div class="muted">Loading posters...</div>';
+    findTmdb(imdb).then(function (m) {
+      return tmdbJson('https://api.themoviedb.org/3/' + m.type + '/' + m.id + '/images?api_key=' + TMDB_KEY + '&include_image_language=' + (lang === 'all' ? ALL_LANGS : lang));
+    }).then(function (d) {
+      var b = pickBox(ctx);
+      if (seq !== pickSeq || !b || pickImdb(ctx) !== imdb) return;
+      var cur = pickCurrent(ctx);
+      var ps = d.posters || [];
+      b.innerHTML = head + (ps.length ? '<div class="posters">' + ps.map(function (p) {
+        return '<button data-act="pickposter" data-p="' + esc(p.file_path) + '" class="' + (posterUrl(p.file_path, 'w342') === cur ? 'on' : '') + '" title="' + p.width + 'x' + p.height + (p.iso_639_1 ? ' ' + p.iso_639_1 : '') + '"><img loading="lazy" src="' + posterUrl(p.file_path, 'w185') + '" alt=""></button>';
+      }).join('') + '</div>' : '<div class="muted">No posters in this language.</div>');
+    }).catch(function (e) {
+      var b = pickBox(ctx);
+      if (seq === pickSeq && b) b.innerHTML = head + '<div class="warn">Could not load posters: ' + esc(e.message) + '</div>';
+    });
+  }
   function addFav() {
+    if (addBusy) return;
     var title = $('fTitle').value.trim();
     var imdb = $('fImdb').value.trim();
     var img = $('fImg').value.trim();
-    if (!title || !validImdb(imdb) || !img) { toast('Fill title, IMDb id and image file'); return; }
-    state.favs.push({ title: title, imdb: imdb, img: img });
-    $('fTitle').value = '';
-    $('fImdb').value = '';
-    $('fImg').value = '';
-    drawFavs();
-    markDirty();
+    if (!title || !validImdb(imdb)) { toast('Fill title and IMDb id'); return; }
+    function done(u) {
+      state.favs.push({ title: title, imdb: imdb, img: u });
+      $('fTitle').value = '';
+      $('fImdb').value = '';
+      $('fImg').value = '';
+      closePick('new');
+      drawFavs();
+      markDirty();
+    }
+    if (img) { done(img); return; }
+    addBusy = true;
+    toast('Fetching poster...');
+    findTmdb(imdb).then(function (m) {
+      if (!m.poster) throw new Error('No poster on TMDB. Choose one or type a file name.');
+      done(posterUrl(m.poster, 'w342'));
+    }).catch(function (e) { toast(e.message); }).then(function () { addBusy = false; });
   }
   function save() {
     var key = tab;
@@ -601,6 +695,14 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     else if (act === 'addShow') addShow();
     else if (act === 'qadd') qsAdd(b);
     else if (act === 'addFav') addFav();
+    else if (act === 'pick') openPick(b.dataset.ctx);
+    else if (act === 'pickclose') closePick(b.closest('[data-pk]').dataset.pk);
+    else if (act === 'pickposter') {
+      var pk = b.closest('[data-pk]').dataset.pk;
+      var url = posterUrl(b.dataset.p, 'w342');
+      if (pk === 'new') { $('fImg').value = url; closePick('new'); toast('Poster selected'); }
+      else { state.favs[Number(pk)].img = url; drawFavs(); markDirty(); }
+    }
     else if (act === 'del') {
       var arr = tab === 'shows' ? state.shows : state.favs;
       var name = (tab === 'shows' ? (titleOf(arr[i]) || arr[i].id) : arr[i].title) || 'this entry';
@@ -620,6 +722,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   });
   function onEdit(e) {
     var t = e.target;
+    if (t.dataset && t.dataset.pl !== undefined) { if (e.type === 'change') openPick(t.dataset.pl, t.value); return; }
     if (t.id === 'search') { query = t.value; drawCards(); return; }
     if (t.id === 'qs') { clearTimeout(qsTimer); var v = t.value; qsTimer = setTimeout(function () { qsSearch(v); }, 300); return; }
     if (t.id === 'bioBox') { state.bio = t.value; markDirty(); return; }
@@ -630,6 +733,10 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var arr = tab === 'shows' ? state.shows : state.favs;
     if (!arr[i]) return;
     arr[i][f] = t.value;
+    if (tab === 'favs' && e.type === 'change' && (f === 'imdb' || f === 'img')) {
+      delete imgTried[arr[i].imdb.trim()];
+      fillFavImgs();
+    }
     if (tab === 'shows' && e.type === 'change') {
       if (f === 'list') { drawChips(); drawCards(); }
       else if (f === 'id') { fillTitles(); drawCards(); }
