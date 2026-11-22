@@ -80,6 +80,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   var OWNER_REPO = 'osaiif/r';
   var API = 'https://api.github.com/repos/' + OWNER_REPO + '/contents/';
   var TMDB_KEY = '6cb6e1dc603bc65ffb6198489d5bc5b7';
+  var TITLE_PREFIX = 'tvbox:title1:';
   var VAULT = 'listEditorVault';
   var META = {
     shows: { file: 't.js', global: 'SHOWS', label: 'Shows' },
@@ -96,6 +97,10 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   var query = '';
   var saving = false;
   var toastTimer = 0;
+  var titleMap = {};
+  var titleSeen = {};
+  var titleQueue = [];
+  var titleActive = 0;
   function $(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -164,16 +169,65 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     });
   }
   function normShow(s) {
+    var id = String(s.id || s.imdb || '');
+    var r = s.r != null ? s.r : s.rating;
+    var j = s.j != null ? s.j : s.journalYear;
+    if (s.title && id) titleMap[id] = String(s.title);
     return {
-      title: String(s.title || ''),
-      imdb: String(s.imdb || ''),
-      src: String(s.src || ''),
-      rating: s.rating == null ? '' : String(s.rating),
+      id: id,
+      r: r == null ? '' : String(r),
+      j: j == null ? '' : String(j),
       list: s.list || '',
-      journalYear: s.journalYear == null ? '' : String(s.journalYear),
-      journalOrder: s.journalOrder == null ? '' : String(s.journalOrder),
-      seasons: Array.isArray(s.seasons) ? s.seasons.join(',') : ''
+      seasons: Array.isArray(s.seasons) ? s.seasons.join(',') : '',
+      wasJ: j != null && String(j) !== ''
     };
+  }
+  function cachedTitle(id) {
+    try { return localStorage.getItem(TITLE_PREFIX + id) || ''; } catch (e) { return ''; }
+  }
+  function titleOf(s) {
+    var id = s.id.trim();
+    if (!titleMap[id]) {
+      var c = cachedTitle(id);
+      if (c) titleMap[id] = c;
+    }
+    return titleMap[id] || '';
+  }
+  function paintTitle(id, name) {
+    var els = document.querySelectorAll('[data-t="' + id + '"]');
+    for (var i = 0; i < els.length; i++) els[i].textContent = name;
+  }
+  function rememberTitle(id, name) {
+    titleMap[id] = name;
+    try { localStorage.setItem(TITLE_PREFIX + id, name); } catch (e) {}
+    paintTitle(id, name);
+  }
+  function fetchName(id) {
+    fetch('https://api.themoviedb.org/3/find/' + encodeURIComponent(id) + '?external_source=imdb_id&api_key=' + TMDB_KEY)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        var f = [].concat(d.tv_results || [], d.movie_results || [])[0];
+        var n = f && (f.name || f.title);
+        if (n) rememberTitle(id, n);
+      })
+      .catch(function () {})
+      .then(function () { titleActive--; pumpTitles(); });
+  }
+  function pumpTitles() {
+    while (titleActive < 4 && titleQueue.length) {
+      titleActive++;
+      fetchName(titleQueue.shift());
+    }
+  }
+  function fillTitles() {
+    state.shows.forEach(function (s) {
+      var id = s.id.trim();
+      if (validImdb(id) && !titleOf(s) && !titleSeen[id]) {
+        titleSeen[id] = 1;
+        titleQueue.push(id);
+      }
+    });
+    pumpTitles();
   }
   function ingest(key, text) {
     var g = META[key].global;
@@ -181,6 +235,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     if (key === 'shows') {
       if (!Array.isArray(data) || !data.length) throw new Error('No shows found in file');
       state.shows = data.map(normShow);
+      fillTitles();
     } else if (key === 'favs') {
       if (!Array.isArray(data)) throw new Error('No favorites found in file');
       state.favs = data.map(function (f) {
@@ -217,8 +272,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       '<div id="qsRes"></div>' +
       '<div class="muted">Click a list button and it is added and saved right away.</div>' +
       '<details><summary class="muted">Add by IMDb id instead</summary>' +
-      '<div class="row" style="margin-top:8px"><input id="addImdb" placeholder="IMDb id, e.g. tt1234567"><button data-act="fetchTitle">Fetch title</button></div>' +
-      '<div class="row"><input id="addTitle" placeholder="Title"><select id="addList">' +
+      '<div class="row" style="margin-top:8px"><input id="addImdb" placeholder="IMDb id, e.g. tt1234567"><select id="addList">' +
       LISTS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + '</option>'; }).join('') +
       '</select><button class="primary" data-act="addShow">Add</button></div></details></div>' +
       '<div id="cards"></div>';
@@ -233,18 +287,17 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   }
   function showCard(s, i) {
     return '<div class="card" data-i="' + i + '">' +
-      '<div class="row"><input data-f="title" value="' + esc(s.title) + '" aria-label="Title"><input data-f="imdb" value="' + esc(s.imdb) + '" style="flex:0 1 150px" aria-label="IMDb id"></div>' +
+      '<div class="row"><div class="grow" data-t="' + esc(s.id.trim()) + '" style="font-weight:600">' + esc(titleOf(s) || s.id || 'New show') + '</div><input data-f="id" value="' + esc(s.id) + '" style="flex:0 1 150px" aria-label="IMDb id"></div>' +
       '<div class="row">' +
       '<label>List<select data-f="list">' + LISTS.map(function (l) {
         return '<option value="' + l[0] + '"' + (l[0] === s.list ? ' selected' : '') + '>' + l[1] + '</option>';
       }).join('') + '</select></label>' +
-      '<label>Rating<select data-f="rating">' + RATINGS.map(function (r) {
-        return '<option value="' + r + '"' + (r === s.rating ? ' selected' : '') + '>' + (r === '' ? 'none' : r) + '</option>';
+      '<label>Rating<select data-f="r">' + RATINGS.map(function (r) {
+        return '<option value="' + r + '"' + (r === s.r ? ' selected' : '') + '>' + (r === '' ? 'none' : r) + '</option>';
       }).join('') + '</select></label>' +
-      '<label>Journal year<input data-f="journalYear" inputmode="numeric" value="' + esc(s.journalYear) + '"></label>' +
-      '<label>Journal order<input data-f="journalOrder" inputmode="numeric" value="' + esc(s.journalOrder) + '"></label>' +
-      '<label>Seasons<input data-f="seasons" placeholder="e.g. 1,2" value="' + esc(s.seasons) + '"></label></div>' +
-      '<div class="row"><label class="grow">Poster URL (optional)<input data-f="src" value="' + esc(s.src) + '"></label><button data-act="del">Delete</button></div>' +
+      '<label>Journal year<input data-f="j" inputmode="numeric" value="' + esc(s.j) + '"></label>' +
+      '<label>Seasons<input data-f="seasons" placeholder="e.g. 1,2" value="' + esc(s.seasons) + '"></label>' +
+      '<button data-act="del">Delete</button></div>' +
       '</div>';
   }
   function drawCards() {
@@ -252,7 +305,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var html = '';
     state.shows.forEach(function (s, i) {
       if (filter !== 'all' && s.list !== filter) return;
-      if (q && (s.title + ' ' + s.imdb).toLowerCase().indexOf(q) === -1) return;
+      if (q && (titleOf(s) + ' ' + s.id).toLowerCase().indexOf(q) === -1) return;
       html += showCard(s, i);
     });
     $('cards').innerHTML = html || '<div class="muted">Nothing here.</div>';
@@ -289,36 +342,22 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   function buildShows() {
     var errs = [];
     var seen = {};
-    var orders = {};
     var lines = state.shows.map(function (s, i) {
-      var title = s.title.trim();
-      var imdb = s.imdb.trim();
-      var src = s.src.trim();
-      var y = s.journalYear.trim();
-      var o = s.journalOrder.trim();
+      var id = s.id.trim();
+      var y = s.j.trim();
       var se = s.seasons.trim();
-      var n = title || ('Row ' + (i + 1));
+      var n = titleOf(s) || id || ('Row ' + (i + 1));
       var p = [];
-      if (!title) errs.push('Row ' + (i + 1) + ': title is empty.');
-      if (!validImdb(imdb)) errs.push(n + ': IMDb id must look like tt1234567.');
-      else if (seen[imdb]) errs.push(n + ': duplicate IMDb id ' + imdb + '.');
-      else seen[imdb] = 1;
-      if (src && !/^https:\/\//.test(src)) errs.push(n + ': poster URL must be empty or start with https://');
-      p.push('title: ' + JSON.stringify(title));
-      p.push('imdb: ' + JSON.stringify(imdb));
-      p.push('src: ' + JSON.stringify(src));
-      p.push('rating: ' + (s.rating === '' ? 'null' : String(parseFloat(s.rating))));
-      if (s.list) p.push('list: ' + JSON.stringify(s.list));
-      if (y || o) {
-        if (!/^(19|20)\d\d$/.test(y)) errs.push(n + ': journal year must be 4 digits (or clear both journal fields).');
-        else if (!/^\d+$/.test(o)) errs.push(n + ': journal order must be a whole number (or clear both journal fields).');
-        else {
-          if (orders[o]) errs.push(n + ': journal order ' + o + ' is already used by ' + orders[o] + '.');
-          else orders[o] = n;
-          p.push('journalYear: ' + Number(y));
-          p.push('journalOrder: ' + Number(o));
-        }
+      if (!validImdb(id)) errs.push(n + ': IMDb id must look like tt1234567.');
+      else if (seen[id]) errs.push(n + ': duplicate IMDb id ' + id + '.');
+      else seen[id] = 1;
+      p.push('id: ' + JSON.stringify(id));
+      if (s.r !== '') p.push('r: ' + String(parseFloat(s.r)));
+      if (y) {
+        if (!/^(19|20)\d\d$/.test(y)) errs.push(n + ': journal year must be 4 digits (or clear it).');
+        else p.push('j: ' + Number(y));
       }
+      if (s.list) p.push('list: ' + JSON.stringify(s.list));
       if (se) {
         var parts = se.split(',').map(function (x) { return x.trim(); });
         var ok = parts.every(function (x) { return /^[1-9]\d*$/.test(x); });
@@ -366,12 +405,10 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   function markDirty() { state.dirty[tab] = true; refresh(); }
   function addShow() {
     var imdb = $('addImdb').value.trim();
-    var title = $('addTitle').value.trim();
     var list = $('addList').value;
     if (!validImdb(imdb)) { toast('IMDb id must look like tt1234567'); return; }
-    if (!title) { toast('Enter a title'); return; }
-    if (state.shows.some(function (s) { return s.imdb.trim() === imdb; })) { toast('That IMDb id is already in the list'); return; }
-    var item = normShow({ title: title, imdb: imdb, src: '', rating: null, list: list });
+    if (state.shows.some(function (s) { return s.id.trim() === imdb; })) { toast('That IMDb id is already in the list'); return; }
+    var item = normShow({ id: imdb, list: list });
     var last = -1;
     state.shows.forEach(function (s, i) { if (!s.list) last = i; });
     if (list === '') state.shows.splice(last + 1, 0, item);
@@ -379,9 +416,9 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     filter = list === '' ? '' : list;
     query = '';
     $('addImdb').value = '';
-    $('addTitle').value = '';
     drawChips();
     drawCards();
+    fillTitles();
     markDirty();
     toast('Added. Press Save to publish.');
   }
@@ -427,9 +464,10 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       .then(function (d) {
         var imdb = d.imdb_id || '';
         if (!validImdb(imdb)) throw new Error('No IMDb id for this title on TMDB');
-        var dup = state.shows.filter(function (s) { return s.imdb.trim() === imdb; })[0];
+        var dup = state.shows.filter(function (s) { return s.id.trim() === imdb; })[0];
         if (dup) { toast('Already in your list: ' + (dup.list === 'watchlist' ? 'Watchlist' : dup.list === 'dnf' ? 'DNF' : 'Watched')); return; }
-        var item = normShow({ title: it.title, imdb: imdb, src: '', rating: null, list: list });
+        var item = normShow({ id: imdb, list: list });
+        if (it.title) rememberTitle(imdb, it.title);
         var last = -1;
         state.shows.forEach(function (s, idx) { if (!s.list) last = idx; });
         if (list === '') state.shows.splice(last + 1, 0, item);
@@ -443,20 +481,6 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       })
       .catch(function (e) { toast(e.message); })
       .then(function () { if (row.style.opacity !== '.5') for (var i = 0; i < all.length; i++) all[i].disabled = false; });
-  }
-  function fetchTitle() {
-    var imdb = $('addImdb').value.trim();
-    if (!validImdb(imdb)) { toast('IMDb id must look like tt1234567'); return; }
-    fetch('https://api.themoviedb.org/3/find/' + encodeURIComponent(imdb) + '?external_source=imdb_id&api_key=' + TMDB_KEY)
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (d) {
-        var all = [].concat(d.tv_results || [], d.movie_results || []);
-        var f = all[0];
-        var name = f && (f.name || f.title);
-        if (name) { $('addTitle').value = name; toast('Title filled'); }
-        else toast('Not found, type the title yourself');
-      })
-      .catch(function () { toast('Lookup failed, type the title yourself'); });
   }
   function addFav() {
     var title = $('fTitle').value.trim();
@@ -575,12 +599,11 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var i = card ? Number(card.dataset.i) : -1;
     if (act === 'reload') reload();
     else if (act === 'addShow') addShow();
-    else if (act === 'fetchTitle') fetchTitle();
     else if (act === 'qadd') qsAdd(b);
     else if (act === 'addFav') addFav();
     else if (act === 'del') {
       var arr = tab === 'shows' ? state.shows : state.favs;
-      var name = arr[i].title || 'this entry';
+      var name = (tab === 'shows' ? (titleOf(arr[i]) || arr[i].id) : arr[i].title) || 'this entry';
       if (!confirm('Delete "' + name + '"?')) return;
       arr.splice(i, 1);
       if (tab === 'shows') { drawChips(); drawCards(); } else drawFavs();
@@ -607,7 +630,22 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var arr = tab === 'shows' ? state.shows : state.favs;
     if (!arr[i]) return;
     arr[i][f] = t.value;
-    if (f === 'list' && e.type === 'change') { drawChips(); drawCards(); }
+    if (tab === 'shows' && e.type === 'change') {
+      if (f === 'list') { drawChips(); drawCards(); }
+      else if (f === 'id') { fillTitles(); drawCards(); }
+      else if (f === 'j') {
+        var cur = arr[i];
+        var has = /^(19|20)\d\d$/.test(t.value.trim());
+        if (has && !cur.wasJ) {
+          arr.splice(i, 1);
+          var last = -1;
+          arr.forEach(function (s, k) { if (s.j.trim()) last = k; });
+          arr.splice(last + 1, 0, cur);
+          drawCards();
+        }
+        cur.wasJ = has;
+      }
+    }
     markDirty();
   }
   $('editor').addEventListener('input', onEdit);

@@ -1,7 +1,7 @@
 (function () {
   var SOURCES = [
     'https://raw.githubusercontent.com/osaiif/r/main/t.js',
-    'https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/t.js'
+    'https://cdn.jsdelivr.net/gh/osaiif/r@main/t.js'
   ];
   function load(url) {
     try {
@@ -18,64 +18,74 @@
   for (var i = 0; i < SOURCES.length; i++) {
     if (load(SOURCES[i])) return;
   }
-  window.SHOWS = (function () {
-return [
-  { title: "The Americans",                      imdb: "tt2149175",  src: "https://image.tmdb.org/t/p/w440_and_h660_face/w1UBlxEXhbKe8sp0fxFZh7MqTce.jpg",  rating: null },
-  { title: "Money Heist",                        imdb: "tt13696452", src: "https://image.tmdb.org/t/p/w440_and_h660_face/dmnwJGVergOFWCiLbPsQTyyzePw.jpg",  rating: 3.5 },
-  { title: "Dark",                               imdb: "tt5753856",  src: "",       rating: 3.5  },
-  { title: "Prison Break",                       imdb: "tt0455275",  src: "",        rating: 4    },
-  { title: "Baseball",                           imdb: "tt0108700", src: "",         rating: null },
-  { title: "Chernobyl",                          imdb: "tt7366338",  src: "",        rating: 4.5  , journalYear: 2024, journalOrder: 18 },
-  { title: "The Bear",                           imdb: "tt14452776", src: "",      rating: 4    , journalYear: 2023, journalOrder: 13 },
-  { title: "The Queen's Gambit",                 imdb: "tt10048342", src: "",       rating: 4    , journalYear: 2022, journalOrder: 8 },
-  { title: "Game of Thrones",                    imdb: "tt0944947",  src: "",       rating: null    },
-  { title: "Mr. Robot",                          imdb: "tt4158110",  src: "",        rating: 4.5 },
-  { title: "When They See Us",                   imdb: "tt7137906",  src: "https://image.tmdb.org/t/p/w440_and_h660_face/oPv3nNtkuc6EPEql5lgdOuQNHuG.jpg",        rating: 4    },
-  { title: "Ozark",                             imdb: "tt5071412",  src: "",        rating: null },
-  { title: "Dexter",                             imdb: "tt0773262",  src: "",         rating: 4    , journalYear: 2022, journalOrder: 1 },
-  { title: "Severance",                          imdb: "tt11280740", src: "",      rating: 4    , journalYear: 2024, journalOrder: 16 },
-  { title: "Mindhunter",                         imdb: "tt5290382",  src: "",       rating: 4    },
-  { title: "Band of Brothers",                   imdb: "tt0185906",  src: "",        rating: 5    , journalYear: 2022, journalOrder: 3 },
-  { title: "The 100",                            imdb: "tt2661044",  src: "",       rating: 2.5  },
-  { title: "Arcane",                             imdb: "tt11126994", src: "",       rating: 4    , journalYear: 2024, journalOrder: 22 },
-  { title: "Sherlock",                           imdb: "tt1475582",  src: "",        rating: 4.5  },
-  { title: "Monster",                         imdb: "tt0434706",  src: "https://media.themoviedb.org/t/p/w440_and_h660_face/c7YgL8hQoQvh5gSlTy0otMWlO24.jpg",       rating: null    },
-  { title: "Lost",                         imdb: "tt0411008",  src: "",       rating: null    },
-  { title: "True Detective",                     imdb: "tt2356777",  src: "",       rating: 4.5  },
-  { title: "Black Mirror",                       imdb: "tt2085059",  src: "",       rating: 4    },
-  { title: "The Walking Dead",                   imdb: "tt1520211",  src: "",       rating: 4 },
-  { title: "Breaking Bad",                       imdb: "tt0903747",  src: "",         rating: 5    },
-  { title: "The Boys",                           imdb: "tt1190634",  src: "",       rating: 4    , journalYear: 2022, journalOrder: 7 },
-  { title: "The Last Kingdom",                   imdb: "tt4179452",  src: "",       rating: 3.5  , journalYear: 2022, journalOrder: 4 },
-  { title: "From",                               imdb: "tt9813792",  src: "",       rating: 3.5  , journalYear: 2023, journalOrder: 15 },
-  { title: "The Night Of",                       imdb: "tt2401256",  src: "",         rating: 3    },
-  { title: "The Terminal List",                  imdb: "tt11743610", src: "",      rating: 3    , journalYear: 2023, journalOrder: 12 },
-  { title: "And Then There Were None",           imdb: "tt3581932",  src: "",         rating: 3    },
-  { title: "The Walking Dead: The Ones Who Live",imdb: "tt9859436",  src: "",      rating: 1.5  },
-  { title: "The Walking Dead: Daryl Dixon",      imdb: "tt13062500", src: "",       rating: 3.5  },
-  { title: "The Walking Dead: Dead City",        imdb: "tt18546730", src: "",       rating: 2  },
-  { title: "Presumed Innocent",                  imdb: "tt17677860", src: "",       rating: 3    , journalYear: 2024, journalOrder: 17 },
-  { title: "The Day of the Jackal",              imdb: "tt24053860", src: "",       rating: 3    },
-  { title: "Dexter: Resurrection",               imdb: "tt33043892", src: "",       rating: 2.5  , journalYear: 2025, journalOrder: 25 },
-  { title: "The Last of Us",                     imdb: "tt3581920",  src: "",       rating: 3.5  , journalYear: 2025, journalOrder: 26 },
-  { title: "Dune: Prophecy",                     imdb: "tt10466872", src: "",       rating: 3.5  , journalYear: 2025, journalOrder: 27 },
-  { title: "Adolescence",                        imdb: "tt31806037", src: "",       rating: 4.5  , journalYear: 2025, journalOrder: 28 },
-  { title: "Through the Darkness",               imdb: "tt15007172", src: "",        rating: 3.5  , journalYear: 2026, journalOrder: 30 },
-  { title: "Silo",                               imdb: "tt14688458",  src: "",       rating: 4  , journalYear: 2026, journalOrder: 31, seasons: [3] },
-  { title: "Succession",                         imdb: "tt7660850",  src: "",       rating: null, list: "dnf" },
-  { title: "West World",                            imdb: "tt0475784",  src: "",       rating: null, list: "dnf" },
-  { title: "Teen Wolf",                          imdb: "tt1567432",  src: "",         rating: null, list: "dnf" },
-  { title: "Stranger Things",                    imdb: "tt4574334",  src: "",        rating: null, list: "dnf" },
-  { title: "The Witcher",                        imdb: "tt5180504",  src: "",       rating: null, list: "dnf" },
-  { title: "The Originals",                            imdb: "tt2632424",  src: "",       rating: null, list: "dnf" },
-  { title: "Vikings: Valhalla",                            imdb: "tt11311302",  src: "",       rating: null, list: "dnf" },
-  { title: "11.22.63",                            imdb: "tt2879552",  src: "",       rating: null, list: "dnf" },
-  { title: "Pluribus",                           imdb: "tt22202452", src: "",       rating: null, list: "watchlist" },
-  { title: "The Pitt",                           imdb: "tt31938062", src: "",       rating: null, list: "watchlist" },
-  { title: "The Comeback: 2004 Boston Red Sox",  imdb: "tt31186041", src: "",      rating: null, list: "watchlist" },
-  { title: "House of the Dragon",                imdb: "tt11198330", src: "",       rating: null, list: "watchlist" },
-];
-  })();
+  window.SHOWS = [
+    { id: "tt2149175" },
+    { id: "tt13696452", r: 3.5 },
+    { id: "tt5753856", r: 3.5 },
+    { id: "tt0455275", r: 4 },
+    { id: "tt0108700" },
+    { id: "tt0773262", r: 4, j: 2022 },
+    { id: "tt0185906", r: 5, j: 2022 },
+    { id: "tt4179452", r: 3.5, j: 2022 },
+    { id: "tt0944947" },
+    { id: "tt4158110", r: 4.5 },
+    { id: "tt7137906", r: 4 },
+    { id: "tt5071412" },
+    { id: "tt1190634", r: 4, j: 2022 },
+    { id: "tt10048342", r: 4, j: 2022 },
+    { id: "tt5290382", r: 4 },
+    { id: "tt11743610", r: 3, j: 2023 },
+    { id: "tt2661044", r: 2.5 },
+    { id: "tt14452776", r: 4, j: 2023 },
+    { id: "tt1475582", r: 4.5 },
+    { id: "tt0434706" },
+    { id: "tt0411008" },
+    { id: "tt2356777", r: 4.5 },
+    { id: "tt2085059", r: 4 },
+    { id: "tt1520211", r: 4 },
+    { id: "tt0903747", r: 5 },
+    { id: "tt9813792", r: 3.5, j: 2023 },
+    { id: "tt11280740", r: 4, j: 2024 },
+    { id: "tt17677860", r: 3, j: 2024 },
+    { id: "tt2401256", r: 3 },
+    { id: "tt7366338", r: 4.5, j: 2024 },
+    { id: "tt3581932", r: 3 },
+    { id: "tt9859436", r: 1.5 },
+    { id: "tt13062500", r: 3.5 },
+    { id: "tt18546730", r: 2 },
+    { id: "tt11126994", r: 4, j: 2024 },
+    { id: "tt24053860", r: 3 },
+    { id: "tt33043892", r: 2.5, j: 2025 },
+    { id: "tt3581920", r: 3.5, j: 2025 },
+    { id: "tt10466872", r: 3.5, j: 2025 },
+    { id: "tt31806037", r: 4.5, j: 2025 },
+    { id: "tt15007172", r: 3.5, j: 2026 },
+    { id: "tt7660850", list: "dnf" },
+    { id: "tt0475784", list: "dnf" },
+    { id: "tt1567432", list: "dnf" },
+    { id: "tt4574334", list: "dnf" },
+    { id: "tt5180504", list: "dnf" },
+    { id: "tt11311302", list: "dnf" },
+    { id: "tt2879552", list: "dnf" },
+    { id: "tt22202452", list: "watchlist" },
+    { id: "tt31938062", list: "watchlist" },
+    { id: "tt31186041", list: "watchlist" },
+    { id: "tt11198330", list: "watchlist" },
+    { id: "tt10574558", list: "watchlist" },
+    { id: "tt7440726", list: "watchlist" },
+    { id: "tt30423279", list: "watchlist" },
+    { id: "tt15435876", list: "watchlist" },
+    { id: "tt10234724", list: "watchlist" },
+    { id: "tt31314751", list: "watchlist" },
+    { id: "tt22248376", list: "watchlist" },
+    { id: "tt1355642", list: "watchlist" },
+    { id: "tt32612521", list: "watchlist" },
+    { id: "tt13309742", list: "watchlist" },
+    { id: "tt2788316", list: "watchlist" },
+    { id: "tt28013708", list: "watchlist" },
+    { id: "tt1877514", list: "watchlist" },
+    { id: "tt5626028", list: "watchlist" },
+  ];
 })();
 (function () {
   var list = window.SHOWS;
@@ -85,6 +95,7 @@ return [
   var API_BASE = 'https://api.themoviedb.org/3/';
   var IMG_BASE = 'https://image.tmdb.org/t/p/w342';
   var CACHE_PREFIX = 'tvbox:poster2:';
+  var TITLE_PREFIX = 'tvbox:title1:';
   var CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   var MAX_ACTIVE = 6;
   var MAX_RETRIES = 2;
@@ -94,10 +105,14 @@ return [
   var TMDB_RE = /^https:\/\/(image\.tmdb\.org|media\.themoviedb\.org)\//;
   var canFetch = typeof fetch === 'function';
   var posters = {};
+  var titles = {};
   var queued = {};
   var queue = [];
+  var lowQueue = [];
+  var pendingTitles = [];
   var active = 0;
   var sweepTimer = 0;
+  var resortTimer = 0;
   function placeholder(id) {
     return "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='150'%20height='225'%20id='ph-" + id + "'/%3E";
   }
@@ -118,16 +133,34 @@ return [
       localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ p: path, t: Date.now() }));
     } catch (e) {}
   }
+  function readTitle(id) {
+    try {
+      var v = localStorage.getItem(TITLE_PREFIX + id);
+      return typeof v === 'string' ? v : '';
+    } catch (e) {
+      return '';
+    }
+  }
+  function writeTitle(id, name) {
+    try {
+      localStorage.setItem(TITLE_PREFIX + id, name);
+    } catch (e) {}
+  }
   function pickMatch(data) {
     var groups = [['tv', (data && data.tv_results) || []], ['movie', (data && data.movie_results) || []]];
+    var first = null;
     for (var g = 0; g < groups.length; g++) {
       var items = groups[g][1];
       for (var i = 0; i < items.length; i++) {
-        var p = items[i] && items[i].poster_path;
-        if (typeof p === 'string' && PATH_RE.test(p) && items[i].id) return { type: groups[g][0], id: items[i].id, path: p };
+        var it = items[i];
+        if (!it || !it.id) continue;
+        var name = it.name || it.title || '';
+        var p = it.poster_path;
+        if (typeof p === 'string' && PATH_RE.test(p)) return { type: groups[g][0], id: it.id, path: p, name: name };
+        if (!first) first = { type: groups[g][0], id: it.id, path: '', name: name };
       }
     }
-    return null;
+    return first;
   }
   function bestPoster(data, fallback) {
     var posters = (data && data.posters) || [];
@@ -155,6 +188,38 @@ return [
     for (var i = 0; i < imgs.length; i++) {
       if (imgs[i].getAttribute('src') === from) imgs[i].setAttribute('src', to);
     }
+  }
+  function patchTitle(id, name) {
+    var cards = document.querySelectorAll('[data-imdb="' + id + '"]');
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].hasAttribute('data-title')) cards[i].setAttribute('data-title', name);
+    }
+    var links = document.querySelectorAll('a[href="/show/?imdb=' + id + '"]');
+    for (var j = 0; j < links.length; j++) {
+      var a = links[j];
+      if (a.classList.contains('entry-title')) {
+        a.textContent = name;
+      } else if (!a.classList.contains('stx-hl')) {
+        var imgs = a.getElementsByTagName('img');
+        for (var k = 0; k < imgs.length; k++) imgs[k].alt = name;
+      }
+    }
+  }
+  function resort() {
+    resortTimer = 0;
+    var el = document.querySelector('.sort-option.-active');
+    var key = el && el.getAttribute('data-key');
+    if (key && key.indexOf('name_') === 0) el.click();
+  }
+  function setTitle(id, name) {
+    if (!name || titles[id] === name) return;
+    titles[id] = name;
+    writeTitle(id, name);
+    list.forEach(function (s) {
+      if (s && s.imdb === id) s.title = name;
+    });
+    patchTitle(id, name);
+    if (!resortTimer) resortTimer = setTimeout(resort, 150);
   }
   function scheduleSweep() {
     if (!sweepTimer) sweepTimer = setTimeout(sweep, 30);
@@ -187,6 +252,11 @@ return [
           finish(id, '');
           return;
         }
+        setTitle(id, match.name);
+        if (!match.path || posters[id]) {
+          finish(id, '');
+          return;
+        }
         var early = IMG_BASE + match.path;
         posters[id] = early;
         apply(id);
@@ -213,15 +283,24 @@ return [
       });
   }
   function pump() {
-    while (active < MAX_ACTIVE && queue.length) {
+    while (active < MAX_ACTIVE && (queue.length || lowQueue.length)) {
       active++;
-      lookup(queue.shift(), 0);
+      lookup(queue.length ? queue.shift() : lowQueue.shift(), 0);
     }
   }
-  function request(id) {
-    if (!canFetch || queued[id]) return;
+  function request(id, low) {
+    if (!canFetch) return;
+    if (queued[id]) {
+      var k = low ? -1 : lowQueue.indexOf(id);
+      if (k !== -1) {
+        lowQueue.splice(k, 1);
+        queue.push(id);
+        pump();
+      }
+      return;
+    }
     queued[id] = true;
-    queue.push(id);
+    (low ? lowQueue : queue).push(id);
     pump();
   }
   function sweep() {
@@ -235,10 +314,23 @@ return [
       if (posters[m[1]]) imgs[i].setAttribute('src', posters[m[1]]);
       else request(m[1]);
     }
+    var ids = pendingTitles;
+    pendingTitles = [];
+    ids.forEach(function (id) { request(id, true); });
   }
+  var order = 0;
   list.forEach(function (s) {
-    if (!s || TMDB_RE.test(s.src || '')) return;
-    var id = ID_RE.test(s.imdb || '') ? s.imdb : '';
+    if (!s) return;
+    s.imdb = s.id || s.imdb || '';
+    s.rating = s.r != null ? s.r : (s.rating != null ? s.rating : null);
+    s.journalYear = s.j || s.journalYear;
+    if (s.journalYear && s.journalOrder == null) s.journalOrder = ++order;
+    var id = ID_RE.test(s.imdb) ? s.imdb : '';
+    var name = id ? readTitle(id) : '';
+    if (name) titles[id] = name;
+    s.title = name || s.title || '';
+    if (id && !s.title) pendingTitles.push(id);
+    if (TMDB_RE.test(s.src || '')) return;
     var cached = id ? readCache(id) : '';
     if (cached) posters[id] = IMG_BASE + cached;
     s.src = id ? (posters[id] || placeholder(id)) : placeholder('');

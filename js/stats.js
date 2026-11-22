@@ -464,7 +464,7 @@ var STATS_YEARS = (function () {
         summary.ratedShowCount += 1;
       }
       summary.details.push({
-        title: entry.title,
+        title: full.name || entry.title,
         imdb: entry.imdb,
         hours: hours,
         episodes: r.episodes,
