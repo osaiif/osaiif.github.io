@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp" media="(min-width: 641px)" fetchpriority="high">
-<link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20vert.webp" media="(max-width: 640px)" fetchpriority="high">
+<link rel="preconnect" href="https://image.tmdb.org">
+<script src="/js/about.js?v=1"></script>
 <style>
 .header-container .group.floating-search.-centered {
   left: 50%;
@@ -65,11 +65,27 @@
     </form>
     </div>
   </header>
-<picture>
-<source media="(min-width: 641px)" srcset="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp">
-<source media="(max-width: 640px)" srcset="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20vert.webp">
-<img src="https://cdn.jsdelivr.net/gh/osaiif/r@b0802a54a9070f7d6165ff2dabc1a1ee4d5a453e/sv%20back.webp" alt="TVbox" fetchpriority="high" decoding="async">
+<picture id="about-picture">
+<img alt="TVbox" fetchpriority="high" decoding="async">
 </picture>
+<script>
+(function () {
+var pic = document.getElementById('about-picture');
+var d = window.ABOUT_IMAGES || {};
+function ok(u) { return typeof u === 'string' && u.indexOf('https://image.tmdb.org/t/p/') === 0; }
+var wide = ok(d.wide) ? d.wide : '';
+var tall = ok(d.tall) ? d.tall : '';
+if (!wide && !tall) { pic.remove(); return; }
+var img = pic.querySelector('img');
+if (tall && wide) {
+var s = document.createElement('source');
+s.media = '(max-width: 640px)';
+s.srcset = tall;
+pic.insertBefore(s, img);
+}
+img.src = wide || tall;
+})();
+</script>
 <div class="about-content">
 <p class="about-paragraph about-intro"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0; position: relative; top: 2px; left: 0px;">
 <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
