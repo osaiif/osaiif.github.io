@@ -187,7 +187,7 @@ showCopied();
 });
 })();
 </script>
-  <script src="/js/news.js?v=2"></script>
+  <script src="/js/news.js?v=3"></script>
   <script>
     (function () {
       var TMDB_BASE = 'https://api.themoviedb.org/3';
@@ -696,7 +696,7 @@ showCopied();
               return;
             }
             items.forEach(function (item) {
-              track.appendChild(window.tvboxNews.buildCard(item, '/news/'));
+              track.appendChild(window.tvboxNews.buildCard(item, window.tvboxNews.articleUrl(item)));
             });
             section.hidden = false;
             window.tvboxNews.addNav(track);

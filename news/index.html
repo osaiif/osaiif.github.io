@@ -179,7 +179,7 @@
       });
     })();
   </script>
-  <script src="/js/news.js?v=2"></script>
+  <script src="/js/news.js?v=3"></script>
   <script>
     (function () {
       var news = window.tvboxNews;
@@ -196,7 +196,7 @@
             return;
           }
           items.forEach(function (item) {
-            list.appendChild(news.buildItem(item, item.webUrl, true));
+            list.appendChild(news.buildItem(item, news.articleUrl(item), false));
           });
         })
         .catch(function (err) {

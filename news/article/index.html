@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>News ǀ tvbox</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/searchbar.css">
+  <script src="/js/searchbar.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://content.guardianapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+  <style>
+    .site-header {
+      position: relative;
+      height: 52px;
+      background-color: #0b121e;
+    }
+    @media (min-width: 1024px) {
+      .site-header { height: 76px; }
+    }
+    .page-content {
+      padding-top: 0px;
+    }
+    .article-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      color: #dde2eb;
+    }
+    .article-section {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #8490a4;
+    }
+    .article-title {
+      margin: 0 0 12px;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #fff;
+    }
+    .article-standfirst {
+      margin: 0 0 14px;
+      font-size: 17px;
+      line-height: 1.5;
+      color: #b4bdcc;
+    }
+    .article-meta {
+      margin: 0 0 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1e2a3e;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #8490a4;
+    }
+    .article-main {
+      margin: 0 0 20px;
+    }
+    .article-main figure,
+    .article-body figure {
+      margin: 20px 0;
+    }
+    .article-main img,
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+    .article-main figcaption,
+    .article-body figcaption {
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #8490a4;
+    }
+    .article-body {
+      font-size: 17px;
+      line-height: 1.7;
+      color: #dde2eb;
+      overflow-wrap: anywhere;
+    }
+    .article-body p {
+      margin: 0 0 16px;
+    }
+    .article-body h2,
+    .article-body h3 {
+      margin: 28px 0 12px;
+      line-height: 1.3;
+      color: #fff;
+    }
+    .article-body a,
+    .article-notice a {
+      color: #7fb5ff;
+    }
+    .article-body blockquote {
+      margin: 20px 0;
+      padding-left: 16px;
+      border-left: 3px solid #1e2a3e;
+      color: #b4bdcc;
+    }
+    .article-body iframe,
+    .article-body video {
+      max-width: 100%;
+    }
+    .article-notice {
+      margin: 28px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid #1e2a3e;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #8490a4;
+    }
+    .article-original {
+      display: inline-block;
+      margin: 20px 0 0;
+      padding: 12px 20px;
+      border-radius: 6px;
+      background-color: #1e2a3e;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .article-original:hover {
+      background-color: #2a3a54;
+    }
+    .article-powered {
+      display: block;
+      margin: 20px 0 0;
+    }
+    .article-powered img {
+      display: block;
+      height: 36px;
+      width: auto;
+    }
+    @media (max-width: 600px) {
+      .article-title {
+        font-size: 23px;
+      }
+      .article-body {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-container">
+    <a href="/about/" class="floating-tvbox" aria-label="TV Box">
+      <svg class="tvbox-icon" aria-hidden="true" viewBox="0 0 100 100" width="13" height="13" style="flex-shrink: 0;">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="76" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="currentColor">t</text>
+      </svg>
+    </a>
+    <a href="/home/" class="floating-home -beside-tvbox" aria-label="Home">
+      <svg class="home-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.1l8.5 7.6c.32.29.5.7.5 1.13V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8.17c0-.43.18-.84.5-1.13L12 3.1z"></path>
+      </svg>
+    </a>
+    <input type="checkbox" id="auth-menu-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signin-toggle" class="auth-checkbox">
+    <input type="checkbox" id="signup-toggle" class="auth-checkbox">
+    <label for="auth-menu-toggle" class="floating-auth -right" aria-label="Account">
+      <svg class="auth-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+      </svg>
+    </label>
+    <label for="auth-menu-toggle" class="auth-backdrop" aria-hidden="true"></label>
+    <div class="auth-dropdown">
+      <label for="signin-toggle" class="auth-dropdown-btn">Sign In</label>
+      <label for="signup-toggle" class="auth-dropdown-btn">Sign Up</label>
+    </div>
+    <div class="auth-modal-wrap signin-modal-wrap">
+      <label for="signin-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <div class="auth-modal-wrap signup-modal-wrap">
+      <label for="signup-toggle" class="auth-modal-backdrop" aria-hidden="true"></label>
+      <div class="auth-modal-box"></div>
+    </div>
+    <form class="group floating-search" id="home-search-form" action="/search/" method="get">
+      <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M21.53 20.47l-3.66-3.66C19.19 15.37 20 13.28 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.28 0 4.37-.81 6.04-2.13l3.66 3.66c.14.14.33.21.53.21s.39-.07.53-.21c.29-.29.29-.77 0-1.06zM11 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"></path>
+      </svg>
+      <input id="home-search-input" name="q" placeholder="search" type="search" class="input" autocomplete="off">
+      <button type="submit" hidden>Search</button>
+    </form>
+    </div>
+  </header>
+  <div class="page-content">
+    <article class="article-wrap" id="article"></article>
+  </div>
+<footer class="site-footer">
+<div class="footer-container">
+<p style="display: inline-flex; align-items: center; gap: 0.35rem;">
+© 2023 <a href="/about/"><strong>tvbox</strong></a> | News from <a href="https://www.theguardian.com/" target="_blank" rel="noopener">The Guardian</a>
+</p>
+</div>
+</footer>
+  <div id="page-loading-overlay" class="page-loading-overlay">
+    <div class="spinner">
+      <div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var form = document.getElementById('home-search-form');
+      var input = document.getElementById('home-search-input');
+      var overlay = document.getElementById('page-loading-overlay');
+      function goToResults() {
+        var value = input.value.trim();
+        if (!value) return;
+        overlay.classList.add('-visible');
+        window.location.href = '/search/?q=' + encodeURIComponent(value);
+      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        goToResults();
+      });
+      input.addEventListener('search', function () {
+        goToResults();
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          goToResults();
+        }
+      });
+      window.addEventListener('pageshow', function () {
+        overlay.classList.remove('-visible');
+      });
+    })();
+  </script>
+  <script src="/js/news.js?v=3"></script>
+  <script>
+    (function () {
+      var news = window.tvboxNews;
+      var root = document.getElementById('article');
+      var id = new URLSearchParams(location.search).get('id') || '';
+      function showMessage(text) {
+        root.innerHTML = '';
+        root.appendChild(news.textEl('p', 'no-results', text));
+        var back = document.createElement('a');
+        back.className = 'article-original';
+        back.href = '/news/';
+        back.textContent = 'Back to news';
+        root.appendChild(back);
+      }
+      if (!news.validId(id)) {
+        showMessage('Article not found.');
+        return;
+      }
+      news.loadArticle(id)
+        .then(function (item) {
+          if (!item) {
+            showMessage('Article not found.');
+            return;
+          }
+          document.title = item.webTitle + ' ǀ tvbox';
+          root.innerHTML = '';
+          root.appendChild(news.buildArticle(item));
+        })
+        .catch(function (err) {
+          console.error('Article failed to load:', err);
+          showMessage('This article is unavailable right now.');
+        });
+    })();
+  </script>
+<script src="/js/auth.js?v=1"></script>
+</body>
+</html>

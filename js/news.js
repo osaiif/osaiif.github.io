@@ -135,5 +135,62 @@
     window.addEventListener('resize', updateNav);
     updateNav();
   }
-  window.tvboxNews = { load: load, buildItem: buildItem, buildCard: buildCard, addNav: addNav, textEl: textEl };
+  function validId(id) {
+    return /^(film|tv-and-radio)\/[a-z0-9\-\/]+$/i.test(id || '');
+  }
+  function articleUrl(item) {
+    return '/news/article/?id=' + encodeURIComponent(item.id);
+  }
+  function loadArticle(id) {
+    var url = 'https://content.guardianapis.com/' + id + '?show-fields=trailText,byline,body,main&api-key=' + GUARDIAN_KEY;
+    return fetch(url).then(function (res) {
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error('Guardian request failed (' + res.status + ')');
+      return res.json();
+    }).then(function (data) {
+      var item = data && data.response && data.response.content;
+      if (!item || !item.webTitle || !isHttps(item.webUrl) || !item.fields || !item.fields.body) return null;
+      if (item.sectionId !== 'film' && item.sectionId !== 'tv-and-radio') return null;
+      return item;
+    });
+  }
+  function htmlEl(tag, className, html) {
+    var el = document.createElement(tag);
+    el.className = className;
+    el.innerHTML = html;
+    return el;
+  }
+  function buildArticle(item) {
+    var f = item.fields;
+    var wrap = document.createDocumentFragment();
+    wrap.appendChild(textEl('p', 'article-section', item.sectionName || ''));
+    wrap.appendChild(textEl('h1', 'article-title', item.webTitle));
+    var standfirst = plainText(f.trailText);
+    if (standfirst) wrap.appendChild(textEl('p', 'article-standfirst', standfirst));
+    var meta = [f.byline ? 'By ' + plainText(f.byline) : '', formatDate(item.webPublicationDate)].filter(Boolean).join(' · ');
+    if (meta) wrap.appendChild(textEl('p', 'article-meta', meta));
+    if (f.main) wrap.appendChild(htmlEl('div', 'article-main', f.main));
+    wrap.appendChild(htmlEl('div', 'article-body', f.body));
+    wrap.appendChild(textEl('p', 'article-notice', '© Guardian News & Media Limited or its affiliated companies. All rights reserved. Provided by The Guardian through the Guardian Open Platform, for personal use only.'));
+    var original = document.createElement('a');
+    original.className = 'article-original';
+    original.href = item.webUrl;
+    original.target = '_blank';
+    original.rel = 'noopener noreferrer';
+    original.textContent = 'Read the original article on theguardian.com';
+    wrap.appendChild(original);
+    var powered = document.createElement('a');
+    powered.className = 'article-powered';
+    powered.href = 'https://www.theguardian.com/';
+    powered.target = '_blank';
+    powered.rel = 'noopener noreferrer';
+    var logo = imageEl('', '/assets/powered-by-guardian.png');
+    logo.removeAttribute('class');
+    logo.alt = 'Powered by The Guardian';
+    logo.loading = 'eager';
+    powered.appendChild(logo);
+    wrap.appendChild(powered);
+    return wrap;
+  }
+  window.tvboxNews = { validId: validId, articleUrl: articleUrl, loadArticle: loadArticle, buildArticle: buildArticle, load: load, buildItem: buildItem, buildCard: buildCard, addNav: addNav, textEl: textEl };
 })();
