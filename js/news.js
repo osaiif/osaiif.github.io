@@ -1,6 +1,39 @@
 (function () {
   var GUARDIAN_KEY = '8ebcb3a0-fa93-4174-b9b6-1966b300fe4f';
-  var GUARDIAN_URL = 'https://content.guardianapis.com/search?section=film%7Ctv-and-radio&tag=type%2Farticle&order-by=newest&page-size=24&show-fields=trailText,thumbnail&api-key=' + GUARDIAN_KEY;
+  var DAYS_BACK = 7;
+  var ON_TOPIC = /\b(films?|movies?|cinema|cinemas|box[- ]office|oscars?|academy awards?|bafta|baftas|emmys?|golden globes?|cannes|sundance|venice film|tiff|sag awards?|critics choice|film festival|awards? (season|race|nominations?|ceremony)|nominat\w*|actors?|actress(es)?|starring|casting|director|directors|screenwriter|screenplay|trailers?|sequels?|prequels?|reboots?|franchise|blockbusters?|studios?|hollywood|netflix|disney|hbo|prime video|apple tv|paramount|streaming|streamer|tv|television|series|sitcom|miniseries|showrunner|episodes?|seasons?|finale|documentar\w*|animation|animated|marvel|dc studios|star wars)\b/i;
+  var OFF_TOPIC_TAG = /(radio|podcast|music|games?|gaming|books?|fashion|food|sport|football|cricket|rugby|tennis|golf|politics|business|technology|science|world\/)/i;
+  var TOPIC_TAG = /(^film\/|tv-and-radio\/(?!radio|podcasts?|tv-and-radio\b)|\/film$|television|tv-and-radio\/(tv|television|series)|\/(tv|television)\b|awards|oscars|bafta|emmy|cinema|actors?|movies?)/i;
+  function pad(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+  function startDate() {
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - DAYS_BACK);
+    return d;
+  }
+  function guardianUrl() {
+    var d = startDate();
+    var from = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    return 'https://content.guardianapis.com/search?section=film%7Ctv-and-radio&tag=type%2Farticle&order-by=newest&page-size=100&from-date=' + from + '&show-tags=keyword&show-fields=trailText,thumbnail&api-key=' + GUARDIAN_KEY;
+  }
+  function isRelated(item) {
+    var tags = item.tags || [];
+    var tagIds = tags.map(function (t) { return t.id || ''; }).join(' ');
+    var tagText = tags.map(function (t) { return (t.id || '') + ' ' + (t.webTitle || ''); }).join(' ');
+    var text = (item.webTitle || '') + ' ' + plainText(item.fields && item.fields.trailText);
+    var topicTag = TOPIC_TAG.test(tagIds);
+    var topicText = ON_TOPIC.test(text);
+    if (item.sectionId === 'film') return true;
+    if (topicTag) return true;
+    if (OFF_TOPIC_TAG.test(tagText)) return false;
+    return topicText;
+  }
+  function isRecent(item) {
+    var d = new Date(item.webPublicationDate);
+    return !isNaN(d.getTime()) && d >= startDate();
+  }
   function isHttps(value) {
     return /^https:\/\//.test(value || '');
   }
@@ -31,14 +64,14 @@
     return [item.sectionName, formatDate(item.webPublicationDate)].filter(Boolean).join(' · ');
   }
   function load() {
-    return fetch(GUARDIAN_URL)
+    return fetch(guardianUrl())
       .then(function (res) {
         if (!res.ok) throw new Error('Guardian request failed (' + res.status + ')');
         return res.json();
       })
       .then(function (data) {
         return ((data.response && data.response.results) || []).filter(function (item) {
-          return item && item.webTitle && isHttps(item.webUrl) && item.fields && isHttps(item.fields.thumbnail);
+          return item && item.webTitle && isHttps(item.webUrl) && item.fields && isHttps(item.fields.thumbnail) && isRecent(item) && isRelated(item);
         });
       });
   }
