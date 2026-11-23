@@ -52,6 +52,12 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
 .posters button{padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;line-height:0;background:#0e1216}
 .posters button.on{border-color:var(--accent)}
 .posters img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.backs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:8px}
+.backs button{padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;line-height:0;background:#0e1216}
+.backs button.on{border-color:var(--accent)}
+.backs img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.tallprev{width:100%;max-width:200px;aspect-ratio:2/3;object-fit:cover;border-radius:8px;display:block}
+.bnprev{width:100%;max-width:640px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;display:block}
 .thumb{width:46px;height:69px;object-fit:cover;border-radius:4px;flex:none;background:#0e1216}
 </style>
 </head>
@@ -90,12 +96,14 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   var META = {
     shows: { file: 't.js', global: 'SHOWS', label: 'Shows' },
     favs: { file: 'favs.js', global: 'FAVORITES', label: 'Favorites' },
-    bio: { file: 'bio.js', global: 'PROFILE_BIO', label: 'Bio' }
+    bio: { file: 'bio.js', global: 'PROFILE_BIO', label: 'Bio' },
+    banner: { file: 'banner.js', global: 'PROFILE_BANNER', label: 'Banner' },
+    about: { file: 'about.js', global: 'ABOUT_IMAGES', label: 'About' }
   };
-  var KEYS = ['shows', 'favs', 'bio'];
+  var KEYS = ['shows', 'favs', 'bio', 'banner', 'about'];
   var LISTS = [['', 'Watched'], ['watchlist', 'Watchlist'], ['dnf', 'DNF']];
   var RATINGS = ['', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5'];
-  var state = { shows: [], favs: [], bio: '', loaded: {}, sha: {}, note: {}, dirty: {} };
+  var state = { shows: [], favs: [], bio: '', banner: '', about: { wide: '', tall: '' }, loaded: {}, sha: {}, note: {}, dirty: {} };
   var token = '';
   var tab = 'shows';
   var filter = 'all';
@@ -168,7 +176,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var t = tok || token;
     return fetch(API + file + '?ref=main', { headers: { Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json' }, cache: 'no-store' }).then(function (r) {
       return r.json().then(function (j) {
-        if (!r.ok) throw new Error(apiError(r, j));
+        if (!r.ok) { var err = new Error(apiError(r, j)); err.status = r.status; throw err; }
         return { text: new TextDecoder().decode(unb64(j.content)), sha: j.sha };
       });
     });
@@ -244,11 +252,15 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     } else if (key === 'favs') {
       if (!Array.isArray(data)) throw new Error('No favorites found in file');
       state.favs = data.map(function (f) {
-        return { title: String(f.title || ''), imdb: String(f.imdb || ''), img: String(f.img || '') };
+        return { title: String(f.title || ''), imdb: String(f.imdb || ''), img: favSrc(String(f.img || '')) };
       });
-    } else {
+    } else if (key === 'bio') {
       if (typeof data !== 'string') throw new Error('No bio found in file');
       state.bio = data;
+    } else if (key === 'banner') {
+      state.banner = typeof data === 'string' ? data : '';
+    } else {
+      state.about = { wide: data && typeof data.wide === 'string' ? data.wide : '', tall: data && typeof data.tall === 'string' ? data.tall : '' };
     }
   }
   function load(key) {
@@ -259,6 +271,15 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       state.dirty[key] = false;
       state.note[key] = 'Loaded live from GitHub.';
     }).catch(function (e) {
+      if ((key === 'banner' || key === 'about') && e.status === 404) {
+        state.banner = '';
+        state.about = { wide: '', tall: '' };
+        state.sha[key] = '';
+        state.loaded[key] = true;
+        state.dirty[key] = false;
+        state.note[key] = 'Nothing set yet.';
+        return;
+      }
       state.loaded[key] = false;
       state.note[key] = 'Could not load ' + META[key].file + ': ' + e.message;
     });
@@ -317,19 +338,138 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   }
   function favsSkeleton() {
     return '<div class="row"><h2 style="flex:1 1 auto;margin:0">Favorites</h2><button data-act="reload">Reload</button></div>' +
-      '<div class="warn" style="margin-bottom:10px">Leave the image empty to use the poster of the IMDb id, or press Choose poster to pick one. A typed file name must already exist in the r repo. <a href="https://github.com/' + OWNER_REPO + '/upload/main" target="_blank" rel="noopener">Upload images</a></div>' +
+      '<div class="warn" style="margin-bottom:10px">Leave the image empty to use the poster of the IMDb id, or press Choose poster to pick one. Only TMDB posters are used.</div>' +
       '<div class="panel" style="margin-bottom:12px"><h2>Add a favorite</h2><div class="row"><input id="fTitle" placeholder="Title"><input id="fImdb" placeholder="tt1234567"><input id="fImg" placeholder="Image (optional)"><button data-act="pick" data-ctx="new">Choose poster</button><button class="primary" data-act="addFav">Add</button></div><div data-pk="new"></div></div>' +
       '<div id="cards"></div>';
   }
   function drawFavs() {
     $('cards').innerHTML = state.favs.map(function (f, i) {
-      return '<div class="card" data-i="' + i + '"><div class="row">' + (f.img ? '<img class="thumb" src="' + esc(favSrc(f.img)) + '" alt="">' : '<div class="thumb"></div>') + '<input data-f="title" value="' + esc(f.title) + '" aria-label="Title"><input data-f="imdb" value="' + esc(f.imdb) + '" aria-label="IMDb id"><input data-f="img" value="' + esc(f.img) + '" placeholder="Empty = poster from IMDb id" aria-label="Image"></div>' +
+      return '<div class="card" data-i="' + i + '"><div class="row">' + (favSrc(f.img) ? '<img class="thumb" src="' + esc(favSrc(f.img)) + '" alt="">' : '<div class="thumb"></div>') + '<input data-f="title" value="' + esc(f.title) + '" aria-label="Title"><input data-f="imdb" value="' + esc(f.imdb) + '" aria-label="IMDb id"><input data-f="img" value="' + esc(f.img) + '" placeholder="Empty = poster from IMDb id" aria-label="Image"></div>' +
         '<div class="row"><button data-act="pick" data-ctx="' + i + '">Choose poster</button><button data-act="up"' + (i === 0 ? ' disabled' : '') + '>Move up</button><button data-act="down"' + (i === state.favs.length - 1 ? ' disabled' : '') + '>Move down</button><button data-act="del">Delete</button></div><div data-pk="' + i + '"></div></div>';
     }).join('') || '<div class="muted">No favorites.</div>';
   }
   function bioSkeleton() {
     return '<div class="row"><h2 style="flex:1 1 auto;margin:0">Bio</h2><button data-act="reload">Reload</button></div>' +
       '<label>Bio (HTML allowed)<textarea id="bioBox" rows="6" spellcheck="false">' + esc(state.bio) + '</textarea></label>';
+  }
+  function bannerSkeleton() {
+    return '<div class="row"><h2 style="flex:1 1 auto;margin:0">Banner</h2><button data-act="reload">Reload</button></div>' +
+      '<div class="panel" style="margin-bottom:12px"><h2>Current banner</h2><div id="bnCur"></div></div>' +
+      '<div class="panel"><h2>Search a show or movie</h2><div class="row"><input id="bq" placeholder="Search a show or movie..." autocomplete="off"></div><div id="bqRes"></div><div id="bqPics"></div></div>';
+  }
+  function drawBannerCur() {
+    var el = $('bnCur');
+    if (!el) return;
+    el.innerHTML = state.banner ? '<img class="bnprev" src="' + esc(state.banner) + '" alt="">' : '<div class="muted">No banner set.</div>';
+  }
+  var bqTimer = 0;
+  var bqSeq = 0;
+  var bqItems = {};
+  function bannerSearch(q) {
+    var box = $('bqRes');
+    if (!box) return;
+    q = q.trim();
+    if (q.length < 2) { box.innerHTML = ''; return; }
+    var seq = ++bqSeq;
+    box.innerHTML = '<div class="muted">Searching...</div>';
+    tmdbJson('https://api.themoviedb.org/3/search/multi?include_adult=false&query=' + encodeURIComponent(q) + '&api_key=' + TMDB_KEY)
+      .then(function (d) {
+        if (seq !== bqSeq || !$('bqRes')) return;
+        var res = (d.results || []).filter(function (x) { return x.media_type === 'tv' || x.media_type === 'movie'; }).slice(0, 8);
+        bqItems = {};
+        $('bqRes').innerHTML = res.map(function (x) {
+          var key = x.media_type + x.id;
+          var title = x.name || x.title || '';
+          var year = (x.first_air_date || x.release_date || '').slice(0, 4);
+          bqItems[key] = { type: x.media_type, id: x.id, title: title };
+          var img = x.poster_path ? '<img class="thumb" src="https://image.tmdb.org/t/p/w92' + x.poster_path + '" alt="">' : '<div class="thumb"></div>';
+          return '<div class="card" data-bk="' + key + '" style="display:flex;gap:10px;align-items:center">' + img +
+            '<div style="flex:1 1 auto;min-width:0"><div style="font-weight:600">' + esc(title) + '</div><div class="muted">' + (x.media_type === 'tv' ? 'TV' : 'Movie') + (year ? ' · ' + year : '') + '</div></div>' +
+            '<button data-act="bpick">Backdrops</button></div>';
+        }).join('') || '<div class="muted">No results.</div>';
+      })
+      .catch(function () { if (seq === bqSeq && $('bqRes')) $('bqRes').innerHTML = '<div class="warn">Search failed. Try again.</div>'; });
+  }
+  function bannerPick(btn) {
+    var row = btn.closest('[data-bk]');
+    var it = row && bqItems[row.dataset.bk];
+    var pics = $('bqPics');
+    if (!it || !pics) return;
+    var seq = ++bqSeq;
+    pics.innerHTML = '<div class="muted" style="margin-top:8px">Loading backdrops...</div>';
+    tmdbJson('https://api.themoviedb.org/3/' + it.type + '/' + it.id + '/images?api_key=' + TMDB_KEY + '&include_image_language=en,null')
+      .then(function (d) {
+        if (seq !== bqSeq || !$('bqPics')) return;
+        var bs = d.backdrops || [];
+        $('bqPics').innerHTML = '<h2 style="margin-top:12px">' + esc(it.title) + '</h2>' + (bs.length ? '<div class="backs">' + bs.map(function (p) {
+          var full = posterUrl(p.file_path, 'w1280');
+          return '<button data-act="bset" data-p="' + esc(p.file_path) + '" class="' + (full === state.banner ? 'on' : '') + '" title="' + p.width + 'x' + p.height + '"><img loading="lazy" src="' + posterUrl(p.file_path, 'w300') + '" alt=""></button>';
+        }).join('') + '</div>' : '<div class="muted">No backdrops for this title.</div>');
+      })
+      .catch(function (e) { if (seq === bqSeq && $('bqPics')) $('bqPics').innerHTML = '<div class="warn">Could not load backdrops: ' + esc(e.message) + '</div>'; });
+  }
+  function aboutSkeleton() {
+    return '<div class="row"><h2 style="flex:1 1 auto;margin:0">About page images</h2><button data-act="reload">Reload</button></div>' +
+      '<div class="panel" style="margin-bottom:12px"><h2>Wide image (computers and tablets)</h2><div id="abWide"></div></div>' +
+      '<div class="panel" style="margin-bottom:12px"><h2>Tall image (phones)</h2><div id="abTall"></div></div>' +
+      '<div class="panel"><h2>Search a show or movie</h2><div class="row"><input id="aq" placeholder="Search a show or movie..." autocomplete="off"></div><div id="aqRes"></div><div id="aqPics"></div></div>';
+  }
+  function drawAboutCur() {
+    var w = $('abWide');
+    var t = $('abTall');
+    if (!w || !t) return;
+    w.innerHTML = state.about.wide ? '<img class="bnprev" src="' + esc(state.about.wide) + '" alt=""><div class="row" style="margin-top:8px"><button data-act="aclear" data-slot="wide">Clear</button></div>' : '<div class="muted">Not set.</div>';
+    t.innerHTML = state.about.tall ? '<img class="tallprev" src="' + esc(state.about.tall) + '" alt=""><div class="row" style="margin-top:8px"><button data-act="aclear" data-slot="tall">Clear</button></div>' : '<div class="muted">Not set.</div>';
+  }
+  var aqTimer = 0;
+  var aqSeq = 0;
+  var aqItems = {};
+  function aboutSearch(q) {
+    var box = $('aqRes');
+    if (!box) return;
+    q = q.trim();
+    if (q.length < 2) { box.innerHTML = ''; return; }
+    var seq = ++aqSeq;
+    box.innerHTML = '<div class="muted">Searching...</div>';
+    tmdbJson('https://api.themoviedb.org/3/search/multi?include_adult=false&query=' + encodeURIComponent(q) + '&api_key=' + TMDB_KEY)
+      .then(function (d) {
+        if (seq !== aqSeq || !$('aqRes')) return;
+        var res = (d.results || []).filter(function (x) { return x.media_type === 'tv' || x.media_type === 'movie'; }).slice(0, 8);
+        aqItems = {};
+        $('aqRes').innerHTML = res.map(function (x) {
+          var key = x.media_type + x.id;
+          var title = x.name || x.title || '';
+          var year = (x.first_air_date || x.release_date || '').slice(0, 4);
+          aqItems[key] = { type: x.media_type, id: x.id, title: title };
+          var img = x.poster_path ? '<img class="thumb" src="https://image.tmdb.org/t/p/w92' + x.poster_path + '" alt="">' : '<div class="thumb"></div>';
+          return '<div class="card" data-ak="' + key + '" style="display:flex;gap:10px;align-items:center">' + img +
+            '<div style="flex:1 1 auto;min-width:0"><div style="font-weight:600">' + esc(title) + '</div><div class="muted">' + (x.media_type === 'tv' ? 'TV' : 'Movie') + (year ? ' · ' + year : '') + '</div></div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button data-act="apick" data-kind="backdrops">Wide images</button><button data-act="apick" data-kind="posters">Tall images</button></div></div>';
+        }).join('') || '<div class="muted">No results.</div>';
+      })
+      .catch(function () { if (seq === aqSeq && $('aqRes')) $('aqRes').innerHTML = '<div class="warn">Search failed. Try again.</div>'; });
+  }
+  function aboutPick(btn) {
+    var row = btn.closest('[data-ak]');
+    var it = row && aqItems[row.dataset.ak];
+    var pics = $('aqPics');
+    if (!it || !pics) return;
+    var kind = btn.dataset.kind;
+    var slot = kind === 'posters' ? 'tall' : 'wide';
+    var seq = ++aqSeq;
+    pics.innerHTML = '<div class="muted" style="margin-top:8px">Loading images...</div>';
+    tmdbJson('https://api.themoviedb.org/3/' + it.type + '/' + it.id + '/images?api_key=' + TMDB_KEY + '&include_image_language=en,null')
+      .then(function (d) {
+        if (seq !== aqSeq || !$('aqPics')) return;
+        var list = d[kind] || [];
+        var big = slot === 'wide' ? 'w1280' : 'w780';
+        var small = slot === 'wide' ? 'w300' : 'w185';
+        var grid = slot === 'wide' ? 'backs' : 'posters';
+        $('aqPics').innerHTML = '<h2 style="margin-top:12px">' + esc(it.title) + ' · ' + (slot === 'wide' ? 'wide' : 'tall') + '</h2>' + (list.length ? '<div class="' + grid + '">' + list.map(function (p) {
+          return '<button data-act="aset" data-slot="' + slot + '" data-p="' + esc(p.file_path) + '" class="' + (posterUrl(p.file_path, big) === state.about[slot] ? 'on' : '') + '" title="' + p.width + 'x' + p.height + '"><img loading="lazy" src="' + posterUrl(p.file_path, small) + '" alt=""></button>';
+        }).join('') + '</div>' : '<div class="muted">No images for this title.</div>');
+      })
+      .catch(function (e) { if (seq === aqSeq && $('aqPics')) $('aqPics').innerHTML = '<div class="warn">Could not load images: ' + esc(e.message) + '</div>'; });
   }
   function drawEditor() {
     var ed = $('editor');
@@ -341,7 +481,9 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     }
     if (tab === 'shows') { ed.innerHTML = showsSkeleton(); drawChips(); drawCards(); }
     else if (tab === 'favs') { ed.innerHTML = favsSkeleton(); drawFavs(); fillFavImgs(); }
-    else { ed.innerHTML = bioSkeleton(); }
+    else if (tab === 'bio') { ed.innerHTML = bioSkeleton(); }
+    else if (tab === 'banner') { ed.innerHTML = bannerSkeleton(); drawBannerCur(); }
+    else { ed.innerHTML = aboutSkeleton(); drawAboutCur(); }
   }
   function validImdb(v) { return /^tt\d+$/.test(v); }
   function buildShows() {
@@ -382,8 +524,8 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       var n = title || ('Row ' + (i + 1));
       if (!title) errs.push('Row ' + (i + 1) + ': title is empty.');
       if (!validImdb(imdb)) errs.push(n + ': IMDb id must look like tt1234567.');
-      if (!img) errs.push(n + ': image is empty. Choose a poster or type a file name.');
-      else if (!/^[A-Za-z0-9_.-]+\.(webp|png|jpg|jpeg)$/.test(img) && !/^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(img)) errs.push(n + ': image must be a file name like show.webp or a TMDB poster link.');
+      if (!img) errs.push(n + ': image is empty. Choose a poster.');
+      else if (!/^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(img)) errs.push(n + ': image must be a TMDB poster link.');
       return '  { title: ' + JSON.stringify(title) + ', imdb: ' + JSON.stringify(imdb) + ', img: ' + JSON.stringify(img) + ' }';
     });
     return { errs: errs, text: 'window.FAVORITES = [\n' + lines.join(',\n') + '\n];\n' };
@@ -394,8 +536,22 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     var errs = lines.length ? [] : ['Bio is empty.'];
     return { errs: errs, text: 'window.PROFILE_BIO = `' + body + '`;\n' };
   }
+  function buildBanner() {
+    var u = state.banner.trim();
+    var ok = /^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(u);
+    return { errs: ok ? [] : ['Pick a backdrop from TMDB first.'], text: 'window.PROFILE_BANNER = ' + JSON.stringify(u) + ';\n' };
+  }
+  function buildAbout() {
+    var re = /^https:\/\/image\.tmdb\.org\/t\/p\/(w\d+|original)\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/;
+    var w = state.about.wide.trim();
+    var t = state.about.tall.trim();
+    var errs = [];
+    if (w && !re.test(w)) errs.push('Wide image must be a TMDB image.');
+    if (t && !re.test(t)) errs.push('Tall image must be a TMDB image.');
+    return { errs: errs, text: 'window.ABOUT_IMAGES = { wide: ' + JSON.stringify(w) + ', tall: ' + JSON.stringify(t) + ' };\n' };
+  }
   function build(key) {
-    return key === 'shows' ? buildShows() : key === 'favs' ? buildFavs() : buildBio();
+    return key === 'shows' ? buildShows() : key === 'favs' ? buildFavs() : key === 'bio' ? buildBio() : key === 'banner' ? buildBanner() : buildAbout();
   }
   function refresh() {
     var res = { errs: [], text: '' };
@@ -511,7 +667,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   }
   function posterUrl(path, size) { return 'https://image.tmdb.org/t/p/' + size + path; }
   function favSrc(img) {
-    return /^https:\/\//.test(img) ? img : 'https://raw.githubusercontent.com/' + OWNER_REPO + '/main/' + encodeURIComponent(img);
+    return /^https:\/\/image\.tmdb\.org\//.test(img) ? img : '';
   }
   function needsImg(f) { return !f.img.trim() && validImdb(f.imdb.trim()); }
   function fillFavImgs() {
@@ -584,7 +740,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     addBusy = true;
     toast('Fetching poster...');
     findTmdb(imdb).then(function (m) {
-      if (!m.poster) throw new Error('No poster on TMDB. Choose one or type a file name.');
+      if (!m.poster) throw new Error('No poster on TMDB.');
       done(posterUrl(m.poster, 'w342'));
     }).catch(function (e) { toast(e.message); }).then(function () { addBusy = false; });
   }
@@ -599,7 +755,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     fetch(API + file, {
       method: 'PUT',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ message: 'Update ' + file + ' via editor', content: b64(new TextEncoder().encode(res.text)), sha: state.sha[key], branch: 'main' })
+      body: JSON.stringify({ message: 'Update ' + file + ' via editor', content: b64(new TextEncoder().encode(res.text)), sha: state.sha[key] || undefined, branch: 'main' })
     }).then(function (r) {
       return r.json().then(function (j) {
         if (!r.ok) throw new Error(apiError(r, j));
@@ -695,6 +851,29 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     else if (act === 'addShow') addShow();
     else if (act === 'qadd') qsAdd(b);
     else if (act === 'addFav') addFav();
+    else if (act === 'apick') aboutPick(b);
+    else if (act === 'aset') {
+      state.about[b.dataset.slot] = posterUrl(b.dataset.p, b.dataset.slot === 'wide' ? 'w1280' : 'w780');
+      drawAboutCur();
+      var aon = document.querySelectorAll('#aqPics button.on');
+      for (var z = 0; z < aon.length; z++) aon[z].classList.remove('on');
+      b.classList.add('on');
+      markDirty();
+    }
+    else if (act === 'aclear') {
+      state.about[b.dataset.slot] = '';
+      drawAboutCur();
+      markDirty();
+    }
+    else if (act === 'bpick') bannerPick(b);
+    else if (act === 'bset') {
+      state.banner = posterUrl(b.dataset.p, 'w1280');
+      drawBannerCur();
+      var on = document.querySelectorAll('.backs button.on');
+      for (var q = 0; q < on.length; q++) on[q].classList.remove('on');
+      b.classList.add('on');
+      markDirty();
+    }
     else if (act === 'pick') openPick(b.dataset.ctx);
     else if (act === 'pickclose') closePick(b.closest('[data-pk]').dataset.pk);
     else if (act === 'pickposter') {
@@ -725,6 +904,8 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     if (t.dataset && t.dataset.pl !== undefined) { if (e.type === 'change') openPick(t.dataset.pl, t.value); return; }
     if (t.id === 'search') { query = t.value; drawCards(); return; }
     if (t.id === 'qs') { clearTimeout(qsTimer); var v = t.value; qsTimer = setTimeout(function () { qsSearch(v); }, 300); return; }
+    if (t.id === 'aq') { clearTimeout(aqTimer); var av = t.value; aqTimer = setTimeout(function () { aboutSearch(av); }, 300); return; }
+    if (t.id === 'bq') { clearTimeout(bqTimer); var bv = t.value; bqTimer = setTimeout(function () { bannerSearch(bv); }, 300); return; }
     if (t.id === 'bioBox') { state.bio = t.value; markDirty(); return; }
     var f = t.dataset && t.dataset.f;
     var card = t.closest && t.closest('.card');

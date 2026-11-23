@@ -20,9 +20,9 @@
   <link rel="preconnect" href="https://media.themoviedb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&family=Figtree:wght@300..700&family=Stack+Sans+Headline:wght@300..700&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="https://raw.githubusercontent.com/osaiif/r/main/r.webp">
-  <link rel="preload" as="image" href="https://raw.githubusercontent.com/osaiif/r/main/b.webp">
   <link rel="preload" as="script" href="/js/shows.js?v=1">
   <link rel="preload" as="script" href="/js/bio.js?v=3">
+  <link rel="preload" as="script" href="/js/banner.js?v=1">
   <style>
     .ratings-chart { --chart-h: 48px; }
     @media (max-width: 420px) {
@@ -373,9 +373,6 @@
 <body class="profile-page">
   <div class="backdrop-container">
     <div id="backdrop" class="backdrop-wrapper backdrop-fade-in"
-         data-backdrop="https://raw.githubusercontent.com/osaiif/r/main/b.webp"
-         data-backdrop2x="https://raw.githubusercontent.com/osaiif/r/main/b.webp"
-         data-backdrop-mobile="https://raw.githubusercontent.com/osaiif/r/main/b.webp"
          data-offset="21">
       <div class="backdropimage js-backdrop-image"></div>
       <div class="backdropmask js-backdrop-fade"></div>
@@ -456,7 +453,7 @@
   <section class="profile-favorites">
     <h2 class="section-heading">Favorite Shows</h2>
     <div class="poster-grid favorites-grid" id="favorites-grid"></div>
-    <script src="/js/favs.js?v=2"></script>
+    <script src="/js/favs.js?v=3"></script>
     <a href="/u/saif/stats/" class="stats-box">
       <span class="year numbers" id="stats-box-year">–</span>
       <span class="label">STATS</span>
@@ -592,6 +589,7 @@ showCopied();
   </div>
   <script src="/js/shows.js?v=1"></script>
   <script src="/js/bio.js?v=3"></script>
+  <script src="/js/banner.js?v=1"></script>
   <script>
     (function () {
       var y = new Date().getFullYear();
@@ -809,15 +807,8 @@ showCopied();
       var wrapper = document.getElementById('backdrop');
       if (!wrapper) return;
       var image = wrapper.querySelector('.js-backdrop-image');
-      var isRetina = window.devicePixelRatio > 1;
-      var isMobile = window.matchMedia('(max-width: 600px)').matches;
-      var url = wrapper.dataset.backdrop;
-      if (isMobile && wrapper.dataset.backdropMobile) {
-        url = wrapper.dataset.backdropMobile;
-      } else if (isRetina && wrapper.dataset.backdrop2x) {
-        url = wrapper.dataset.backdrop2x;
-      }
-      if (!url || url.indexOf('PASTE_') === 0) return;
+      var url = window.PROFILE_BANNER;
+      if (typeof url !== 'string' || url.indexOf('https://image.tmdb.org/t/p/') !== 0) return;
       var offset = wrapper.dataset.offset;
       if (offset) {
         image.style.backgroundPosition = 'center ' + offset + '%';
