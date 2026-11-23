@@ -124,9 +124,11 @@
     .work-sentinel { height: 1px; }
     .works-wrap { position: relative; }
     .work-search { position: absolute; top: -3px; right: 0; z-index: 2; display: flex; align-items: center; height: 21px; }
-    .work-search[hidden], .work-search-input[hidden] { display: none; }
-    .work-search-input { width: min(220px, calc(100vw - 160px)); height: 21px; margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid #4a6a85; border-radius: 0; background: transparent; color: #ffffff; font-family: var(--font-text); font-size: 16px; outline: none; -webkit-appearance: none; appearance: none; }
-    .work-search-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .work-search[hidden] { display: none; }
+    .work-search-input { width: 0; height: 21px; margin: 0; padding: 0; border: 0; border-bottom: 1px solid #4a6a85; border-radius: 0; background: transparent; color: transparent; caret-color: transparent; visibility: hidden; font-family: var(--font-text); font-size: 16px; outline: none; -webkit-appearance: none; appearance: none; transition: width 0.25s ease, padding 0.25s ease, visibility 0s linear 0.25s; }
+    .work-search.-open .work-search-input { width: min(220px, calc(100vw - 160px)); padding: 0 4px; color: #ffffff; caret-color: auto; visibility: visible; transition-delay: 0s; }
+    .work-search-input::placeholder { color: transparent; }
+    .work-search.-open .work-search-input::placeholder { color: rgba(255, 255, 255, 0.4); }
     .work-search-input::-webkit-search-decoration, .work-search-input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
     .work-search-btn { display: flex; align-items: center; justify-content: center; width: 26px; height: 21px; padding: 0; border: 0; background: none; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.15s ease; }
     .work-search-btn:hover, .work-search-btn:focus-visible { color: #ffffff; outline: none; }
@@ -212,7 +214,7 @@
     </section>
     <div class="works-wrap">
       <div class="work-search" id="work-search" hidden>
-        <input type="search" class="work-search-input" id="work-search-input" placeholder="credits" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search credits" hidden>
+        <input type="search" class="work-search-input" id="work-search-input" placeholder="credits" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search credits">
         <button type="button" class="work-search-btn" id="work-search-btn" aria-label="Search credits" aria-expanded="false">
           <svg class="work-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
           <svg class="work-search-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
@@ -723,7 +725,7 @@
         showMatches(q, raw);
       }
       function openSearch() {
-        searchInput.hidden = false;
+        searchEl.classList.add('-open');
         searchBtn.classList.add('-open');
         searchBtn.setAttribute('aria-expanded', 'true');
         searchBtn.setAttribute('aria-label', 'Close search');
@@ -732,7 +734,7 @@
       function closeSearch() {
         clearTimeout(searchTimer);
         searchInput.value = '';
-        searchInput.hidden = true;
+        searchEl.classList.remove('-open');
         searchBtn.classList.remove('-open');
         searchBtn.setAttribute('aria-expanded', 'false');
         searchBtn.setAttribute('aria-label', 'Search credits');
@@ -740,7 +742,7 @@
         searchBtn.focus();
       }
       searchBtn.addEventListener('click', function () {
-        if (searchInput.hidden) openSearch();
+        if (!searchEl.classList.contains('-open')) openSearch();
         else closeSearch();
       });
       searchInput.addEventListener('input', function () {
@@ -816,7 +818,7 @@
         });
         searching = false;
         searchInput.value = '';
-        searchInput.hidden = true;
+        searchEl.classList.remove('-open');
         searchBtn.classList.remove('-open');
         searchBtn.setAttribute('aria-expanded', 'false');
         searchEl.hidden = works.acting.length + works.crew.length < SEARCH_MIN;
