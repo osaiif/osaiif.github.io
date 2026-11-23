@@ -385,7 +385,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
           var img = x.poster_path ? '<img class="thumb" src="https://image.tmdb.org/t/p/w92' + x.poster_path + '" alt="">' : '<div class="thumb"></div>';
           return '<div class="card" data-bk="' + key + '" style="display:flex;gap:10px;align-items:center">' + img +
             '<div style="flex:1 1 auto;min-width:0"><div style="font-weight:600">' + esc(title) + '</div><div class="muted">' + (x.media_type === 'tv' ? 'TV' : 'Movie') + (year ? ' · ' + year : '') + '</div></div>' +
-            '<button data-act="bpick">Backdrops</button></div>';
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button data-act="bpick">Backdrops</button>' + (x.media_type === 'tv' ? '<button data-act="bstills">Stills</button>' : '') + '</div></div>';
         }).join('') || '<div class="muted">No results.</div>';
       })
       .catch(function () { if (seq === bqSeq && $('bqRes')) $('bqRes').innerHTML = '<div class="warn">Search failed. Try again.</div>'; });
@@ -407,6 +407,42 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
         }).join('') + '</div>' : '<div class="muted">No backdrops for this title.</div>');
       })
       .catch(function (e) { if (seq === bqSeq && $('bqPics')) $('bqPics').innerHTML = '<div class="warn">Could not load backdrops: ' + esc(e.message) + '</div>'; });
+  }
+  var stillIt = {};
+  function stillsStart(btn, tgt) {
+    var row = btn.closest(tgt === 'b' ? '[data-bk]' : '[data-ak]');
+    var it = row && (tgt === 'b' ? bqItems : aqItems)[row.dataset[tgt === 'b' ? 'bk' : 'ak']];
+    if (!it) return;
+    stillIt[tgt] = it;
+    stillsLoad(tgt, undefined);
+  }
+  function stillsLoad(tgt, season) {
+    var it = stillIt[tgt];
+    var pics = $(tgt === 'b' ? 'bqPics' : 'aqPics');
+    if (!it || !pics) return;
+    var seq = tgt === 'b' ? ++bqSeq : ++aqSeq;
+    var cur = tgt === 'b' ? state.banner : state.about.wide;
+    pics.innerHTML = '<div class="muted" style="margin-top:8px">Loading stills...</div>';
+    tmdbJson('https://api.themoviedb.org/3/tv/' + it.id + '?api_key=' + TMDB_KEY)
+      .then(function (show) {
+        var seasons = (show.seasons || []).filter(function (s) { return s.episode_count > 0; });
+        if (!seasons.length) throw new Error('No seasons found');
+        var n = season === undefined ? seasons[0].season_number : season;
+        return tmdbJson('https://api.themoviedb.org/3/tv/' + it.id + '/season/' + n + '?api_key=' + TMDB_KEY).then(function (sd) {
+          return { seasons: seasons, n: n, eps: sd.episodes || [] };
+        });
+      })
+      .then(function (r) {
+        if (seq !== (tgt === 'b' ? bqSeq : aqSeq) || !$(tgt === 'b' ? 'bqPics' : 'aqPics')) return;
+        var opts = r.seasons.map(function (s) { return '<option value="' + s.season_number + '"' + (s.season_number === r.n ? ' selected' : '') + '>' + esc(s.name || ('Season ' + s.season_number)) + '</option>'; }).join('');
+        var act = tgt === 'b' ? 'bset' : 'aset';
+        var eps = r.eps.filter(function (e) { return e.still_path; });
+        var grid = eps.length ? '<div class="backs">' + eps.map(function (e) {
+          return '<button data-act="' + act + '" data-slot="wide" data-s="original" data-p="' + esc(e.still_path) + '" class="' + (posterUrl(e.still_path, 'original') === cur ? 'on' : '') + '" title="S' + r.n + 'E' + e.episode_number + ' ' + esc(e.name || '') + '"><img loading="lazy" src="' + posterUrl(e.still_path, 'w300') + '" alt=""></button>';
+        }).join('') + '</div>' : '<div class="muted">No stills for this season.</div>';
+        $(tgt === 'b' ? 'bqPics' : 'aqPics').innerHTML = '<h2 style="margin-top:12px">' + esc(it.title) + ' · stills</h2><div class="row" style="margin-top:8px"><label style="flex:0 1 220px">Season<select data-ss="' + tgt + '">' + opts + '</select></label></div>' + grid;
+      })
+      .catch(function (e) { if (seq === (tgt === 'b' ? bqSeq : aqSeq) && $(tgt === 'b' ? 'bqPics' : 'aqPics')) $(tgt === 'b' ? 'bqPics' : 'aqPics').innerHTML = '<div class="warn">Could not load stills: ' + esc(e.message) + '</div>'; });
   }
   function aboutSkeleton() {
     return '<div class="row"><h2 style="flex:1 1 auto;margin:0">About page images</h2><button data-act="reload">Reload</button></div>' +
@@ -444,7 +480,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
           var img = x.poster_path ? '<img class="thumb" src="https://image.tmdb.org/t/p/w92' + x.poster_path + '" alt="">' : '<div class="thumb"></div>';
           return '<div class="card" data-ak="' + key + '" style="display:flex;gap:10px;align-items:center">' + img +
             '<div style="flex:1 1 auto;min-width:0"><div style="font-weight:600">' + esc(title) + '</div><div class="muted">' + (x.media_type === 'tv' ? 'TV' : 'Movie') + (year ? ' · ' + year : '') + '</div></div>' +
-            '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button data-act="apick" data-kind="backdrops">Wide images</button><button data-act="apick" data-kind="posters">Tall images</button></div></div>';
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button data-act="apick" data-kind="backdrops">Wide images</button><button data-act="apick" data-kind="posters">Tall images</button>' + (x.media_type === 'tv' ? '<button data-act="astills">Stills</button>' : '') + '</div></div>';
         }).join('') || '<div class="muted">No results.</div>';
       })
       .catch(function () { if (seq === aqSeq && $('aqRes')) $('aqRes').innerHTML = '<div class="warn">Search failed. Try again.</div>'; });
@@ -853,7 +889,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
     else if (act === 'addFav') addFav();
     else if (act === 'apick') aboutPick(b);
     else if (act === 'aset') {
-      state.about[b.dataset.slot] = posterUrl(b.dataset.p, b.dataset.slot === 'wide' ? 'w1280' : 'w780');
+      state.about[b.dataset.slot] = posterUrl(b.dataset.p, b.dataset.s || (b.dataset.slot === 'wide' ? 'w1280' : 'w780'));
       drawAboutCur();
       var aon = document.querySelectorAll('#aqPics button.on');
       for (var z = 0; z < aon.length; z++) aon[z].classList.remove('on');
@@ -866,8 +902,10 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
       markDirty();
     }
     else if (act === 'bpick') bannerPick(b);
+    else if (act === 'bstills') stillsStart(b, 'b');
+    else if (act === 'astills') stillsStart(b, 'a');
     else if (act === 'bset') {
-      state.banner = posterUrl(b.dataset.p, 'w1280');
+      state.banner = posterUrl(b.dataset.p, b.dataset.s || 'w1280');
       drawBannerCur();
       var on = document.querySelectorAll('.backs button.on');
       for (var q = 0; q < on.length; q++) on[q].classList.remove('on');
@@ -901,6 +939,7 @@ code{background:#0e1216;padding:1px 5px;border-radius:4px}
   });
   function onEdit(e) {
     var t = e.target;
+    if (t.dataset && t.dataset.ss !== undefined) { if (e.type === 'change') stillsLoad(t.dataset.ss, Number(t.value)); return; }
     if (t.dataset && t.dataset.pl !== undefined) { if (e.type === 'change') openPick(t.dataset.pl, t.value); return; }
     if (t.id === 'search') { query = t.value; drawCards(); return; }
     if (t.id === 'qs') { clearTimeout(qsTimer); var v = t.value; qsTimer = setTimeout(function () { qsSearch(v); }, 300); return; }
