@@ -594,7 +594,6 @@ showCopied();
       var rowsMount = document.getElementById('rows-mount');
       var HIDDEN_GENRES = [10763, 10764, 10766, 10767];
       var HIDDEN_Q = HIDDEN_GENRES.join('%7C');
-      var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       var MAIN_GENRES = [
         { id: 10759, name: 'Action & Adventure' },
         { id: 16, name: 'Animation' },
@@ -644,47 +643,12 @@ showCopied();
         if (detail.number_of_seasons > 2 || detail.number_of_episodes > 20) return '';
         return detail.number_of_episodes + (detail.number_of_episodes === 1 ? ' ep' : ' eps');
       }
-      function returningCheck(detail) {
-        var next = detail && detail.next_episode_to_air;
-        if (!next || next.episode_number !== 1 || !(next.season_number > 1) || !next.air_date) return '';
-        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(next.air_date);
-        if (!m) return '';
-        return 'S' + next.season_number + ' ' + MONTHS[parseInt(m[2], 10) - 1] + ' ' + parseInt(m[3], 10);
-      }
       function networkSource() {
         var net = NETWORK_PICK;
         return tmdbFetch('/network/' + net[0]).then(function (info) {
           return fetchTmdb(discoverPath('with_networks=' + net[0] + '&sort_by=popularity.desc&vote_count.gte=100')).then(function (shows) {
             return { title: 'On ' + ((info && info.name) || net[1]), shows: shows };
           });
-        });
-      }
-      function actorAttempt(actors, i) {
-        if (i >= actors.length || i >= 4) return Promise.reject(new Error('No actor row'));
-        var person = actors[i];
-        return tmdbFetch('/person/' + person.id + '/combined_credits').then(function (data) {
-          var seen = {};
-          var items = (data.cast || []).filter(function (c) {
-            if (!c || !c.poster_path || !(c.vote_count >= 100)) return false;
-            if (c.media_type !== 'tv' && c.media_type !== 'movie') return false;
-            if (/self|narrator|archive/i.test(c.character || '')) return false;
-            var key = c.media_type + c.id;
-            if (seen[key]) return false;
-            seen[key] = true;
-            return true;
-          });
-          items.forEach(function (c) { c._movie = c.media_type === 'movie'; });
-          items = filterRow(GRID_FILTER, items).sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
-          if (items.length < 6) throw new Error('Too few');
-          return { title: 'More With ' + person.name, link: '/p/?id=' + person.id, shows: items };
-        }).catch(function () { return actorAttempt(actors, i + 1); });
-      }
-      function actorSource() {
-        return fetchTmdb('/person/popular', 'page=' + (1 + Math.floor(Math.random() * 3))).then(function (people) {
-          var actors = people.filter(function (p) {
-            return p && p.id && p.name && p.known_for_department === 'Acting';
-          });
-          return actorAttempt(shuffleList(actors), 0);
         });
       }
       var UPCOMING_PATH =
@@ -700,13 +664,10 @@ showCopied();
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { guide: true, title: 'TV Guide' },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
-        { title: 'Returning Soon', path: discoverPath('with_status=0&air_date.gte=' + isoDate(0) + '&air_date.lte=' + isoDate(75) + '&first_air_date.lte=' + isoDate(-120) + '&sort_by=popularity.desc&vote_count.gte=100'), pages: 2, enrich: returningCheck, min: 4, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
         { title: 'Short Binges', path: discoverPath('with_status=3&sort_by=popularity.desc&vote_average.gte=7.3&vote_count.gte=200'), pages: 2, enrich: shortCheck, min: 5, posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Miniseries', link: '/g/?s=all&type=2', path: discoverPath('with_type=2&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
-        { title: 'Top Rated', path: '/tv/top_rated' },
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
-        { title: 'More With', source: actorSource, posterOnly: true },
         { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true }
       ];
       function filterRow(rowDef, shows) {
