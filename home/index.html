@@ -661,13 +661,13 @@ showCopied();
         { news: true },
         { pills: true, title: 'Genres' },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
-        { guide: true, title: 'TV Guide' },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
         { title: 'Short Binges', path: discoverPath('with_status=3&sort_by=popularity.desc&vote_average.gte=7.3&vote_count.gte=200'), pages: 2, enrich: shortCheck, min: 5, posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Miniseries', link: '/g/?s=all&type=2', path: discoverPath('with_type=2&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
-        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true }
+        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true },
+        { guide: true, title: 'TV Guide' }
       ];
       function filterRow(rowDef, shows) {
         return shows.filter(function (show) {
@@ -967,6 +967,20 @@ showCopied();
         var buttons = [];
         var current = 0;
         var requestSeq = 0;
+        var EXCLUDED_KEYWORD_TERMS = ['lgbt', 'lgbtq', 'gay', 'lesbian', 'bisexual', 'transgender', 'queer', 'homosexuality', 'drag queen'];
+        var EXCLUDED_KEYWORD_RE = /\b(lgbt\w*|gay|lesbian|bisexual|transgender|queer|homosexuality|drag queen)\b/i;
+        var excludedKeywords = Promise.all(EXCLUDED_KEYWORD_TERMS.map(function (term) {
+          return fetchTmdb('/search/keyword', 'query=' + encodeURIComponent(term)).then(function (list) {
+            return list.filter(function (k) { return k && k.id && EXCLUDED_KEYWORD_RE.test(k.name || ''); }).map(function (k) { return k.id; });
+          }, function () { return []; });
+        })).then(function (lists) {
+          var seen = {};
+          return [].concat.apply([], lists).filter(function (id) {
+            if (seen[id]) return false;
+            seen[id] = true;
+            return true;
+          }).slice(0, 60);
+        });
         function dayLabel(n) {
           if (n === 0) return 'Today';
           if (n === 1) return 'Tomorrow';
@@ -983,7 +997,9 @@ showCopied();
           var seq = ++requestSeq;
           fillSkeleton(refs);
           var day = isoDate(n);
-          fetchPages(discoverPath('sort_by=popularity.desc&air_date.gte=' + day + '&air_date.lte=' + day), 3).then(function (shows) {
+          excludedKeywords.then(function (ids) {
+            return fetchPages(discoverPath('sort_by=popularity.desc&air_date.gte=' + day + '&air_date.lte=' + day + (ids.length ? '&without_keywords=' + ids.join('%7C') : '')), 3);
+          }).then(function (shows) {
             if (seq !== requestSeq) return;
             shows = filterRow(GRID_FILTER, uniqueShows(shows)).sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
             if (!shows.length) {
