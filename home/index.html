@@ -660,7 +660,6 @@ showCopied();
       var ROWS = [
         { news: true },
         { pills: true, title: 'Genres' },
-        { title: 'In Theaters', path: '/movie/now_playing', movie: true, posterOnly: true },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { guide: true, title: 'TV Guide' },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
@@ -685,7 +684,7 @@ showCopied();
       function uniqueShows(shows) {
         var seen = {};
         return shows.filter(function (show) {
-          var key = (show._movie ? 'm' : 't') + show.id;
+          var key = show.id;
           if (seen[key]) return false;
           seen[key] = true;
           return true;
@@ -781,7 +780,7 @@ showCopied();
           var name = show.name || show.title;
           var card = document.createElement('a');
           card.className = 'carousel-card';
-          card.href = ((rowDef.movie || show._movie) ? '/m/?id=' : '/show/?id=') + show.id;
+          card.href = '/show/?id=' + show.id;
           var rankHtml = rowDef.ranked ? '<span class="carousel-rank numbers">' + (i + 1) + '</span>' : '';
           var rating = show.vote_average ? (show.vote_average / 2).toFixed(1) : '';
           var tail = show._note || yearFromDate(show.first_air_date || show.release_date);
