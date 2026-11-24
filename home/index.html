@@ -142,126 +142,6 @@
       font-size: 12px;
       color: #8490a4;
     }
-    .pick {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      min-height: 208px;
-      box-sizing: border-box;
-      padding: 14px;
-      border: 1px solid #1e2a3e;
-      border-radius: 10px;
-      background-color: rgba(255, 255, 255, 0.02);
-      transition: opacity 0.2s ease;
-    }
-    .pick.-fading {
-      opacity: 0;
-    }
-    .pick.-loading .pick-body {
-      visibility: hidden;
-    }
-    .pick-poster {
-      flex: 0 0 auto;
-      display: block;
-      width: 120px;
-      height: 180px;
-      overflow: hidden;
-      border-radius: 6px;
-      background-color: #191f29;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-    .pick-poster img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .pick-body {
-      flex: 1 1 auto;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .pick-title {
-      font-size: 18px;
-      font-weight: 600;
-      line-height: 1.25;
-      color: #fff;
-      text-decoration: none;
-    }
-    .pick-meta {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 12px;
-      color: #8490a4;
-    }
-    .pick-genres {
-      margin: -4px 0 0;
-      font-size: 12px;
-      color: #8490a4;
-    }
-    .pick-meta svg {
-      width: 10px;
-      height: 10px;
-      margin-right: 4px;
-      fill: #fff;
-    }
-    .pick-meta span:first-child {
-      display: inline-flex;
-      align-items: center;
-    }
-    .pick-overview {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.55;
-      color: #8490a4;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .pick-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 4px;
-    }
-    .pick-actions .hero-cta,
-    .pick-actions .pill {
-      box-sizing: border-box;
-      height: 34px;
-      padding: 0 16px;
-      border-radius: 8px;
-      font-size: 12px;
-    }
-    .pick-actions .pill {
-      display: inline-flex;
-      align-items: center;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    @media (max-width: 600px) {
-      .pick {
-        gap: 12px;
-        min-height: 170px;
-        padding: 12px;
-      }
-      .pick-poster {
-        width: 96px;
-        height: 144px;
-      }
-      .pick-title {
-        font-size: 16px;
-      }
-      .pick-overview {
-        font-size: 12px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -714,13 +594,7 @@ showCopied();
       var rowsMount = document.getElementById('rows-mount');
       var HIDDEN_GENRES = [10763, 10764, 10766, 10767];
       var HIDDEN_Q = HIDDEN_GENRES.join('%7C');
-      var ID_RE = /^tt\d+$/;
       var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      var GENRE_NAMES = {
-        10759: 'Action & Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime', 99: 'Documentary',
-        18: 'Drama', 10751: 'Family', 10762: 'Kids', 9648: 'Mystery', 10765: 'Sci-Fi & Fantasy',
-        10768: 'War & Politics', 37: 'Western'
-      };
       var MAIN_GENRES = [
         { id: 10759, name: 'Action & Adventure' },
         { id: 16, name: 'Animation' },
@@ -736,14 +610,11 @@ showCopied();
       ];
       var PILL_GENRES = MAIN_GENRES.slice();
       PILL_GENRES.splice(7, 0, { id: 10762, name: 'Kids' });
-      var TOP_GENRE_IDS = [10759, 16, 35, 80, 18, 9648, 10765];
-      var DECADES = [1970, 1980, 1990, 2000, 2010];
-      var COUNTRIES = [['KR', 'Korean'], ['JP', 'Japanese'], ['GB', 'British'], ['ES', 'Spanish'], ['FR', 'French'], ['DE', 'German'], ['TR', 'Turkish'], ['IN', 'Indian'], ['SE', 'Swedish'], ['DK', 'Danish']];
+      var TOP_GENRE_IDS = [10759, 16, 80, 18, 9648];
+      var EXCLUDED_ROW_GENRES = [10765, 99];
+      var DECADES = [1980, 1990, 2000, 2010];
+      var COUNTRIES = [['KR', 'Korean'], ['JP', 'Japanese'], ['GB', 'British'], ['ES', 'Spanish'], ['FR', 'French'], ['DE', 'German'], ['TR', 'Turkish'], ['IN', 'Indian'], ['SE', 'Swedish']];
       var NETWORKS = [[213, 'Netflix'], [49, 'HBO'], [2552, 'Apple TV+'], [1024, 'Prime Video'], [2739, 'Disney+'], [453, 'Hulu'], [174, 'AMC'], [88, 'FX'], [4, 'BBC One'], [67, 'Showtime']];
-      var SHOWS_SOURCES = [
-        'https://raw.githubusercontent.com/osaiif/r/main/t.js',
-        'https://cdn.jsdelivr.net/gh/osaiif/r@main/t.js'
-      ];
       var GRID_FILTER = { posterOnly: true, hideGenres: true };
       function pad2(n) { return n < 10 ? '0' + n : '' + n; }
       function isoDate(offsetDays) {
@@ -797,71 +668,6 @@ showCopied();
         if (!m) return '';
         return 'S' + next.season_number + ' ' + MONTHS[parseInt(m[2], 10) - 1] + ' ' + parseInt(m[3], 10);
       }
-      var showsRequest = null;
-      function loadSaifShows() {
-        if (showsRequest) return showsRequest;
-        function attempt(i) {
-          if (i >= SHOWS_SOURCES.length) return Promise.reject(new Error('Shows list unavailable'));
-          return fetch(SHOWS_SOURCES[i])
-            .then(function (res) {
-              if (!res.ok) throw new Error('status');
-              return res.text();
-            })
-            .then(function (text) {
-              var list = (new Function(text + '\n;return typeof SHOWS !== "undefined" ? SHOWS : null;'))();
-              if (!Array.isArray(list) || !list.length) throw new Error('empty');
-              return list;
-            })
-            .catch(function () { return attempt(i + 1); });
-        }
-        showsRequest = attempt(0);
-        return showsRequest;
-      }
-      function findByImdb(id) {
-        return tmdbFetch('/find/' + id, 'external_source=imdb_id').then(function (data) {
-          var tv = (data.tv_results || [])[0];
-          if (tv) return tv;
-          var movie = (data.movie_results || [])[0];
-          if (movie) {
-            movie._movie = true;
-            return movie;
-          }
-          return null;
-        }, function () { return null; });
-      }
-      function watchlistSource() {
-        return loadSaifShows().then(function (list) {
-          var items = list.filter(function (s) {
-            return s && s.list === 'watchlist' && ID_RE.test(s.id || '');
-          }).slice(0, 18);
-          return Promise.all(items.map(function (s) { return findByImdb(s.id); }));
-        }).then(function (found) {
-          return { shows: found.filter(Boolean) };
-        });
-      }
-      function becauseAttempt(candidates, i) {
-        if (i >= candidates.length || i >= 4) return Promise.reject(new Error('No recommendations'));
-        return tmdbFetch('/find/' + candidates[i].id, 'external_source=imdb_id').then(function (data) {
-          var tv = (data.tv_results || [])[0];
-          if (!tv) throw new Error('Not a series');
-          return tmdbFetch('/tv/' + tv.id + '/recommendations').then(function (rec) {
-            var items = filterRow(GRID_FILTER, rec.results || []);
-            if (items.length < 6) throw new Error('Too few');
-            return { title: 'Because Saif Watched ' + tv.name, shows: items };
-          });
-        }).catch(function () { return becauseAttempt(candidates, i + 1); });
-      }
-      function becauseSource() {
-        return loadSaifShows().then(function (list) {
-          var seen = list.filter(function (s) {
-            return s && (!s.list || s.list === 'watched') && ID_RE.test(s.id || '');
-          });
-          var picks = seen.filter(function (s) { return s.r >= 4.5; });
-          if (picks.length < 3) picks = seen.filter(function (s) { return s.r >= 4; });
-          if (!picks.length) picks = seen;
-          return becauseAttempt(shuffleList(picks.slice()), 0);
-        });
-      }
       function networkSource() {
         var net = NETWORK_PICK;
         return tmdbFetch('/network/' + net[0]).then(function (info) {
@@ -904,7 +710,7 @@ showCopied();
         '&first_air_date.lte=' + isoDate(120) +
         '&without_genres=' + HIDDEN_GENRES.join('%2C');
       var topGenre = pickRandom(MAIN_GENRES.filter(function (g) { return TOP_GENRE_IDS.indexOf(g.id) !== -1; }));
-      var genrePool = shuffleList(MAIN_GENRES.filter(function (g) { return g.id !== topGenre.id; }));
+      var genrePool = shuffleList(MAIN_GENRES.filter(function (g) { return g.id !== topGenre.id && EXCLUDED_ROW_GENRES.indexOf(g.id) === -1; }));
       var decadePick = pickRandom(DECADES);
       var countryPick = pickRandom(COUNTRIES);
       var NETWORK_PICK = pickRandom(NETWORKS);
@@ -913,13 +719,10 @@ showCopied();
         { pills: true, title: 'Genres' },
         { title: 'In Theaters', path: '/movie/now_playing', movie: true, posterOnly: true },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
-        { pick: true, title: 'Surprise Me' },
-        { title: 'Saif\'s Watchlist', link: '/u/saif/watchlist/', source: watchlistSource, posterOnly: true },
-        { title: 'Because Saif Watched', source: becauseSource, posterOnly: true },
+        { guide: true, title: 'TV Guide' },
         genreRowDef(genrePool[0]),
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Returning Soon', path: discoverPath('with_status=0&air_date.gte=' + isoDate(0) + '&air_date.lte=' + isoDate(75) + '&first_air_date.lte=' + isoDate(-120) + '&sort_by=popularity.desc&vote_count.gte=100'), pages: 2, enrich: returningCheck, min: 4, posterOnly: true, hideGenres: true },
-        { title: 'Hidden Gems', path: discoverPath('sort_by=popularity.desc&vote_average.gte=7.8&vote_count.gte=150&vote_count.lte=1500'), posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Top 10 ' + topGenre.name, link: genreLink(topGenre), path: discoverPath('with_genres=' + topGenre.id + '&sort_by=vote_average.desc&vote_count.gte=1000'), ranked: true, limit: 10, min: 5, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
         genreRowDef(genrePool[1]),
@@ -931,8 +734,7 @@ showCopied();
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
         genreRowDef(genrePool[2]),
         { title: 'More With', source: actorSource, posterOnly: true },
-        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-365) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true },
-        { guide: true, title: 'TV Guide' }
+        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true }
       ];
       function filterRow(rowDef, shows) {
         return shows.filter(function (show) {
@@ -1224,105 +1026,6 @@ showCopied();
         rowsMount.appendChild(section);
         observeReveal(section);
       }
-      function buildPick(rowDef) {
-        var section = document.createElement('section');
-        section.className = 'discover-row';
-        var heading = document.createElement('h2');
-        heading.className = 'section-heading';
-        heading.textContent = rowDef.title;
-        section.appendChild(heading);
-        var card = document.createElement('div');
-        card.className = 'pick -loading';
-        card.innerHTML =
-          '<a class="pick-poster" href="/show/"></a>' +
-          '<div class="pick-body">' +
-            '<a class="pick-title" href="/show/"></a>' +
-            '<div class="pick-meta"></div>' +
-            '<p class="pick-genres"></p>' +
-            '<p class="pick-overview"></p>' +
-            '<div class="pick-actions">' +
-              '<a class="hero-cta" href="/show/"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>View show</span></a>' +
-              '<button type="button" class="pill">Shuffle</button>' +
-            '</div>' +
-          '</div>';
-        section.appendChild(card);
-        rowsMount.appendChild(section);
-        observeReveal(section);
-        var posterEl = card.querySelector('.pick-poster');
-        var titleEl = card.querySelector('.pick-title');
-        var metaEl = card.querySelector('.pick-meta');
-        var genresEl = card.querySelector('.pick-genres');
-        var overviewEl = card.querySelector('.pick-overview');
-        var ctaEl = card.querySelector('.hero-cta');
-        var shuffleEl = card.querySelector('.pill');
-        var pool = [];
-        var index = 0;
-        var busy = false;
-        function render(i) {
-          var show = pool[i];
-          var href = '/show/?id=' + show.id;
-          posterEl.href = href;
-          titleEl.href = href;
-          ctaEl.href = href;
-          titleEl.textContent = show.name;
-          overviewEl.textContent = show.overview;
-          posterEl.setAttribute('aria-label', show.name);
-          posterEl.innerHTML = '';
-          var img = document.createElement('img');
-          img.alt = show.name;
-          img.width = 120;
-          img.height = 180;
-          img.decoding = 'async';
-          img.src = POSTER_BASE + show.poster_path;
-          posterEl.appendChild(img);
-          var parts = [];
-          if (show.vote_average) parts.push(STAR_SVG + '<span>' + (show.vote_average / 2).toFixed(1) + '</span>');
-          var year = yearFromDate(show.first_air_date);
-          if (year) parts.push('<span>' + year + '</span>');
-          var names = (show.genre_ids || []).map(function (id) { return GENRE_NAMES[id]; }).filter(Boolean).slice(0, 2);
-          genresEl.textContent = names.join(', ');
-          genresEl.hidden = !names.length;
-          metaEl.innerHTML = parts.join('<span class="hero-meta-dot">·</span>');
-          return img;
-        }
-        lazyLoad(section, function () {
-          fetchTmdb('/tv/top_rated', 'page=' + (1 + Math.floor(Math.random() * 5))).then(function (shows) {
-            pool = shuffleList(filterRow(GRID_FILTER, shows).filter(function (s) { return !!s.overview; }));
-            if (pool.length < 2) {
-              section.remove();
-              return;
-            }
-            render(0);
-            card.classList.remove('-loading');
-          }).catch(function (err) {
-            console.error('Surprise Me failed to load:', err);
-            section.remove();
-          });
-        });
-        shuffleEl.addEventListener('click', function () {
-          if (busy || pool.length < 2) return;
-          busy = true;
-          card.classList.add('-fading');
-          window.setTimeout(function () {
-            index = (index + 1) % pool.length;
-            var img = render(index);
-            var revealed = false;
-            function reveal() {
-              if (revealed) return;
-              revealed = true;
-              card.classList.remove('-fading');
-              busy = false;
-            }
-            if (img.complete) {
-              reveal();
-            } else {
-              img.addEventListener('load', reveal);
-              img.addEventListener('error', reveal);
-              window.setTimeout(reveal, 900);
-            }
-          }, 200);
-        });
-      }
       function buildGuide(rowDef) {
         var refs = buildSkeletonRow(rowDef.title);
         var tabs = document.createElement('div');
@@ -1347,14 +1050,14 @@ showCopied();
           var seq = ++requestSeq;
           fillSkeleton(refs);
           var day = isoDate(n);
-          fetchTmdb(discoverPath('sort_by=popularity.desc&air_date.gte=' + day + '&air_date.lte=' + day)).then(function (shows) {
+          fetchPages(discoverPath('sort_by=popularity.desc&air_date.gte=' + day + '&air_date.lte=' + day), 3).then(function (shows) {
             if (seq !== requestSeq) return;
-            shows = filterRow(GRID_FILTER, uniqueShows(shows));
+            shows = filterRow(GRID_FILTER, uniqueShows(shows)).sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
             if (!shows.length) {
               showEmpty(refs, 'Nothing listed for this day');
               return;
             }
-            fillRow(rowDef, shows, refs);
+            fillRow({ limit: 40 }, shows, refs);
           }).catch(function (err) {
             if (seq !== requestSeq) return;
             console.error('TV Guide failed to load:', err);
@@ -1385,10 +1088,6 @@ showCopied();
         }
         if (rowDef.pills) {
           buildPills(rowDef);
-          return;
-        }
-        if (rowDef.pick) {
-          buildPick(rowDef);
           return;
         }
         if (rowDef.guide) {
