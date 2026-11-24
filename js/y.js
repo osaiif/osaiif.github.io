@@ -397,9 +397,106 @@
     var option = select.options[select.selectedIndex];
     field.querySelector('.cg-field-text').textContent = isDefault || !option ? field.getAttribute('data-label') : option.textContent;
     field.classList.toggle('-set', !isDefault);
+    buildFieldMenu(select);
   }
   function fieldOf(select) {
     return select.closest('.cg-field');
+  }
+  function menuButton(opt, idx) {
+    return '<button type="button" class="sort-option" role="menuitemradio" aria-checked="false" data-index="' + idx + '">' + escapeHtml(opt.textContent) + '</button>';
+  }
+  function fieldChoices(select) {
+    var field = fieldOf(select);
+    return field ? field.querySelector('.cg-field-menu .sort-choices') : null;
+  }
+  function markFieldMenu(select) {
+    var choices = fieldChoices(select);
+    if (!choices) return;
+    Array.prototype.forEach.call(choices.querySelectorAll('.sort-option'), function (b) {
+      var on = parseInt(b.getAttribute('data-index'), 10) === select.selectedIndex;
+      b.classList.toggle('-active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+  function buildFieldMenu(select) {
+    var choices = fieldChoices(select);
+    if (!choices) return;
+    var html = '';
+    var idx = 0;
+    Array.prototype.forEach.call(select.children, function (node) {
+      if (node.tagName === 'OPTGROUP') {
+        html += '<span class="cg-menu-label">' + escapeHtml(node.label) + '</span>';
+        Array.prototype.forEach.call(node.children, function (opt) { html += menuButton(opt, idx++); });
+      } else if (node.tagName === 'OPTION') {
+        html += menuButton(node, idx++);
+      }
+    });
+    choices.innerHTML = html;
+    markFieldMenu(select);
+  }
+  function setFieldOpen(field, open) {
+    var menu = field.querySelector('.cg-field-menu');
+    var trigger = field.querySelector('.cg-field-trigger');
+    if (!menu || !trigger) return;
+    field.classList.toggle('-open', open);
+    menu.classList.toggle('-open', open);
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!open) return;
+    menu.classList.remove('-right');
+    var rect = field.getBoundingClientRect();
+    var width = menu.offsetWidth;
+    if (rect.left + width > window.innerWidth - 12 && rect.right - width >= 12) menu.classList.add('-right');
+    var active = menu.querySelector('.-active');
+    if (active) menu.scrollTop = Math.max(0, active.offsetTop - (menu.clientHeight - active.offsetHeight) / 2);
+  }
+  function closeFieldMenus(except) {
+    Array.prototype.forEach.call(document.querySelectorAll('.cg-field.-open'), function (f) {
+      if (f !== except) setFieldOpen(f, false);
+    });
+  }
+  function enhanceField(select) {
+    var field = fieldOf(select);
+    if (!field) return;
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cg-field-trigger';
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-label', field.getAttribute('data-label') || '');
+    var menu = document.createElement('div');
+    menu.className = 'sort-menu cg-field-menu';
+    menu.setAttribute('role', 'menu');
+    menu.innerHTML = '<div class="sort-row"><div class="sort-choices"></div></div>';
+    field.appendChild(trigger);
+    field.appendChild(menu);
+    trigger.addEventListener('click', function () {
+      var open = !field.classList.contains('-open');
+      closeFieldMenus(field);
+      setFieldOpen(field, open);
+    });
+    menu.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.sort-option') : null;
+      if (!btn) return;
+      setFieldOpen(field, false);
+      var idx = parseInt(btn.getAttribute('data-index'), 10);
+      if (isNaN(idx) || idx === select.selectedIndex) return;
+      select.selectedIndex = idx;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  function enhanceFields() {
+    Array.prototype.forEach.call(document.querySelectorAll('.cg-field-select'), enhanceField);
+    document.addEventListener('click', function (e) {
+      closeFieldMenus(e.target.closest ? e.target.closest('.cg-field') : null);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelector('.cg-field.-open');
+      if (!open) return;
+      var trigger = open.querySelector('.cg-field-trigger');
+      closeFieldMenus(null);
+      if (trigger) trigger.focus();
+    });
   }
   function cardHtml(show) {
     var year = show.first_air_date ? show.first_air_date.slice(0, 4) : '';
@@ -561,7 +658,7 @@
     markActive('data-year', year === null ? 'all' : String(year));
   }
   function renderFilters() {
-    el.genre.innerHTML = '<option value="">All genres</option>' + GENRES.map(function (g) {
+    el.genre.innerHTML = '<option value="">All</option>' + GENRES.map(function (g) {
       return '<option value="' + g.slug + '"' + (g.slug === state.genre ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
     }).join('');
     el.genre.value = state.genre;
@@ -569,11 +666,11 @@
       return '<option value="' + pair[0] + '">' + escapeHtml(pair[1]) + '</option>';
     }).join('');
     el.sort.value = state.sort;
-    el.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, state.country);
-    el.lang.innerHTML = optionsHtml('All languages', POPULAR_LANGS, languageList, state.lang);
-    el.status.innerHTML = simpleOptionsHtml('All statuses', STATUSES, state.status);
-    el.type.innerHTML = simpleOptionsHtml('All types', TYPES, state.type);
-    el.rating.innerHTML = simpleOptionsHtml('All ratings', RATINGS, state.rating);
+    el.country.innerHTML = optionsHtml('All', POPULAR_COUNTRIES, countryList, state.country);
+    el.lang.innerHTML = optionsHtml('All', POPULAR_LANGS, languageList, state.lang);
+    el.status.innerHTML = simpleOptionsHtml('All', STATUSES, state.status);
+    el.type.innerHTML = simpleOptionsHtml('All', TYPES, state.type);
+    el.rating.innerHTML = simpleOptionsHtml('All', RATINGS, state.rating);
     el.country.value = state.country;
     el.lang.value = state.lang;
     syncField(el.genre);
@@ -696,12 +793,14 @@
     syncUrl();
     startFresh();
   }
+  enhanceFields();
   buildYearMenu();
   renderFilters();
   renderTitle();
   syncUrl();
   el.pickTrigger.addEventListener('click', function (e) {
     e.stopPropagation();
+    closeFieldMenus(null);
     setMenuOpen(!el.pickMenu.classList.contains('-open'));
   });
   document.addEventListener('click', function (e) {
@@ -779,13 +878,13 @@
   startFresh();
   loadCountries().then(function (list) {
     countryList = list;
-    el.country.innerHTML = optionsHtml('All countries', POPULAR_COUNTRIES, countryList, state.country);
+    el.country.innerHTML = optionsHtml('All', POPULAR_COUNTRIES, countryList, state.country);
     el.country.value = state.country;
     syncField(el.country);
   }).catch(function () {});
   loadLanguages().then(function (list) {
     languageList = list;
-    el.lang.innerHTML = optionsHtml('All languages', POPULAR_LANGS, languageList, state.lang);
+    el.lang.innerHTML = optionsHtml('All', POPULAR_LANGS, languageList, state.lang);
     el.lang.value = state.lang;
     syncField(el.lang);
   }).catch(function () {});

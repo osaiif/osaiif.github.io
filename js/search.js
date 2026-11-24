@@ -303,13 +303,6 @@
     ['tr', 'Turkish'], ['ru', 'Russian'], ['sv', 'Swedish'], ['da', 'Danish'], ['no', 'Norwegian'],
     ['nl', 'Dutch'], ['th', 'Thai'], ['pl', 'Polish']
   ];
-  var MAX_AKA = 4;
-  var NON_WORD;
-  try {
-    NON_WORD = new RegExp('[^\\p{L}\\p{N}]+', 'gu');
-  } catch (e) {
-    NON_WORD = /[^a-z0-9\u00c0-\uffff]+/gi;
-  }
   var STAR_ICON_SVG =
     '<svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.75l2.87 6.13 6.63.7-4.93 4.6 1.32 6.62L12 17.9l-5.89 3.9 1.32-6.62-4.93-4.6 6.63-.7L12 2.75z"></path></svg>';
   var SPINNER_HTML =
@@ -332,62 +325,6 @@
     var s = String(name || '');
     if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  }
-  function fold(str) {
-    var s = String(str || '');
-    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return s.toLowerCase().replace(NON_WORD, ' ').trim();
-  }
-  function makeMatcher(q) {
-    var qf = fold(q);
-    var qk = qf.replace(/ /g, '');
-    var tokens = qf ? qf.split(' ') : [];
-    return function (name) {
-      if (!qk) return false;
-      var nf = fold(name);
-      if (nf.replace(/ /g, '').indexOf(qk) !== -1) return true;
-      for (var i = 0; i < tokens.length; i++) if (nf.indexOf(tokens[i]) === -1) return false;
-      return true;
-    };
-  }
-  function uniqueNames(list, shown) {
-    var keys = {};
-    keys[fold(shown).replace(/ /g, '')] = true;
-    var out = [];
-    for (var i = 0; i < list.length; i++) {
-      if (typeof list[i] !== 'string') continue;
-      var name = list[i].trim();
-      var key = fold(name).replace(/ /g, '');
-      if (!key || keys[key]) continue;
-      keys[key] = true;
-      out.push(name);
-    }
-    return out;
-  }
-  function detailNames(type, details) {
-    return details && type === 'person' ? (details.also_known_as || []).slice() : [];
-  }
-  function showAka(card, names, q) {
-    if (!names.length) return;
-    var isHit = makeMatcher(q);
-    var hits = [];
-    var rest = [];
-    names.forEach(function (n) { (isHit(n) ? hits : rest).push(n); });
-    var ordered = hits.concat(rest);
-    var html = ordered.slice(0, MAX_AKA).map(function (n) {
-      var safe = escapeHtml(n);
-      return isHit(n) ? '<mark class="aka-hit">' + safe + '</mark>' : safe;
-    }).join(', ');
-    if (ordered.length > MAX_AKA) html += ' +' + (ordered.length - MAX_AKA);
-    var el = document.createElement('p');
-    el.className = 'aka';
-    el.setAttribute('title', ordered.slice(0, 80).join(' · '));
-    el.innerHTML = '<span class="aka-label">Also known as</span> ' + html;
-    var details = card.querySelector('.details');
-    if (!details) return;
-    var anchor = card.querySelector('.creator');
-    if (anchor) details.insertBefore(el, anchor);
-    else details.appendChild(el);
   }
   function yearFromDate(dateStr) {
     return dateStr ? dateStr.slice(0, 4) : '';
@@ -551,9 +488,6 @@
     var el = document.createElement('a');
     el.className = 'result-item person-item';
     el.href = itemHref(item);
-    el.setAttribute('data-lazy', 'person');
-    el.setAttribute('data-id', item.id);
-    el.setAttribute('data-q', query);
     var known = (item.known_for || []).map(function (k) { return k.title || k.name; }).filter(Boolean).slice(0, 3);
     var dept = item.known_for_department || '';
     el.innerHTML =
@@ -580,7 +514,6 @@
     el.href = itemHref(item);
     el.setAttribute('data-lazy', isMovie ? 'movie' : 'tv');
     el.setAttribute('data-id', item.id);
-    el.setAttribute('data-q', query);
     var posterSrc = item.poster_path ? IMG_BASE + item.poster_path : 'poster-placeholder.jpg';
     var rating = formatRating(item.vote_average, item.vote_count);
     el.innerHTML =
@@ -589,8 +522,7 @@
         '<div class="header">' +
           '<h2 class="title">' + escapeHtml(title) + '</h2>' +
           '<div class="meta">' +
-            '<span class="kind">' + escapeHtml(kindLabel(item)) + '</span>' +
-            (yearFromDate(date) ? '<span class="year numbers">' + yearFromDate(date) + '</span>' : '') +
+            '<span class="kind">' + escapeHtml(kindLabel(item) + (yearFromDate(date) ? ' | ' + yearFromDate(date) : '')) + '</span>' +
             (rating ? '<span class="rating numbers">' + STAR_ICON_SVG + rating + '</span>' : '') +
           '</div>' +
         '</div>' +
@@ -634,19 +566,12 @@
   function loadDetails(card) {
     var type = card.getAttribute('data-lazy');
     var id = card.getAttribute('data-id');
-    var q = card.getAttribute('data-q') || '';
     card.removeAttribute('data-lazy');
     var badge = card.querySelector('.creator-badge');
-    var titleEl = card.querySelector('.title');
-    var shown = titleEl ? titleEl.textContent : '';
     var path = '/' + type + '/' + id;
     var params = type === 'movie' ? 'append_to_response=credits' : '';
     tmdbFetch(path, params)
       .then(function (details) {
-        if (type === 'person') {
-          showAka(card, uniqueNames(detailNames(type, details), shown), q);
-          return;
-        }
         var names;
         if (type === 'movie') {
           names = ((details && details.credits && details.credits.crew) || []).filter(function (c) { return c.job === 'Director'; }).map(function (c) { return c.name; });
@@ -661,7 +586,7 @@
         }
       })
       .catch(function () {
-        if (type !== 'person') removeCreator(card);
+        removeCreator(card);
       });
   }
   function watchDetails(root) {
