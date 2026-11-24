@@ -546,15 +546,12 @@ showCopied();
         '&first_air_date.lte=' + isoDate(120) +
         '&without_genres=' + HIDDEN_GENRES.join('%2C');
       var ROWS = [
-        { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
-        { title: 'In Theaters', path: '/movie/now_playing', movie: true, posterOnly: true },
-        { title: 'Coming Soon', path: '/movie/upcoming', movie: true, posterOnly: true },
         { title: 'News', news: true },
-        { title: 'Airing Today', path: '/tv/airing_today', posterOnly: true, hideGenres: true },
+        { title: 'In Theaters', path: '/movie/now_playing', movie: true, posterOnly: true },
+        { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
-        { title: 'Top Rated', path: '/tv/top_rated' },
-        { title: 'On The Air', path: '/tv/on_the_air' }
+        { title: 'Top Rated', path: '/tv/top_rated' }
       ];
       function filterRow(rowDef, shows) {
         return shows.filter(function (show) {
