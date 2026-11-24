@@ -610,10 +610,6 @@ showCopied();
       ];
       var PILL_GENRES = MAIN_GENRES.slice();
       PILL_GENRES.splice(7, 0, { id: 10762, name: 'Kids' });
-      var TOP_GENRE_IDS = [10759, 16, 80, 18, 9648];
-      var EXCLUDED_ROW_GENRES = [10765, 99];
-      var DECADES = [1980, 1990, 2000, 2010];
-      var COUNTRIES = [['KR', 'Korean'], ['JP', 'Japanese'], ['GB', 'British'], ['ES', 'Spanish'], ['FR', 'French'], ['DE', 'German'], ['TR', 'Turkish'], ['IN', 'Indian'], ['SE', 'Swedish']];
       var NETWORKS = [[213, 'Netflix'], [49, 'HBO'], [2552, 'Apple TV+'], [1024, 'Prime Video'], [2739, 'Disney+'], [453, 'Hulu'], [174, 'AMC'], [88, 'FX'], [4, 'BBC One'], [67, 'Showtime']];
       var GRID_FILTER = { posterOnly: true, hideGenres: true };
       function pad2(n) { return n < 10 ? '0' + n : '' + n; }
@@ -642,19 +638,6 @@ showCopied();
       }
       function genreLink(genre) {
         return '/g/?s=' + slugify(genre.name);
-      }
-      function genreRowDef(genre) {
-        return {
-          title: genre.name,
-          link: genreLink(genre),
-          path: discoverPath('with_genres=' + genre.id + '&sort_by=popularity.desc&vote_count.gte=100'),
-          posterOnly: true,
-          hideGenres: true,
-          shuffle: true
-        };
-      }
-      function decadeLabel(decade) {
-        return decade < 2000 ? String(decade % 100) + 's' : decade + 's';
       }
       function shortCheck(detail) {
         if (!detail || !detail.number_of_seasons || !detail.number_of_episodes) return '';
@@ -709,10 +692,6 @@ showCopied();
         '&first_air_date.gte=' + isoDate(-14) +
         '&first_air_date.lte=' + isoDate(120) +
         '&without_genres=' + HIDDEN_GENRES.join('%2C');
-      var topGenre = pickRandom(MAIN_GENRES.filter(function (g) { return TOP_GENRE_IDS.indexOf(g.id) !== -1; }));
-      var genrePool = shuffleList(MAIN_GENRES.filter(function (g) { return g.id !== topGenre.id && EXCLUDED_ROW_GENRES.indexOf(g.id) === -1; }));
-      var decadePick = pickRandom(DECADES);
-      var countryPick = pickRandom(COUNTRIES);
       var NETWORK_PICK = pickRandom(NETWORKS);
       var ROWS = [
         { news: true },
@@ -720,19 +699,13 @@ showCopied();
         { title: 'In Theaters', path: '/movie/now_playing', movie: true, posterOnly: true },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { guide: true, title: 'TV Guide' },
-        genreRowDef(genrePool[0]),
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Returning Soon', path: discoverPath('with_status=0&air_date.gte=' + isoDate(0) + '&air_date.lte=' + isoDate(75) + '&first_air_date.lte=' + isoDate(-120) + '&sort_by=popularity.desc&vote_count.gte=100'), pages: 2, enrich: returningCheck, min: 4, posterOnly: true, hideGenres: true },
-        { title: 'Top 10 ' + topGenre.name, link: genreLink(topGenre), path: discoverPath('with_genres=' + topGenre.id + '&sort_by=vote_average.desc&vote_count.gte=1000'), ranked: true, limit: 10, min: 5, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
-        genreRowDef(genrePool[1]),
         { title: 'Short Binges', path: discoverPath('with_status=3&sort_by=popularity.desc&vote_average.gte=7.3&vote_count.gte=200'), pages: 2, enrich: shortCheck, min: 5, posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Miniseries', link: '/g/?s=all&type=2', path: discoverPath('with_type=2&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
         { title: 'Top Rated', path: '/tv/top_rated' },
-        { title: 'From the ' + decadeLabel(decadePick), link: '/g/?s=all&decade=' + decadePick, path: discoverPath('first_air_date.gte=' + decadePick + '-01-01&first_air_date.lte=' + (decadePick + 9) + '-12-31&sort_by=vote_count.desc&vote_average.gte=7&vote_count.gte=300'), posterOnly: true, hideGenres: true, shuffle: true },
-        { title: countryPick[1] + ' Shows', link: '/g/?s=all&country=' + countryPick[0], path: discoverPath('with_origin_country=' + countryPick[0] + '&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
-        genreRowDef(genrePool[2]),
         { title: 'More With', source: actorSource, posterOnly: true },
         { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true }
       ];
