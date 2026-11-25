@@ -83,6 +83,45 @@
         height: 120px;
       }
     }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px 10px;
+      overflow: visible;
+      padding: 2px 0 0;
+    }
+    .guide-grid::after {
+      display: none;
+    }
+    .guide-grid .carousel-card,
+    .guide-grid .carousel-poster,
+    .guide-grid .carousel-card-body {
+      width: 100%;
+      min-width: 0;
+    }
+    .guide-grid .carousel-poster,
+    .guide-grid .carousel-poster-fallback {
+      height: auto;
+      aspect-ratio: 2 / 3;
+    }
+    .guide-grid .carousel-poster-fallback {
+      width: 100%;
+    }
+    .guide-grid .carousel-card img {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      max-width: none;
+    }
+    .guide-grid .row-empty {
+      grid-column: 1 / -1;
+    }
+    @media (min-width: 1024px) {
+      .guide-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 18px 12px;
+      }
+    }
     .pill-strip {
       display: flex;
       gap: 8px;
@@ -702,7 +741,7 @@ showCopied();
       var NETWORK_PICK = pickRandom(NETWORKS);
       var ROWS = [
         { pills: true, title: 'Genres' },
-        { news: true },
+        { news: true, title: 'News' },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
@@ -844,7 +883,7 @@ showCopied();
             '</div>';
           refs.track.appendChild(card);
         });
-        attachNav(refs);
+        if (!rowDef.grid) attachNav(refs);
       }
       function finishRow(rowDef, refs, shows) {
         if (rowDef.shuffle) shows = shuffleList(shows.slice());
@@ -1007,6 +1046,7 @@ showCopied();
         var tabs = document.createElement('div');
         tabs.className = 'pill-strip -tabs';
         refs.section.insertBefore(tabs, refs.wrap);
+        refs.track.classList.add('guide-grid');
         var buttons = [];
         var current = 0;
         var requestSeq = 0;
@@ -1033,7 +1073,7 @@ showCopied();
               showEmpty(refs, 'Nothing listed for this day');
               return;
             }
-            fillRow({ limit: 40 }, shows, refs);
+            fillRow({ limit: 40, grid: true }, shows, refs);
           }).catch(function (err) {
             if (seq !== requestSeq) return;
             console.error('TV Guide failed to load:', err);
