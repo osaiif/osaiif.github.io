@@ -701,16 +701,16 @@ showCopied();
         '&without_genres=' + HIDDEN_GENRES.join('%2C');
       var NETWORK_PICK = pickRandom(NETWORKS);
       var ROWS = [
-        { news: true },
         { pills: true, title: 'Genres' },
+        { news: true },
         { title: 'Trending This Week', path: '/trending/tv/week', ranked: true },
         { title: 'New & Upcoming', path: UPCOMING_PATH, posterOnly: true, hideGenres: true },
         { title: 'Popular Shows', path: '/tv/popular' },
-        { guide: true, title: 'TV Guide' },
         { title: 'Short Binges', path: discoverPath('with_status=3&sort_by=popularity.desc&vote_average.gte=7.3&vote_count.gte=200'), pages: 2, enrich: shortCheck, min: 5, posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Miniseries', link: '/g/?s=all&type=2', path: discoverPath('with_type=2&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
-        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true }
+        { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true },
+        { guide: true, title: 'TV Guide' }
       ];
       function filterRow(rowDef, shows) {
         return shows.filter(function (show) {
