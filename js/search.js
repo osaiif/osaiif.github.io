@@ -1047,9 +1047,6 @@
           emptyStreak = items.length ? 0 : emptyStreak + 1;
           if (emptyStreak >= EMPTY_LIMIT) exhausted = true;
           var fragment = document.createDocumentFragment();
-          if (correctedTo && !shownAny && items.length) {
-            fragment.appendChild(buildGroupLabel('Showing results for \u201c' + correctedTo + '\u201d'));
-          }
           if (next === 1) {
             var withSaif = matchesSaif(query) && (tab === 'all' || tab === 'person');
             if (withSaif) {
