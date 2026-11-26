@@ -52,6 +52,13 @@
         margin-bottom: 32px;
       }
     }
+    body.profile-page:not(.is-ready) .backdrop-container > .floating-tvbox,
+    body.profile-page:not(.is-ready) .backdrop-container > .floating-home,
+    body.profile-page:not(.is-ready) .backdrop-container > .floating-auth,
+    body.profile-page:not(.is-ready) .backdrop-container > .floating-search {
+      opacity: 0;
+      pointer-events: none;
+    }
     .profile-stats-embed {
       display: none;
     }
@@ -829,5 +836,10 @@ showCopied();
     });
   </script>
 <script src="/js/auth.js?v=1"></script>
+<script>
+  requestAnimationFrame(function () {
+    document.body.classList.add('is-ready');
+  });
+</script>
 </body>
 </html>
