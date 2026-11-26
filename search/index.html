@@ -178,7 +178,13 @@
     }
     #results-container .result-group-label:first-child {
       padding-top: 0.35rem;
-      margin-top: -0.8rem;
+      margin-bottom: -0.4rem;
+    }
+    #results-container:has(> .result-group-label:first-child) {
+      margin-top: -1.2rem;
+    }
+    #search-filters:not([hidden]) ~ #results-container:has(> .result-group-label:first-child) {
+      margin-top: calc(-1.2rem - 6px);
     }
     #results-container .result-group-label:not(:first-child) {
       margin-top: 0.6rem;
