@@ -52,13 +52,6 @@
         margin-bottom: 32px;
       }
     }
-    body.profile-page:not(.is-ready) .backdrop-container > .floating-tvbox,
-    body.profile-page:not(.is-ready) .backdrop-container > .floating-home,
-    body.profile-page:not(.is-ready) .backdrop-container > .floating-auth,
-    body.profile-page:not(.is-ready) .backdrop-container > .floating-search {
-      opacity: 0;
-      pointer-events: none;
-    }
     .profile-stats-embed {
       display: none;
     }
@@ -374,6 +367,22 @@
       .profile-header .bio {
         margin: -51px 0 12px 156px;
       }
+    }
+    body.profile-page .backdrop-container > .floating-tvbox,
+    body.profile-page .backdrop-container > .floating-home,
+    body.profile-page .backdrop-container > .floating-auth {
+      transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+    }
+    body.profile-page .backdrop-container > #home-search-form.floating-search {
+      transition: width 0.25s ease, max-width 0.25s ease, opacity 0.2s ease;
+    }
+    body.profile-page:not(.tv-ready) .backdrop-container > .floating-tvbox,
+    body.profile-page:not(.tv-ready) .backdrop-container > .floating-home,
+    body.profile-page:not(.tv-ready) .backdrop-container > .floating-auth,
+    body.profile-page:not(.tv-ready) .backdrop-container > #home-search-form.floating-search {
+      opacity: 0;
+      pointer-events: none;
+      animation: tv-failsafe 0s linear 6s forwards;
     }
   </style>
 </head>
@@ -836,10 +845,5 @@ showCopied();
     });
   </script>
 <script src="/js/auth.js?v=1"></script>
-<script>
-  requestAnimationFrame(function () {
-    document.body.classList.add('is-ready');
-  });
-</script>
 </body>
 </html>
