@@ -62,12 +62,14 @@
     }
     #results-container .header {
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.18rem;
+      flex-wrap: nowrap;
+      align-items: baseline;
+      column-gap: 0.45rem;
       min-width: 0;
     }
     #results-container .title {
+      flex: 0 1 auto;
+      min-width: 0;
       font-size: 0.92rem;
       font-weight: 600;
       line-height: 1.25;
@@ -82,8 +84,7 @@
       flex-wrap: nowrap;
       align-items: center;
       gap: 0.5rem;
-      height: 1rem;
-      overflow: hidden;
+      flex: none;
     }
     #results-container .rating {
       display: inline-flex;
