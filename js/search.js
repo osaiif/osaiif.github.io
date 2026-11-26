@@ -444,6 +444,9 @@
   var activeController = null;
   var requestId = 0;
   var query = '';
+  var apiQuery = '';
+  var correctedTo = '';
+  var correctionTried = false;
   var tab = 'all';
   var page = 0;
   var totalPages = 0;
@@ -526,7 +529,7 @@
             (rating ? '<span class="rating numbers">' + STAR_ICON_SVG + rating + '</span>' : '') +
           '</div>' +
         '</div>' +
-        (item.overview ? '<p class="overview">' + escapeHtml(item.overview) + '</p>' : '') +
+        '<p class="overview">' + escapeHtml(item.overview || '') + '</p>' +
         '<div class="creator">' +
           '<span>' + (isMovie ? 'Directed by' : 'Created by') + '</span>' +
           '<span class="creator-badge -loading">…</span>' +
@@ -560,8 +563,7 @@
   }
   function removeCreator(card) {
     var creator = card.querySelector('.creator');
-    if (creator && creator.parentNode) creator.parentNode.removeChild(creator);
-    card.classList.add('no-creator');
+    if (creator) creator.innerHTML = '';
   }
   function loadDetails(card) {
     var type = card.getAttribute('data-lazy');
@@ -691,7 +693,7 @@
     return !!(FILTER_TABS[tab] && (filters.genre || filters.year || filters.country || filters.lang || filters.rating));
   }
   function pageParams(pageNumber, kind) {
-    var params = 'query=' + encodeURIComponent(query) + '&include_adult=false&page=' + pageNumber;
+    var params = 'query=' + encodeURIComponent(apiQuery || query) + '&include_adult=false&page=' + pageNumber;
     if (filters.year && FILTER_TABS[tab]) {
       params += (kind === 'movie' ? '&primary_release_year=' : '&first_air_date_year=') + filters.year;
     }
@@ -754,6 +756,142 @@
       return data;
     });
   }
+  function normText(str) {
+    var s = String(str || '');
+    if (s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function editDistance(a, b) {
+    a = a.slice(0, 80);
+    b = b.slice(0, 80);
+    var rows = [];
+    for (var i = 0; i <= a.length; i++) {
+      rows[i] = [i];
+      for (var j = 1; j <= b.length; j++) rows[i][j] = i === 0 ? j : 0;
+    }
+    for (i = 1; i <= a.length; i++) {
+      for (j = 1; j <= b.length; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        var v = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost);
+        if (i > 1 && j > 1 && a.charAt(i - 1) === b.charAt(j - 2) && a.charAt(i - 2) === b.charAt(j - 1)) {
+          v = Math.min(v, rows[i - 2][j - 2] + 1);
+        }
+        rows[i][j] = v;
+      }
+    }
+    return rows[a.length][b.length];
+  }
+  function similarity(a, b) {
+    if (!a || !b) return 0;
+    var best = 0;
+    var pairs = [[a, b], [a.replace(/ /g, ''), b.replace(/ /g, '')]];
+    if (/^the /.test(b)) pairs.push([a, b.slice(4)]);
+    if (/^the /.test(a)) pairs.push([a.slice(4), b]);
+    pairs.forEach(function (p) {
+      var len = Math.max(p[0].length, p[1].length);
+      if (!len) return;
+      var sim = 1 - editDistance(p[0], p[1]) / len;
+      if (sim > best) best = sim;
+    });
+    return best;
+  }
+  function itemNames(item) {
+    var names = [item.title, item.original_title, item.name, item.original_name];
+    var out = [];
+    names.forEach(function (n) {
+      var t = normText(n);
+      if (t && out.indexOf(t) === -1) out.push(t);
+    });
+    return out;
+  }
+  function tokensCovered(q, name) {
+    var qt = q.split(' ');
+    var nt = name.split(' ');
+    return qt.every(function (t) {
+      return nt.some(function (w) { return w.indexOf(t) === 0; });
+    });
+  }
+  function hasGoodMatch(items, q) {
+    var top = (items || []).slice(0, 10);
+    for (var i = 0; i < top.length; i++) {
+      var names = itemNames(top[i]);
+      for (var j = 0; j < names.length; j++) {
+        if (similarity(q, names[j]) >= 0.8 || tokensCovered(q, names[j])) return true;
+      }
+    }
+    return false;
+  }
+  var vocabPromise = null;
+  function loadVocabulary() {
+    if (vocabPromise) return vocabPromise;
+    var paths = [];
+    ['/tv/popular', '/movie/popular', '/tv/top_rated', '/movie/top_rated'].forEach(function (p) {
+      for (var n = 1; n <= 5; n++) paths.push([p, 'language=en-US&page=' + n, p.indexOf('/tv') === 0 ? 'tv' : 'movie']);
+    });
+    for (var m = 1; m <= 2; m++) paths.push(['/trending/all/week', 'language=en-US&page=' + m, '']);
+    vocabPromise = Promise.all(paths.map(function (p) {
+      return tmdbFetch(p[0], p[1]).then(function (data) {
+        return (data.results || []).map(function (r) {
+          if (p[2]) r.media_type = p[2];
+          return r;
+        });
+      }).catch(function () { return []; });
+    })).then(function (lists) {
+      return [].concat.apply([], lists);
+    });
+    return vocabPromise;
+  }
+  function correctionQueries(q) {
+    var tokens = q.split(' ');
+    var out = [];
+    function add(s) {
+      if (s && s.length >= 3 && s !== q && out.indexOf(s) === -1) out.push(s);
+    }
+    tokens.forEach(function (t) { if (t.length >= 3) add(t); });
+    if (tokens.length > 1) {
+      tokens.forEach(function (t, i) {
+        add(tokens.filter(function (x, k) { return k !== i; }).join(' '));
+      });
+    }
+    if (q.length >= 6) add(q.slice(0, -1));
+    tokens.forEach(function (t) { if (t.length >= 6) add(t.slice(0, -1)); });
+    return out.slice(0, 8);
+  }
+  function findCorrection(q, signal) {
+    var compact = q.replace(/ /g, '');
+    if (compact.length < 4 || !/[a-z]/.test(compact)) return Promise.resolve('');
+    var searches = correctionQueries(q).map(function (s) {
+      return tmdbFetch('/search/multi', 'query=' + encodeURIComponent(s) + '&include_adult=false&page=1', signal).then(function (data) {
+        return data.results || [];
+      }).catch(function (e) {
+        if (e && e.name === 'AbortError') throw e;
+        return [];
+      });
+    });
+    searches.push(loadVocabulary());
+    return Promise.all(searches).then(function (lists) {
+      var pool = [].concat.apply([], lists);
+      var best = null;
+      var bestScore = 0;
+      var bestPop = -1;
+      pool.forEach(function (item) {
+        if (!item || (item.media_type !== 'tv' && item.media_type !== 'movie' && item.media_type !== 'person')) return;
+        var raw = item.media_type === 'movie' ? [item.title, item.original_title] : [item.name, item.original_name];
+        raw.forEach(function (r) {
+          var name = normText(r);
+          if (!name || !r) return;
+          var score = similarity(q, name);
+          var pop = item.popularity || 0;
+          if (score > bestScore + 0.0001 || (Math.abs(score - bestScore) <= 0.0001 && pop > bestPop)) {
+            best = r;
+            bestScore = score;
+            bestPop = pop;
+          }
+        });
+      });
+      return best && bestScore >= 0.75 ? String(best).trim() : '';
+    });
+  }
   function keepItem(item) {
     if (!item) return false;
     if (item.media_type === 'person') return !!item.name;
@@ -772,6 +910,25 @@
     updateFooter();
     fetchResults(next, controller.signal)
       .then(function (data) {
+        if (rid !== requestId || next !== 1 || correctionTried) return data;
+        correctionTried = true;
+        var q = normText(query);
+        if (matchesSaif(query) || hasGoodMatch(data.results, q)) return data;
+        return findCorrection(q, controller.signal).then(function (fixed) {
+          if (rid !== requestId || !fixed || normText(fixed) === q) return data;
+          apiQuery = fixed;
+          return fetchResults(1, controller.signal).then(function (fixedData) {
+            if (rid !== requestId) return fixedData;
+            if (!(fixedData.results || []).length) {
+              apiQuery = query;
+              return data;
+            }
+            correctedTo = fixed;
+            return fixedData;
+          });
+        });
+      })
+      .then(function (data) {
         if (rid !== requestId) return;
         var fresh = (data.results || []).filter(function (item) {
           if (!keepItem(item)) return false;
@@ -789,6 +946,9 @@
           emptyStreak = items.length ? 0 : emptyStreak + 1;
           if (emptyStreak >= EMPTY_LIMIT) exhausted = true;
           var fragment = document.createDocumentFragment();
+          if (correctedTo && !shownAny && items.length) {
+            fragment.appendChild(buildGroupLabel('Showing results for \u201c' + correctedTo + '\u201d'));
+          }
           if (next === 1) {
             var withSaif = matchesSaif(query) && (tab === 'all' || tab === 'person');
             if (withSaif) {
@@ -851,6 +1011,9 @@
     seen = {};
     shownAny = false;
     emptyStreak = 0;
+    apiQuery = query;
+    correctedTo = '';
+    correctionTried = false;
     clearResults();
     updateFooter();
     renderTabs();

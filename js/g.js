@@ -272,8 +272,7 @@
   ];
   var SORTS = [
     ['popularity.desc', 'Most popular'],
-    ['vote_average.desc', 'Top rated'],
-    ['vote_count.desc', 'Most voted'],
+    ['vote_count.desc', 'Top rated'],
     ['first_air_date.desc', 'Newest first'],
     ['first_air_date.asc', 'Oldest first'],
     ['name.asc', 'Title A–Z']
@@ -762,7 +761,6 @@
       q.push('vote_average.gte=' + state.rating);
       minVotes = 30;
     }
-    if (state.sort === 'vote_average.desc') minVotes = Math.max(minVotes, 50);
     if (minVotes) q.push('vote_count.gte=' + minVotes);
     return q.join('&');
   }
