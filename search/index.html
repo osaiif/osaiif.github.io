@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://www.themoviedb.org">
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="preload" as="script" href="/js/search.js?v=13">
+  <link rel="preload" as="script" href="/js/search.js?v=14">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Stack+Sans+Headline:wght@400&display=swap" rel="stylesheet">
   <style>
     #results-container.results-container {
@@ -178,6 +178,7 @@
     }
     #results-container .result-group-label:first-child {
       padding-top: 0.35rem;
+      margin-top: -0.8rem;
     }
     #results-container .result-group-label:not(:first-child) {
       margin-top: 0.6rem;
@@ -234,8 +235,18 @@
     .cg-field:focus-within { border-color: #4a6a85; }
     .cg-field-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cg-field-chevron { position: absolute; top: 50%; right: 9px; width: 13px; height: 13px; margin-top: -6.5px; fill: none; stroke: #8490a4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-    .cg-field-select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; appearance: none; -webkit-appearance: none; background: transparent; }
-    .cg-field-select option, .cg-field-select optgroup { background-color: #0b121e; color: #eaeef5; }
+    .cg-field.-open { border-color: #4a6a85; }
+    .cg-field-select { display: none; }
+    .cg-field-trigger { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+    .cg-field.-open .cg-field-chevron { stroke: #fff; transform: rotate(180deg); }
+    .cg-field .cg-field-menu { top: calc(100% + 6px); left: 0; right: auto; min-width: 100%; max-width: calc(100vw - 24px); max-height: min(60vh, 340px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; visibility: hidden; transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s; }
+    .cg-field .cg-field-menu.-open { visibility: visible; transition-delay: 0s; }
+    .cg-field .cg-field-menu.-right { left: auto; right: 0; }
+    .cg-field .cg-field-menu .sort-row { justify-content: stretch; padding: 4px; }
+    .cg-field .cg-field-menu .sort-choices { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 100%; }
+    .cg-field .cg-field-menu .sort-option { text-align: left; }
+    .cg-year-option { font-family: var(--font-numbers); }
+    .cg-menu-label { display: block; padding: 8px 9px 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6f7c91; white-space: nowrap; }
     .cg-link { padding: 0; border: 0; background: none; color: #8490a4; font: inherit; font-size: 12.5px; cursor: pointer; transition: color 0.15s ease; }
     .cg-link:hover { color: #fff; }
     .cg-link[hidden] { display: none; }
@@ -436,7 +447,7 @@ showCopied();
     }
   })();
   </script>
-  <script src="/js/search.js?v=13"></script>
+  <script src="/js/search.js?v=14"></script>
 <script src="/js/auth.js?v=1"></script>
 </body>
 </html>
