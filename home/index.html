@@ -123,6 +123,19 @@
     .guide-grid .carousel-card img.-shown {
       opacity: 1;
     }
+    .discover-row.-pills .pill-strip {
+      padding-left: 0;
+    }
+    @media (max-width: 640px) {
+      .discover-row.-pills {
+        margin-top: 16px;
+      }
+    }
+    @media (max-width: 420px) {
+      .discover-row.-pills {
+        margin-top: 28px;
+      }
+    }
     @media (min-width: 1024px) {
       .guide-grid {
         grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -1031,7 +1044,7 @@ showCopied();
       }
       function buildPills(rowDef) {
         var section = document.createElement('section');
-        section.className = 'discover-row';
+        section.className = 'discover-row -pills';
         var strip = document.createElement('div');
         strip.className = 'pill-strip';
         var all = document.createElement('a');
