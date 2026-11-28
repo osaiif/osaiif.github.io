@@ -1047,11 +1047,6 @@ showCopied();
         section.className = 'discover-row -pills';
         var strip = document.createElement('div');
         strip.className = 'pill-strip';
-        var all = document.createElement('a');
-        all.className = 'pill';
-        all.href = '/g/?s=all';
-        all.textContent = 'All';
-        strip.appendChild(all);
         PILL_GENRES.forEach(function (genre) {
           var a = document.createElement('a');
           a.className = 'pill';
