@@ -751,7 +751,7 @@ showCopied();
         { title: 'Miniseries', link: '/g/?s=all&type=2', path: discoverPath('with_type=2&sort_by=popularity.desc&vote_average.gte=6.5&vote_count.gte=100'), posterOnly: true, hideGenres: true },
         { title: 'On ' + NETWORK_PICK[1], source: networkSource, posterOnly: true, hideGenres: true, shuffle: true },
         { title: 'Ended Recently', path: discoverPath('with_status=3&air_date.gte=' + isoDate(-60) + '&air_date.lte=' + isoDate(0) + '&sort_by=popularity.desc&vote_count.gte=200'), posterOnly: true, hideGenres: true },
-        { guide: true, title: 'TV Guide' }
+        { guide: true, title: 'Release Calendar' }
       ];
       function filterRow(rowDef, shows) {
         return shows.filter(function (show) {
@@ -1099,7 +1099,7 @@ showCopied();
             fillRow({ limit: 40, grid: true }, shows, refs);
           }).catch(function (err) {
             if (seq !== requestSeq) return;
-            console.error('TV Guide failed to load:', err);
+            console.error('Release Calendar failed to load:', err);
             showEmpty(refs, 'Could not load this day');
           });
         }
