@@ -1032,11 +1032,6 @@ showCopied();
       function buildPills(rowDef) {
         var section = document.createElement('section');
         section.className = 'discover-row';
-        var heading = document.createElement('div');
-        heading.className = 'section-heading';
-        heading.setAttribute('aria-hidden', 'true');
-        heading.style.paddingBottom = '0';
-        section.appendChild(heading);
         var strip = document.createElement('div');
         strip.className = 'pill-strip';
         var all = document.createElement('a');
@@ -1057,6 +1052,7 @@ showCopied();
       }
       function buildGuide(rowDef) {
         var refs = buildSkeletonRow(rowDef.title);
+        refs.heading.style.textAlign = 'center';
         var tabs = document.createElement('div');
         tabs.className = 'pill-strip -tabs';
         refs.section.insertBefore(tabs, refs.wrap);
