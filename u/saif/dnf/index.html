@@ -18,6 +18,8 @@
   <style>
     #dnf-grid { grid-template-columns: repeat(4, 1fr); }
     @media (min-width: 900px) { #dnf-grid { grid-template-columns: repeat(8, 1fr); gap: 12px; } }
+    #dnf-grid img { opacity: 0; transition: opacity 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+    #dnf-grid img.-shown { opacity: 1; }
     .section-heading {
       margin-top: 0;
       line-height: 28px;
@@ -181,22 +183,38 @@ showCopied();
         grid.innerHTML = '<p class="dnf-empty">Nothing marked as did-not-finish yet.</p>';
         return;
       }
-      var EAGER_ROW_SIZE = 4;
       var frag = document.createDocumentFragment();
       shows.forEach(function (s, i) {
         var titleAttr = s.title.replace(/"/g, '&quot;');
-        var loadingAttr = i < EAGER_ROW_SIZE ? 'eager' : 'lazy';
         var card = document.createElement('div');
         card.className = 'card';
         card.dataset.title = s.title;
         card.dataset.imdb = s.imdb;
         card.innerHTML =
           '<a href="/show/?imdb=' + s.imdb + '">' +
-            '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="' + loadingAttr + '" decoding="async">' +
+            '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="eager" decoding="async">' +
           '</a>';
         frag.appendChild(card);
       });
       grid.appendChild(frag);
+      var revealTimer = setTimeout(function () {
+        grid.querySelectorAll('img').forEach(function (im) { im.classList.add('-shown'); });
+      }, 10000);
+      function revealInOrder() {
+        var list = grid.querySelectorAll('img');
+        for (var k = 0; k < list.length; k++) {
+          var im = list[k];
+          if (im.classList.contains('-shown')) continue;
+          if (!im.complete) return;
+          im.classList.add('-shown');
+        }
+        clearTimeout(revealTimer);
+      }
+      grid.querySelectorAll('img').forEach(function (im) {
+        im.addEventListener('load', revealInOrder);
+        im.addEventListener('error', revealInOrder);
+      });
+      revealInOrder();
     })();
   </script>
 <script src="/js/auth.js?v=1"></script>

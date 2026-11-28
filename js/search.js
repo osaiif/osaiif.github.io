@@ -1050,7 +1050,6 @@
           if (next === 1) {
             var withSaif = matchesSaif(query) && (tab === 'all' || tab === 'person');
             if (withSaif) {
-              if (items.length) fragment.appendChild(buildGroupLabel('Profile'));
               fragment.appendChild(buildSaifCard());
               if (items.length) fragment.appendChild(buildGroupLabel('Results'));
               shownAny = true;

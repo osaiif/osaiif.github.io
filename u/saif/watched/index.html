@@ -19,6 +19,8 @@
   <style>
     #watched-grid { grid-template-columns: repeat(4, 1fr); }
     @media (min-width: 900px) { #watched-grid { grid-template-columns: repeat(8, 1fr); gap: 12px; } }
+    #watched-grid img { opacity: 0; transition: opacity 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+    #watched-grid img.-shown { opacity: 1; }
     .section-heading-row {
       padding-bottom: 5px;
       margin-bottom: 12px;
@@ -197,11 +199,29 @@ showCopied();
           : '';
         card.innerHTML =
           '<a href="/show/?imdb=' + s.imdb + '">' +
-            '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="lazy" decoding="async">' +
+            '<img src="' + s.src + '" alt="' + titleAttr + '" width="150" height="225" loading="eager" decoding="async">' +
           '</a>' + ratingHtml;
         frag.appendChild(card);
       });
       grid.appendChild(frag);
+      var revealTimer = setTimeout(function () {
+        grid.querySelectorAll('img').forEach(function (im) { im.classList.add('-shown'); });
+      }, 10000);
+      function revealInOrder() {
+        var list = grid.querySelectorAll('img');
+        for (var k = 0; k < list.length; k++) {
+          var im = list[k];
+          if (im.classList.contains('-shown')) continue;
+          if (!im.complete) return;
+          im.classList.add('-shown');
+        }
+        clearTimeout(revealTimer);
+      }
+      grid.querySelectorAll('img').forEach(function (im) {
+        im.addEventListener('load', revealInOrder);
+        im.addEventListener('error', revealInOrder);
+      });
+      revealInOrder();
     })();
   </script>
   <script src="/js/sort.js?v=1"></script>
